@@ -1,0 +1,188 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import { TypeBadge } from '@/components/ui/Badge';
+import { provider }  from '@/lib/providers';
+import { formatCount } from '@/lib/utils/formatters';
+import type { Creator } from '@/types/index';
+
+const [allSight, allCreators, sightCategories] = await Promise.all([
+  provider.getMedia({ division: 'sight' }),
+  provider.getCreators(30),
+  provider.getCategories('sight'),
+]);
+
+const creatorMap   = Object.fromEntries(allCreators.map(c => [c.id, c]));
+const featured     = allSight.filter(m => m.featured).slice(0, 6);
+const trending     = allSight.filter(m => m.trending).slice(0, 4);
+const editorsPicks = allSight.filter(m => m.editorsPick).slice(0, 4);
+const videos       = allSight.filter(m => m.type === 'video').slice(0, 3);
+const photos       = allSight.filter(m => m.type === 'photo').slice(0, 8);
+
+const types = [
+  { slug: 'photos',        label: 'Photos',        href: '/sight/photos' },
+  { slug: 'videos',        label: 'Videos',        href: '/sight/videos' },
+  { slug: 'illustrations', label: 'Illustrations', href: '/sight/illustrations' },
+  { slug: 'wallpapers',    label: 'Wallpapers',    href: '/sight/wallpapers' },
+];
+---
+
+<BaseLayout
+  title="SIGHT — Visual Media Discovery · SENSES"
+  description="Discover premium photography, video, and illustration. Landscape, urban, minimal, cinematic — the visual world in one place."
+>
+  <div class="pt-[var(--nav-height)] pb-20">
+
+    <!-- Hero -->
+    <div class="relative overflow-hidden border-b border-senses-border mb-10">
+      <div class="absolute inset-0 bg-gradient-to-br from-[#C8B89A]/8 via-transparent to-transparent pointer-events-none" />
+      <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-14">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div>
+            <p class="text-senses-sight text-xs tracking-[0.35em] uppercase mb-3 font-medium">Visual Division</p>
+            <h1 class="text-display-2xl text-senses-text leading-none tracking-tight">SIGHT</h1>
+            <p class="text-senses-text-2 text-base mt-4 max-w-lg leading-relaxed">
+              Photographs, video, illustration — every visual medium curated for
+              quality, mood, and moment.
+            </p>
+            <div class="flex flex-wrap gap-3 mt-6">
+              <a href="/explore?division=sight" class="px-5 py-2.5 rounded-xl bg-senses-sight text-senses-bg text-sm font-medium hover:bg-senses-sight/90 transition-colors">
+                Explore SIGHT
+              </a>
+              <a href="/sight/photos" class="px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 hover:text-senses-text transition-all">
+                Browse Photos
+              </a>
+            </div>
+          </div>
+          <!-- Stats -->
+          <div class="flex gap-6 flex-shrink-0">
+            {[
+              [allSight.length.toString(), 'items'],
+              [allSight.filter(m => m.type === 'photo').length.toString(), 'photos'],
+              [allSight.filter(m => m.type === 'video').length.toString(), 'videos'],
+            ].map(([n, l]) => (
+              <div class="text-center">
+                <p class="text-senses-sight text-2xl font-light">{n}</p>
+                <p class="text-senses-text-3 text-xs uppercase tracking-widest">{l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+
+      <!-- Type strip -->
+      <div class="flex gap-2 overflow-x-auto pb-2 mb-10 scrollbar-none">
+        {types.map(t => (
+          <a
+            href={t.href}
+            class="flex-shrink-0 px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-sight/40 hover:text-senses-sight transition-all"
+          >
+            {t.label}
+          </a>
+        ))}
+        {sightCategories.map(cat => (
+          <a
+            href={`/explore?category=${cat.slug}`}
+            class="flex-shrink-0 px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-3 text-sm hover:text-senses-text transition-all capitalize"
+          >
+            {cat.label}
+          </a>
+        ))}
+      </div>
+
+      <!-- Trending section -->
+      {trending.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-senses-text text-base font-medium">
+              Trending <span class="text-senses-sight">Now</span>
+            </h2>
+            <a href="/explore?division=sight&sort=trending" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">
+              See all →
+            </a>
+          </div>
+          <div class="masonry-grid">
+            {trending.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Photos grid -->
+      {photos.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-senses-text text-base font-medium">Photos</h2>
+            <a href="/sight/photos" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">View all →</a>
+          </div>
+          <div class="masonry-grid">
+            {photos.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Editor's picks -->
+      {editorsPicks.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-senses-text text-base font-medium">
+              Editor's <span class="text-senses-sight">Picks</span>
+            </h2>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {editorsPicks.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Videos row -->
+      {videos.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-senses-text text-base font-medium">Videos</h2>
+            <a href="/sight/videos" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">View all →</a>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {videos.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Category cards -->
+      <section class="mb-12">
+        <h2 class="text-senses-text text-base font-medium mb-5">Browse by Category</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {sightCategories.map(cat => (
+            <a
+              href={`/explore?category=${cat.slug}`}
+              class="relative group rounded-xl overflow-hidden aspect-[4/3] bg-senses-surface border border-senses-border hover:border-senses-sight/40 transition-all"
+            >
+              <img
+                src={cat.coverImage}
+                alt={cat.label}
+                class="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-opacity"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+              <div class="absolute bottom-0 left-0 p-4">
+                <p class="text-senses-sight text-[10px] tracking-widest uppercase mb-1 font-medium">{cat.division}</p>
+                <p class="text-senses-text font-medium">{cat.label}</p>
+                <p class="text-senses-text-3 text-xs mt-0.5 line-clamp-1">{cat.description}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+
+    </div>
+  </div>
+</BaseLayout>

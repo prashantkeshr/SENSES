@@ -1,0 +1,50 @@
+---
+import BaseLayout      from '@/layouts/BaseLayout.astro';
+import { ExploreGrid } from '@/components/explore/ExploreGrid';
+import { provider }    from '@/lib/providers';
+import { formatCount } from '@/lib/utils/formatters';
+
+const [allMedia, allCreators] = await Promise.all([
+  provider.getMedia(),
+  provider.getCreators(30),
+]);
+
+const sightCount   = allMedia.filter(m => m.division === 'sight').length;
+const hearingCount = allMedia.filter(m => m.division === 'hearing').length;
+---
+
+<BaseLayout
+  title="Explore — SENSES"
+  description="Explore all visual and audio media across SIGHT and HEARING. Filter by type, mood, and style to discover your next sensory experience."
+>
+  <div class="pt-[var(--nav-height)] pb-20 min-h-screen">
+
+    <!-- Page header -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 pt-10 pb-6">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-2">All media</p>
+          <h1 class="text-display-xl text-senses-text leading-none">Explore</h1>
+          <p class="text-senses-text-3 text-sm mt-2 max-w-md">
+            Every item in the SENSES catalog. Filter, sort, and discover.
+          </p>
+        </div>
+        <!-- Division pills summary -->
+        <div class="flex gap-3 flex-shrink-0">
+          <div class="px-4 py-2 rounded-xl bg-senses-surface border border-senses-border">
+            <p class="text-senses-sight text-xs tracking-widest uppercase mb-0.5">Sight</p>
+            <p class="text-senses-text font-medium">{sightCount} items</p>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-senses-surface border border-senses-border">
+            <p class="text-senses-hearing text-xs tracking-widest uppercase mb-0.5">Hearing</p>
+            <p class="text-senses-text font-medium">{hearingCount} items</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Client island: filtering + masonry grid -->
+    <ExploreGrid client:load media={allMedia} creators={allCreators} />
+
+  </div>
+</BaseLayout>

@@ -93,26 +93,27 @@ export function AudioPlayer({ data, title, accentColor = '#8FAEC0' }: Props) {
 
       {/* Waveform */}
       <div
-        className={`flex items-end gap-[2px] h-14 mb-3 ${isPlaceholder ? 'cursor-default opacity-60' : 'cursor-pointer'}`}
+        className={`h-14 mb-3 ${isPlaceholder ? 'cursor-default opacity-60' : 'cursor-pointer'}`}
+        style={{ display: 'grid', gridTemplateColumns: `repeat(${BARS}, 1fr)`, gap: '2px', alignItems: 'flex-end' }}
         onClick={handleSeek}
         role="slider"
         aria-label="Seek audio"
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(progress * 100)}
+        suppressHydrationWarning
       >
         {WAVEFORM.map((h, i) => {
           const played = i / BARS < progress;
           return (
             <div
               key={i}
+              suppressHydrationWarning
               style={{
                 height: `${h}%`,
-                width: `${Math.floor(100 / BARS)}%`,
                 backgroundColor: played ? accentColor : `${accentColor}30`,
                 borderRadius: '1px',
                 transition: 'background-color 80ms',
-                flexShrink: 0,
               }}
             />
           );

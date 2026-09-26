@@ -1,0 +1,86 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import { provider }  from '@/lib/providers';
+import type { MediaType } from '@/types/index';
+
+type SectionDef = {
+  title:       string;
+  description: string;
+  types:       MediaType[];
+};
+
+export async function getStaticPaths() {
+  const defs: Record<string, SectionDef> = {
+    music:   { title: 'Music',   description: 'Cinematic scores, orchestral compositions, solo piano, and emotionally charged music for any moment.',         types: ['music'] },
+    sounds:  { title: 'Sounds',  description: 'Natural soundscapes and field recordings — forests, rain, thunder, water, and the textures of the world.',     types: ['sound'] },
+    ambient: { title: 'Ambient', description: 'Atmospheric long-form audio for focus, relaxation, deep work, and immersive environments.',                    types: ['ambient', 'loop'] },
+    'lo-fi': { title: 'Lo-Fi',   description: 'Mellow, nostalgic beats for studying, creating, and slow afternoons.',                                         types: ['loop'] },
+  };
+  return Object.entries(defs).map(([section, def]) => ({
+    params: { section },
+    props:  { section, def },
+  }));
+}
+
+interface Props { section: string; def: SectionDef }
+const { section, def } = Astro.props;
+
+if (!def) return Astro.redirect('/hearing');
+
+const allCreators = await provider.getCreators(30);
+const creatorMap  = Object.fromEntries(allCreators.map(c => [c.id, c]));
+
+const byType = await Promise.all(
+  def.types.map(type => provider.getMedia({ division: 'hearing', type }))
+);
+const items = byType.flat();
+---
+
+<BaseLayout
+  title={`${def.title} — HEARING · SENSES`}
+  description={def.description}
+>
+  <div class="pt-[var(--nav-height)] pb-20">
+
+    <!-- Breadcrumb -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-5">
+      <nav class="flex items-center gap-1.5 text-xs text-senses-text-3">
+        <a href="/" class="hover:text-senses-text transition-colors">SENSES</a>
+        <span>/</span>
+        <a href="/hearing" class="text-senses-hearing hover:text-senses-text transition-colors">HEARING</a>
+        <span>/</span>
+        <span class="text-senses-text">{def.title}</span>
+      </nav>
+    </div>
+
+    <!-- Header -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 pb-8 border-b border-senses-border mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <p class="text-senses-hearing text-xs tracking-widest uppercase mb-2 font-medium">HEARING · {def.title}</p>
+          <h1 class="text-display-lg text-senses-text">{def.title}</h1>
+          <p class="text-senses-text-3 text-sm mt-2 max-w-lg">{def.description}</p>
+        </div>
+        <p class="text-senses-text-3 text-sm flex-shrink-0">{items.length} items</p>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+      {items.length === 0 ? (
+        <div class="py-24 text-center">
+          <p class="text-senses-text-3 text-lg mb-1">No {def.title.toLowerCase()} yet</p>
+          <p class="text-senses-text-3 text-sm">Check back soon — more audio is being curated.</p>
+        </div>
+      ) : (
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {items.map(item => (
+            <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
+          ))}
+        </div>
+      )}
+    </div>
+
+  </div>
+</BaseLayout>

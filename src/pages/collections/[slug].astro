@@ -1,0 +1,161 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import { provider }  from '@/lib/providers';
+import { formatDate } from '@/lib/utils/formatters';
+
+export async function getStaticPaths() {
+  const collections = await provider.getCollections();
+  return collections.map(col => ({
+    params: { slug: col.slug },
+    props:  { collectionId: col.id },
+  }));
+}
+
+interface Props { collectionId: string }
+const { collectionId } = Astro.props;
+
+const [collection, allCreators] = await Promise.all([
+  provider.getCollectionById(collectionId),
+  provider.getCreators(30),
+]);
+
+if (!collection) return Astro.redirect('/collections');
+
+const creatorMap = Object.fromEntries(allCreators.map(c => [c.id, c]));
+
+// Fetch each media item in the collection
+const items = (
+  await Promise.all(collection.mediaIds.map(id => provider.getMediaById(id)))
+).filter(Boolean) as Awaited<ReturnType<typeof provider.getMediaById>>[];
+
+const validItems = items.filter((m): m is NonNullable<typeof m> => m !== null);
+
+const sightItems   = validItems.filter(m => m.division === 'sight');
+const hearingItems = validItems.filter(m => m.division === 'hearing');
+---
+
+<BaseLayout
+  title={`${collection.title} — Collections · SENSES`}
+  description={collection.description}
+  ogImage={collection.coverImage}
+>
+  <div class="pt-[var(--nav-height)] pb-20">
+
+    <!-- Hero -->
+    <div class="relative h-64 md:h-80 overflow-hidden mb-10">
+      <img
+        src={collection.coverImage}
+        alt={collection.title}
+        class="w-full h-full object-cover opacity-40"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-senses-bg via-senses-bg/60 to-senses-bg/20" />
+
+      <div class="absolute inset-0 flex flex-col justify-end max-w-[1440px] mx-auto px-4 md:px-8 pb-8">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-1.5 text-xs text-senses-text-3 mb-4">
+          <a href="/" class="hover:text-senses-text transition-colors">SENSES</a>
+          <span>/</span>
+          <a href="/collections" class="hover:text-senses-text transition-colors">Collections</a>
+          <span>/</span>
+          <span class="text-senses-text">{collection.title}</span>
+        </nav>
+
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-senses-text-3 text-[10px] tracking-widest uppercase font-medium">
+                Curated by SENSES
+              </span>
+              {collection.crossSensory && (
+                <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                  <span class="text-senses-sight text-[9px] tracking-widest">SIGHT</span>
+                  <span class="text-white/30 text-[9px]">×</span>
+                  <span class="text-senses-hearing text-[9px] tracking-widest">HEARING</span>
+                </div>
+              )}
+            </div>
+            <h1 class="text-display-lg text-senses-text leading-tight">{collection.title}</h1>
+          </div>
+          <div class="flex gap-4 text-center flex-shrink-0">
+            {sightItems.length > 0 && (
+              <div>
+                <p class="text-senses-sight text-xl font-light">{sightItems.length}</p>
+                <p class="text-senses-text-3 text-[10px] uppercase tracking-wider">visual</p>
+              </div>
+            )}
+            {hearingItems.length > 0 && (
+              <div>
+                <p class="text-senses-hearing text-xl font-light">{hearingItems.length}</p>
+                <p class="text-senses-text-3 text-[10px] uppercase tracking-wider">audio</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+
+      <!-- Description + tags -->
+      <div class="flex flex-col md:flex-row gap-8 mb-10">
+        <div class="flex-1">
+          <p class="text-senses-text-2 leading-relaxed">{collection.description}</p>
+        </div>
+        <div class="flex-shrink-0">
+          <p class="text-senses-text-3 text-[10px] uppercase tracking-widest mb-2 font-medium">Tags</p>
+          <div class="flex flex-wrap gap-1.5">
+            {collection.tags.map(tag => (
+              <a
+                href={`/search?q=${encodeURIComponent(tag)}`}
+                class="px-2.5 py-1 rounded-lg text-xs bg-senses-surface border border-senses-border text-senses-text-3 hover:text-senses-text transition-all"
+              >
+                {tag}
+              </a>
+            ))}
+          </div>
+          <p class="text-senses-text-3 text-xs mt-3">
+            Created {formatDate(collection.createdAt)}
+          </p>
+        </div>
+      </div>
+
+      <!-- Cross-sensory: sight first, then hearing -->
+      {sightItems.length > 0 && (
+        <section class="mb-12">
+          {collection.crossSensory && (
+            <div class="flex items-center gap-2 mb-5">
+              <div class="w-2 h-2 rounded-full bg-senses-sight" />
+              <h2 class="text-senses-sight text-xs tracking-widest uppercase font-medium">Visual</h2>
+            </div>
+          )}
+          {!collection.crossSensory && (
+            <h2 class="text-senses-text text-base font-medium mb-5">Media</h2>
+          )}
+          <div class="masonry-grid">
+            {sightItems.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {hearingItems.length > 0 && (
+        <section class="mb-12">
+          {collection.crossSensory && (
+            <div class="flex items-center gap-2 mb-5">
+              <div class="w-2 h-2 rounded-full bg-senses-hearing" />
+              <h2 class="text-senses-hearing text-xs tracking-widest uppercase font-medium">Audio</h2>
+            </div>
+          )}
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {hearingItems.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+    </div>
+  </div>
+</BaseLayout>

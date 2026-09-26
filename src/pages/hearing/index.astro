@@ -1,0 +1,179 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import { provider }  from '@/lib/providers';
+
+const [allHearing, allCreators, hearingCategories] = await Promise.all([
+  provider.getMedia({ division: 'hearing' }),
+  provider.getCreators(30),
+  provider.getCategories('hearing'),
+]);
+
+const creatorMap   = Object.fromEntries(allCreators.map(c => [c.id, c]));
+const featured     = allHearing.filter(m => m.featured).slice(0, 6);
+const music        = allHearing.filter(m => m.type === 'music').slice(0, 4);
+const ambient      = allHearing.filter(m => m.type === 'ambient').slice(0, 4);
+const editorsPicks = allHearing.filter(m => m.editorsPick).slice(0, 4);
+
+const types = [
+  { label: 'Music',   href: '/hearing/music' },
+  { label: 'Ambient', href: '/hearing/ambient' },
+  { label: 'Sounds',  href: '/hearing/sounds' },
+  { label: 'Lo-Fi',   href: '/hearing/lo-fi' },
+];
+---
+
+<BaseLayout
+  title="HEARING — Audio Discovery · SENSES"
+  description="Discover premium music, ambient soundscapes, and field recordings. Cinematic scores, nature sounds, lo-fi beats — the sonic world in one place."
+>
+  <div class="pt-[var(--nav-height)] pb-20">
+
+    <!-- Hero -->
+    <div class="relative overflow-hidden border-b border-senses-border mb-10">
+      <div class="absolute inset-0 bg-gradient-to-br from-[#8FAEC0]/8 via-transparent to-transparent pointer-events-none" />
+      <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-14">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div>
+            <p class="text-senses-hearing text-xs tracking-[0.35em] uppercase mb-3 font-medium">Audio Division</p>
+            <h1 class="text-display-2xl text-senses-text leading-none tracking-tight">HEARING</h1>
+            <p class="text-senses-text-2 text-base mt-4 max-w-lg leading-relaxed">
+              Music, ambient soundscapes, field recordings — every sonic medium
+              curated for depth, mood, and moment.
+            </p>
+            <div class="flex flex-wrap gap-3 mt-6">
+              <a href="/explore?division=hearing" class="px-5 py-2.5 rounded-xl bg-senses-hearing text-senses-bg text-sm font-medium hover:bg-senses-hearing/90 transition-colors">
+                Explore HEARING
+              </a>
+              <a href="/hearing/ambient" class="px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 hover:text-senses-text transition-all">
+                Browse Ambient
+              </a>
+            </div>
+          </div>
+          <!-- Stats -->
+          <div class="flex gap-6 flex-shrink-0">
+            {[
+              [allHearing.length.toString(), 'items'],
+              [allHearing.filter(m => m.type === 'music').length.toString(), 'music'],
+              [allHearing.filter(m => m.type === 'ambient').length.toString(), 'ambient'],
+            ].map(([n, l]) => (
+              <div class="text-center">
+                <p class="text-senses-hearing text-2xl font-light">{n}</p>
+                <p class="text-senses-text-3 text-xs uppercase tracking-widest">{l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+
+      <!-- Type strip -->
+      <div class="flex gap-2 overflow-x-auto pb-2 mb-10 scrollbar-none">
+        {types.map(t => (
+          <a
+            href={t.href}
+            class="flex-shrink-0 px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-hearing/40 hover:text-senses-hearing transition-all"
+          >
+            {t.label}
+          </a>
+        ))}
+        {hearingCategories.map(cat => (
+          <a
+            href={`/explore?category=${cat.slug}`}
+            class="flex-shrink-0 px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-3 text-sm hover:text-senses-text transition-all"
+          >
+            {cat.label}
+          </a>
+        ))}
+      </div>
+
+      <!-- Featured -->
+      {featured.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-senses-text text-base font-medium">
+              Featured <span class="text-senses-hearing">Sounds</span>
+            </h2>
+            <a href="/explore?division=hearing" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">See all →</a>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {featured.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Music section -->
+      {music.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-senses-text text-base font-medium">Music</h2>
+            <a href="/hearing/music" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">View all →</a>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {music.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Ambient section -->
+      {ambient.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-senses-text text-base font-medium">Ambient</h2>
+            <a href="/hearing/ambient" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">View all →</a>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {ambient.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Editor's picks -->
+      {editorsPicks.length > 0 && (
+        <section class="mb-12">
+          <h2 class="text-senses-text text-base font-medium mb-5">
+            Editor's <span class="text-senses-hearing">Picks</span>
+          </h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {editorsPicks.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Category cards -->
+      <section class="mb-12">
+        <h2 class="text-senses-text text-base font-medium mb-5">Browse by Category</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {hearingCategories.map(cat => (
+            <a
+              href={`/explore?category=${cat.slug}`}
+              class="relative group rounded-xl overflow-hidden aspect-square bg-senses-surface border border-senses-border hover:border-senses-hearing/40 transition-all"
+            >
+              <img
+                src={cat.coverImage}
+                alt={cat.label}
+                class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+              <div class="absolute bottom-0 left-0 p-3">
+                <p class="text-senses-hearing text-[10px] tracking-widest uppercase mb-0.5 font-medium">hearing</p>
+                <p class="text-senses-text text-sm font-medium">{cat.label}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+
+    </div>
+  </div>
+</BaseLayout>

@@ -160,9 +160,9 @@ const licenseLabels: Record<string, string> = {
                 <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Mood</h2>
                 <div class="flex flex-wrap gap-1.5">
                   {media.moods.map(m => (
-                    <span class="px-2.5 py-1 rounded-lg text-xs bg-senses-hearing/10 border border-senses-hearing/20 text-senses-hearing/90 capitalize">
+                    <a href={`/mood/${m}`} class="px-2.5 py-1 rounded-lg text-xs bg-senses-hearing/10 border border-senses-hearing/20 text-senses-hearing/90 capitalize hover:border-senses-hearing/50 hover:text-senses-hearing transition-all">
                       {m}
-                    </span>
+                    </a>
                   ))}
                 </div>
               </div>
@@ -172,9 +172,9 @@ const licenseLabels: Record<string, string> = {
                 <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Style</h2>
                 <div class="flex flex-wrap gap-1.5">
                   {media.styles.map(s => (
-                    <span class="px-2.5 py-1 rounded-lg text-xs bg-senses-surface-2 border border-senses-border text-senses-text-3 capitalize">
-                      {s}
-                    </span>
+                    <a href={`/style/${s}`} class="px-2.5 py-1 rounded-lg text-xs bg-senses-surface-2 border border-senses-border text-senses-text-3 capitalize hover:border-senses-border-2 hover:text-senses-text-2 transition-all">
+                      {s.replace(/-/g, ' ')}
+                    </a>
                   ))}
                 </div>
               </div>

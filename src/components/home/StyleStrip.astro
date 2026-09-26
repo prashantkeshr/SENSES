@@ -1,0 +1,44 @@
+---
+import type { Media } from '@/types/index';
+import { STYLE_META } from '@/lib/data/styleMeta';
+
+interface Props {
+  media:     Media[];
+  division?: 'sight' | 'hearing' | 'all';
+}
+
+const { media, division = 'all' } = Astro.props;
+
+const styleCount: Record<string, number> = {};
+media
+  .filter(m => division === 'all' || m.division === division)
+  .forEach(m => m.styles.forEach(s => {
+    styleCount[s] = (styleCount[s] ?? 0) + 1;
+  }));
+
+const sorted = Object.entries(styleCount)
+  .sort((a, b) => b[1] - a[1]);
+---
+
+{sorted.length > 0 && (
+  <div class="relative overflow-hidden">
+    <div class="pointer-events-none absolute left-0 top-0 bottom-0 w-8 z-10 bg-gradient-to-r from-senses-bg to-transparent" />
+    <div class="pointer-events-none absolute right-0 top-0 bottom-0 w-8 z-10 bg-gradient-to-l from-senses-bg to-transparent" />
+
+    <div class="flex gap-2 overflow-x-auto no-scrollbar px-4 md:px-8 py-3">
+      {sorted.map(([style, count]) => {
+        const label = style.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const divisionHint = STYLE_META[style]?.division;
+        return (
+          <a
+            href={`/style/${style}`}
+            class="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-senses-surface border border-senses-border text-senses-text-3 text-xs hover:border-senses-border-2 hover:text-senses-text transition-all duration-150 whitespace-nowrap"
+          >
+            {label}
+            <span class="text-senses-text-3/50 text-[10px]">{count}</span>
+          </a>
+        );
+      })}
+    </div>
+  </div>
+)}

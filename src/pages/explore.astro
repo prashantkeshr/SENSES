@@ -3,6 +3,7 @@ import BaseLayout      from '@/layouts/BaseLayout.astro';
 import { ExploreGrid } from '@/components/explore/ExploreGrid';
 import { BannerAd }    from '@/components/ads/AdSlot';
 import MoodStrip       from '@/components/home/MoodStrip.astro';
+import StyleStrip      from '@/components/home/StyleStrip.astro';
 import { provider }    from '@/lib/providers';
 import { formatCount } from '@/lib/utils/formatters';
 
@@ -48,6 +49,11 @@ const hearingCount = allMedia.filter(m => m.division === 'hearing').length;
     <!-- Mood strip -->
     <div class="border-b border-senses-border/50">
       <MoodStrip media={allMedia} />
+    </div>
+
+    <!-- Style strip -->
+    <div class="border-b border-senses-border/50">
+      <StyleStrip media={allMedia} />
     </div>
 
     <!-- Ad slot -->

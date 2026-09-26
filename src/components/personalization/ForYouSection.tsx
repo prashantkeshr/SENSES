@@ -3,6 +3,7 @@ import type { Media, Creator } from '@/types/index';
 import { getLocalState } from '@/lib/utils/localState';
 import { getRecommendedMedia } from '@/lib/utils/recommendations';
 import { MediaCard } from '@/components/media/MediaCard';
+import { SkeletonCard } from '@/components/ui/SkeletonCard';
 
 interface Props {
   media:    Media[];
@@ -25,7 +26,21 @@ export function ForYouSection({ media, creators }: Props) {
     setMounted(true);
   }, [media]);
 
-  if (!mounted || items.length === 0) return null;
+  if (!mounted) return (
+    <section className="px-4 md:px-8 py-10 border-t border-senses-border">
+      <div className="flex items-center gap-2 mb-6">
+        <span className="w-1.5 h-1.5 rounded-full bg-senses-accent block animate-pulse" />
+        <div className="h-4 w-32 bg-senses-surface-2 rounded animate-pulse" />
+      </div>
+      <div className="masonry-grid">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonCard key={i} layout="masonry" aspectRatio={i % 3 === 0 ? '3/4' : '4/3'} />
+        ))}
+      </div>
+    </section>
+  );
+
+  if (items.length === 0) return null;
 
   const sightItems   = items.filter(m => m.division === 'sight');
   const hearingItems = items.filter(m => m.division === 'hearing');

@@ -90,7 +90,11 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
   <link rel="manifest"     href="/manifest.json" />
   <meta name="theme-color" content="#080808" />
   <meta name="color-scheme" content="dark light" />
-  <link rel="icon"         href="/favicon.svg" type="image/svg+xml" />
+  <!-- Favicon: dark default, light for light-scheme browsers -->
+  <link rel="icon" href="/icons/favicon-dark.png"  type="image/png" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="/icons/favicon-light.png" type="image/png" media="(prefers-color-scheme: light)" />
+  <link rel="icon" href="/icons/favicon-dark.png"  type="image/png" />
+  <link rel="apple-touch-icon" href="/icons/icon-dark.png" />
 
   <!-- Structured data -->
   {schema && (

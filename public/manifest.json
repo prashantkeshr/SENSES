@@ -1,6 +1,6 @@
 {
-  "name": "SENSES",
-  "short_name": "SENSES",
+  "name": "Senses",
+  "short_name": "Senses",
   "description": "A premium media discovery platform for visual and audio content.",
   "start_url": "/",
   "display": "standalone",
@@ -10,16 +10,28 @@
   "scope": "/",
   "icons": [
     {
-      "src": "/icons/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/favicon-dark.png",
+      "sizes": "128x128",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon.svg",
+      "src": "/icons/icon-dark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-light.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/senses-brand.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "maskable"
+      "purpose": "any"
     }
   ],
   "shortcuts": [

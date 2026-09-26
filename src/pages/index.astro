@@ -5,10 +5,12 @@ import CategoryStrip from '@/components/home/CategoryStrip';
 import DiscoverySection from '@/components/home/DiscoverySection';
 import CrossSensorySection from '@/components/home/CrossSensorySection';
 import CreatorsRow from '@/components/home/CreatorsRow';
+import { ForYouSection }    from '@/components/personalization/ForYouSection';
+import { RecentlyViewed }   from '@/components/personalization/RecentlyViewed';
 import { provider } from '@/lib/providers/index';
 
 // Parallel data fetching
-const [trending, featured, editorsPicks, latest, creators, categories, collections] = await Promise.all([
+const [trending, featured, editorsPicks, latest, creators, categories, collections, allMedia] = await Promise.all([
   provider.getTrendingMedia(12),
   provider.getFeaturedMedia(8),
   provider.getEditorsPicks(6),
@@ -16,6 +18,7 @@ const [trending, featured, editorsPicks, latest, creators, categories, collectio
   provider.getCreators(10),
   provider.getCategories(),
   provider.getCollections(),
+  provider.getMedia({}),
 ]);
 
 const schema = {
@@ -40,6 +43,9 @@ const schema = {
     <CategoryStrip categories={categories} client:load />
   </div>
 
+  <!-- Recently Viewed (client island — hidden when empty) -->
+  <RecentlyViewed client:visible media={allMedia} creators={creators} />
+
   <!-- Content -->
   <div class="max-w-[1440px] mx-auto">
 
@@ -53,6 +59,9 @@ const schema = {
       layout="masonry"
       client:load
     />
+
+    <!-- For You (client island — personalized recommendations) -->
+    <ForYouSection client:visible media={allMedia} creators={creators} />
 
     <!-- Editor's Picks -->
     <div class="border-t border-senses-border">

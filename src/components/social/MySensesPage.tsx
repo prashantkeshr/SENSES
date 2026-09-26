@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { Media, Creator } from '@/types/index';
 import { getLocalState, toggleFollow, clearLocalData } from '@/lib/utils/localState';
 import { getAllCommentCount } from '@/lib/utils/comments';
+import { getTopInterests, getRecentlyViewed } from '@/lib/utils/recommendations';
 import {
   getUserCollections, createUserCollection, deleteUserCollection,
   addToUserCollection, removeFromUserCollection, type UserCollection,
@@ -14,7 +15,7 @@ interface Props {
   creators: Creator[];
 }
 
-type Tab = 'liked' | 'saved' | 'following' | 'collections';
+type Tab = 'liked' | 'saved' | 'following' | 'collections' | 'interests';
 
 function EmptyState({ tab }: { tab: Tab }) {
   const msgs: Record<Tab, { heading: string; body: string; href?: string; cta?: string }> = {
@@ -22,6 +23,7 @@ function EmptyState({ tab }: { tab: Tab }) {
     saved:       { heading: 'Nothing saved yet',        body: 'Save items to bookmark them for later.',                 href: '/explore',  cta: 'Explore media' },
     following:   { heading: 'Not following anyone',     body: 'Follow creators to see their work in one place.',        href: '/discover', cta: 'Discover creators' },
     collections: { heading: 'No collections yet',       body: 'Create a collection to organise your saved media.',      href: undefined,   cta: undefined },
+    interests:   { heading: 'No interests tracked yet', body: 'Browse and view media to build your interest profile.',  href: '/explore',  cta: 'Start exploring' },
   };
   const m = msgs[tab];
   return (
@@ -124,11 +126,13 @@ export function MySensesPage({ media, creators }: Props) {
   const [likedIds,    setLikedIds]    = useState<string[]>([]);
   const [savedIds,    setSavedIds]    = useState<string[]>([]);
   const [followedIds, setFollowedIds] = useState<string[]>([]);
-  const [commentCount, setCommentCount] = useState(0);
-  const [userCols,    setUserCols]    = useState<UserCollection[]>([]);
-  const [newColName,  setNewColName]  = useState('');
-  const [showNewCol,  setShowNewCol]  = useState(false);
-  const [mounted,     setMounted]     = useState(false);
+  const [commentCount,  setCommentCount]  = useState(0);
+  const [userCols,      setUserCols]      = useState<UserCollection[]>([]);
+  const [newColName,    setNewColName]    = useState('');
+  const [showNewCol,    setShowNewCol]    = useState(false);
+  const [interests,     setInterests]     = useState<{ label: string; count: number }[]>([]);
+  const [recentItems,   setRecentItems]   = useState<Media[]>([]);
+  const [mounted,       setMounted]       = useState(false);
 
   const creatorMap = useMemo(() => Object.fromEntries(creators.map(c => [c.id, c])), [creators]);
   const mediaMap   = useMemo(() => Object.fromEntries(media.map(m  => [m.id,  m])),  [media]);
@@ -140,6 +144,8 @@ export function MySensesPage({ media, creators }: Props) {
     setFollowedIds(state.followedCreatorIds);
     setCommentCount(getAllCommentCount());
     setUserCols(getUserCollections());
+    setInterests(getTopInterests(state.interestSignals, 15));
+    setRecentItems(getRecentlyViewed(media, state.recentlyViewedIds, 10));
     setMounted(true);
   }, []);
 
@@ -171,6 +177,7 @@ export function MySensesPage({ media, creators }: Props) {
     { key: 'saved',       label: 'Saved',        count: savedIds.length     },
     { key: 'following',   label: 'Following',    count: followedIds.length  },
     { key: 'collections', label: 'Collections',  count: userCols.length     },
+    { key: 'interests',   label: 'Interests',    count: interests.length    },
   ];
 
   if (!mounted) {
@@ -335,6 +342,69 @@ export function MySensesPage({ media, creators }: Props) {
               </div>
           }
         </div>
+      )}
+
+      {/* ── Interests ── */}
+      {tab === 'interests' && (
+        interests.length === 0
+          ? (
+            <div className="py-20 text-center">
+              <p className="text-senses-text-2 text-base mb-2">No interests tracked yet</p>
+              <p className="text-senses-text-3 text-sm mb-6">Browse and view media to build your interest profile.</p>
+              <a href="/explore" className="px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 transition-all">
+                Start exploring
+              </a>
+            </div>
+          ) : (
+            <div>
+              <p className="text-senses-text-3 text-sm mb-6">
+                Built from your views, likes, and saves. Stronger signals drive personalized picks on the home page.
+              </p>
+
+              {/* Top interests bar chart */}
+              <div className="space-y-2 mb-10">
+                {(() => {
+                  const max = interests[0]?.count ?? 1;
+                  return interests.map(({ label, count }) => (
+                    <div key={label} className="flex items-center gap-3">
+                      <span className="text-senses-text-2 text-sm w-32 truncate flex-shrink-0 capitalize">{label}</span>
+                      <div className="flex-1 h-2 bg-senses-surface-2 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-senses-accent transition-all duration-500"
+                          style={{ width: `${Math.round((count / max) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-senses-text-3 text-xs w-6 text-right flex-shrink-0">{count}</span>
+                    </div>
+                  ));
+                })()}
+              </div>
+
+              {/* Recently viewed shelf */}
+              {recentItems.length > 0 && (
+                <div>
+                  <h3 className="text-senses-text-3 text-xs uppercase tracking-widest font-medium mb-4">
+                    Recently Viewed
+                  </h3>
+                  <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+                    {recentItems.map(m => {
+                      const href = m.division === 'hearing'
+                        ? `/hearing/${m.type}/${m.slug}`
+                        : `/sight/${m.type}/${m.slug}`;
+                      return (
+                        <a key={m.id} href={href} className="flex-shrink-0 group" style={{ width: '120px' }}>
+                          <div className="w-full aspect-square rounded-xl overflow-hidden bg-senses-surface-2 mb-2">
+                            <img src={m.thumbnail} alt={m.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          </div>
+                          <p className="text-senses-text-2 text-xs line-clamp-2 group-hover:text-senses-text transition-colors">{m.title}</p>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
       )}
 
       {/* ── Danger zone ── */}

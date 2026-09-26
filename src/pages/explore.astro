@@ -1,6 +1,7 @@
 ---
 import BaseLayout      from '@/layouts/BaseLayout.astro';
 import { ExploreGrid } from '@/components/explore/ExploreGrid';
+import { BannerAd }    from '@/components/ads/AdSlot';
 import { provider }    from '@/lib/providers';
 import { formatCount } from '@/lib/utils/formatters';
 
@@ -42,6 +43,9 @@ const hearingCount = allMedia.filter(m => m.division === 'hearing').length;
         </div>
       </div>
     </div>
+
+    <!-- Ad slot -->
+    <BannerAd index={0} />
 
     <!-- Client island: filtering + masonry grid -->
     <ExploreGrid client:load media={allMedia} creators={allCreators} />

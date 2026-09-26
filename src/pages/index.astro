@@ -7,6 +7,7 @@ import CrossSensorySection from '@/components/home/CrossSensorySection';
 import CreatorsRow from '@/components/home/CreatorsRow';
 import { ForYouSection }    from '@/components/personalization/ForYouSection';
 import { RecentlyViewed }   from '@/components/personalization/RecentlyViewed';
+import { BannerAd }         from '@/components/ads/AdSlot';
 import { provider } from '@/lib/providers/index';
 
 // Parallel data fetching
@@ -95,6 +96,9 @@ const schema = {
         client:load
       />
     </div>
+
+    <!-- Ad banner -->
+    <BannerAd index={1} />
 
     <!-- Rising Creators -->
     <div class="border-t border-senses-border">

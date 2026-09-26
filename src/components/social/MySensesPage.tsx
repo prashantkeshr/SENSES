@@ -3,6 +3,7 @@ import type { Media, Creator } from '@/types/index';
 import { getLocalState, toggleFollow, clearLocalData } from '@/lib/utils/localState';
 import { getAllCommentCount } from '@/lib/utils/comments';
 import { getTopInterests, getRecentlyViewed } from '@/lib/utils/recommendations';
+import { getDownloadHistory, getDownloadCount } from '@/lib/utils/downloads';
 import {
   getUserCollections, createUserCollection, deleteUserCollection,
   addToUserCollection, removeFromUserCollection, type UserCollection,
@@ -15,7 +16,7 @@ interface Props {
   creators: Creator[];
 }
 
-type Tab = 'liked' | 'saved' | 'following' | 'collections' | 'interests';
+type Tab = 'liked' | 'saved' | 'following' | 'collections' | 'interests' | 'downloads';
 
 function EmptyState({ tab }: { tab: Tab }) {
   const msgs: Record<Tab, { heading: string; body: string; href?: string; cta?: string }> = {
@@ -24,6 +25,7 @@ function EmptyState({ tab }: { tab: Tab }) {
     following:   { heading: 'Not following anyone',     body: 'Follow creators to see their work in one place.',        href: '/discover', cta: 'Discover creators' },
     collections: { heading: 'No collections yet',       body: 'Create a collection to organise your saved media.',      href: undefined,   cta: undefined },
     interests:   { heading: 'No interests tracked yet', body: 'Browse and view media to build your interest profile.',  href: '/explore',  cta: 'Start exploring' },
+    downloads:   { heading: 'No downloads yet',         body: 'Download media from any detail page to track it here.',  href: '/explore',  cta: 'Browse media' },
   };
   const m = msgs[tab];
   return (
@@ -130,9 +132,11 @@ export function MySensesPage({ media, creators }: Props) {
   const [userCols,      setUserCols]      = useState<UserCollection[]>([]);
   const [newColName,    setNewColName]    = useState('');
   const [showNewCol,    setShowNewCol]    = useState(false);
-  const [interests,     setInterests]     = useState<{ label: string; count: number }[]>([]);
-  const [recentItems,   setRecentItems]   = useState<Media[]>([]);
-  const [mounted,       setMounted]       = useState(false);
+  const [interests,      setInterests]     = useState<{ label: string; count: number }[]>([]);
+  const [recentItems,    setRecentItems]   = useState<Media[]>([]);
+  const [downloadItems,  setDownloadItems] = useState<Media[]>([]);
+  const [downloadCount,  setDownloadCount] = useState(0);
+  const [mounted,        setMounted]       = useState(false);
 
   const creatorMap = useMemo(() => Object.fromEntries(creators.map(c => [c.id, c])), [creators]);
   const mediaMap   = useMemo(() => Object.fromEntries(media.map(m  => [m.id,  m])),  [media]);
@@ -146,6 +150,8 @@ export function MySensesPage({ media, creators }: Props) {
     setUserCols(getUserCollections());
     setInterests(getTopInterests(state.interestSignals, 15));
     setRecentItems(getRecentlyViewed(media, state.recentlyViewedIds, 10));
+    setDownloadItems(getDownloadHistory(media));
+    setDownloadCount(getDownloadCount());
     setMounted(true);
   }, []);
 
@@ -178,6 +184,7 @@ export function MySensesPage({ media, creators }: Props) {
     { key: 'following',   label: 'Following',    count: followedIds.length  },
     { key: 'collections', label: 'Collections',  count: userCols.length     },
     { key: 'interests',   label: 'Interests',    count: interests.length    },
+    { key: 'downloads',  label: 'Downloads',    count: downloadCount       },
   ];
 
   if (!mounted) {
@@ -401,6 +408,31 @@ export function MySensesPage({ media, creators }: Props) {
                       );
                     })}
                   </div>
+                </div>
+              )}
+            </div>
+          )
+      )}
+
+      {/* ── Downloads ── */}
+      {tab === 'downloads' && (
+        downloadItems.length === 0
+          ? <EmptyState tab="downloads" />
+          : (
+            <div>
+              <p className="text-senses-text-3 text-sm mb-6">
+                Media you've downloaded through SENSES, most recent first.
+              </p>
+              <div className="masonry-grid">
+                {downloadItems.filter(m => m.division === 'sight').map(m => (
+                  <MediaCard key={m.id} media={m} creator={creatorMap[m.creator]} />
+                ))}
+              </div>
+              {downloadItems.filter(m => m.division === 'hearing').length > 0 && (
+                <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {downloadItems.filter(m => m.division === 'hearing').map(m => (
+                    <MediaCard key={m.id} media={m} creator={creatorMap[m.creator]} layout="grid" />
+                  ))}
                 </div>
               )}
             </div>

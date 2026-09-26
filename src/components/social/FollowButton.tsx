@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toggleFollow, getLocalState } from '@/lib/utils/localState';
+import { toast } from '@/lib/utils/toast';
 
 interface Props {
   creatorId:    string;
@@ -24,6 +25,9 @@ export function FollowButton({ creatorId, displayName, size = 'md' }: Props) {
     if (nowFollowing) {
       setPulse(true);
       setTimeout(() => setPulse(false), 600);
+      toast(`Following ${displayName ?? 'creator'}`, 'success');
+    } else {
+      toast(`Unfollowed ${displayName ?? 'creator'}`, 'info');
     }
   };
 

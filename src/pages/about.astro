@@ -1,0 +1,123 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { provider } from '@/lib/providers';
+const creators = await provider.getCreators(6);
+---
+
+<BaseLayout
+  title="About — SENSES"
+  description="SENSES is a premium media discovery platform built for people who believe in the power of visual and audio art."
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+
+    <!-- Hero -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 pt-20 pb-16 text-center">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">About SENSES</p>
+      <h1 class="text-display-xl text-senses-text leading-tight mb-6">
+        A platform built for people<br class="hidden sm:block" /> who feel things deeply.
+      </h1>
+      <p class="text-senses-text-2 text-lg leading-relaxed max-w-2xl mx-auto">
+        SENSES is a curated media discovery platform where visual and audio art exist side by side —
+        because the best moments in life engage more than one sense at a time.
+      </p>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-senses-border" />
+
+    <!-- Mission -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-16">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+        <div>
+          <p class="text-senses-sight text-xs tracking-widest uppercase mb-4 font-medium">Our Mission</p>
+          <h2 class="text-senses-text text-xl font-light leading-relaxed mb-4">
+            Make the world's finest visual and audio media discoverable to everyone.
+          </h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            We believe that great art — whether a photograph that stops your breath or a sound that
+            changes your mood — should be easy to find, properly attributed, and available to creators
+            and audiences alike.
+          </p>
+        </div>
+        <div>
+          <p class="text-senses-hearing text-xs tracking-widest uppercase mb-4 font-medium">How We Do It</p>
+          <ul class="space-y-4">
+            {[
+              ['Curation over quantity', 'Every item on SENSES is reviewed. We prioritise quality, originality, and emotional resonance over volume.'],
+              ['Creator-first', 'Attribution is mandatory, not optional. Creators control their licensing terms.'],
+              ['Cross-sensory discovery', 'Our unique SIGHT × HEARING collections pair visual and audio experiences that complement each other.'],
+            ].map(([title, body]) => (
+              <li>
+                <p class="text-senses-text-2 text-sm font-medium mb-0.5">{title}</p>
+                <p class="text-senses-text-3 text-sm leading-relaxed">{body}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-senses-border" />
+
+    <!-- Numbers -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-16">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
+        {[
+          ['30+',   'Curated items'],
+          ['10',    'Featured creators'],
+          ['10',    'Categories'],
+          ['2',     'Divisions'],
+        ].map(([n, l]) => (
+          <div>
+            <p class="text-senses-text text-3xl font-light mb-1">{n}</p>
+            <p class="text-senses-text-3 text-xs uppercase tracking-widest">{l}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-senses-border" />
+
+    <!-- Two divisions -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-16">
+      <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-10 font-medium">The Two Divisions</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div class="p-6 rounded-2xl bg-senses-surface border border-senses-border">
+          <div class="w-2 h-2 rounded-full bg-senses-sight mb-4" />
+          <h3 class="text-senses-sight text-sm font-medium tracking-widest uppercase mb-2">Sight</h3>
+          <p class="text-senses-text-2 text-sm leading-relaxed">
+            Photography, videography, digital illustration, concept art, and wallpapers.
+            Everything the eye reaches for first.
+          </p>
+          <a href="/sight" class="inline-block mt-4 text-senses-sight text-xs hover:underline">Explore SIGHT →</a>
+        </div>
+        <div class="p-6 rounded-2xl bg-senses-surface border border-senses-border">
+          <div class="w-2 h-2 rounded-full bg-senses-hearing mb-4" />
+          <h3 class="text-senses-hearing text-sm font-medium tracking-widest uppercase mb-2">Hearing</h3>
+          <p class="text-senses-text-2 text-sm leading-relaxed">
+            Original music, ambient soundscapes, lo-fi loops, field recordings, and sound design.
+            Everything that fills the space between images.
+          </p>
+          <a href="/hearing" class="inline-block mt-4 text-senses-hearing text-xs hover:underline">Explore HEARING →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-senses-border" />
+
+    <!-- CTA -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-16 text-center">
+      <h2 class="text-senses-text text-xl font-light mb-3">Want to share your work here?</h2>
+      <p class="text-senses-text-3 text-sm mb-6">
+        SENSES accepts creator applications on a rolling basis. We're looking for original, high-quality visual and audio work.
+      </p>
+      <a href="/creators" class="px-6 py-3 rounded-xl bg-senses-text text-senses-bg text-sm font-medium hover:bg-senses-accent transition-colors">
+        Apply as a creator
+      </a>
+    </div>
+
+  </div>
+</BaseLayout>

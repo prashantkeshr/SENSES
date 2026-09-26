@@ -1,8 +1,9 @@
 ---
 import '../styles/globals.css';
-import GlobalNav    from '@components/layout/GlobalNav';
-import SearchOverlay from '@components/layout/SearchOverlay';
-import { InstallPrompt } from '@/components/pwa/InstallPrompt';
+import GlobalNav      from '@components/layout/GlobalNav';
+import SearchOverlay   from '@components/layout/SearchOverlay';
+import { InstallPrompt }   from '@/components/pwa/InstallPrompt';
+import { ToastContainer }  from '@/components/ui/ToastContainer';
 
 interface Props {
   title:        string;
@@ -88,6 +89,7 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
   <GlobalNav client:load />
   <SearchOverlay client:load />
   <InstallPrompt client:idle />
+  <ToastContainer client:load />
 
   <main>
     <slot />

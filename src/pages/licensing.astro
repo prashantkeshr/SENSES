@@ -1,0 +1,178 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const licenses = [
+  {
+    id: 'cc0',
+    name: 'CC0 — Public Domain',
+    color: 'text-emerald-400',
+    dot: 'bg-emerald-400',
+    short: 'Free for any use. No attribution required.',
+    canUse: ['Personal and commercial projects', 'Modify, remix, and redistribute', 'No attribution required (though appreciated)', 'Use in AI training datasets'],
+    cannotUse: [],
+    note: 'The creator has waived all rights. You can do essentially anything with CC0 works.',
+  },
+  {
+    id: 'cc-by',
+    name: 'CC BY 4.0',
+    color: 'text-blue-400',
+    dot: 'bg-blue-400',
+    short: 'Free for any use with attribution.',
+    canUse: ['Personal and commercial projects', 'Modify, remix, and redistribute', 'Use in AI training datasets'],
+    cannotUse: ['Use without crediting the creator'],
+    note: 'You must give appropriate credit and link back to the original when practical.',
+  },
+  {
+    id: 'cc-by-nc',
+    name: 'CC BY-NC 4.0',
+    color: 'text-yellow-400',
+    dot: 'bg-yellow-400',
+    short: 'Non-commercial use with attribution.',
+    canUse: ['Personal and editorial projects', 'Modify and redistribute non-commercially', 'Educational and journalistic use'],
+    cannotUse: ['Commercial use or monetised projects', 'Use without crediting the creator'],
+    note: 'Non-commercial means the use cannot be primarily directed toward commercial advantage.',
+  },
+  {
+    id: 'editorial',
+    name: 'Editorial Only',
+    color: 'text-orange-400',
+    dot: 'bg-orange-400',
+    short: 'News, education, and commentary only.',
+    canUse: ['News articles and reporting', 'Educational materials', 'Commentary and criticism'],
+    cannotUse: ['Advertising or promotional materials', 'Commercial products or branding', 'Modification without editorial context'],
+    note: 'Editorial use means the image illustrates a newsworthy event or is used in a factual, non-commercial context.',
+  },
+  {
+    id: 'commercial',
+    name: 'Commercial License',
+    color: 'text-senses-accent',
+    dot: 'bg-senses-accent',
+    short: 'Full commercial rights — contact creator.',
+    canUse: ['Advertising and marketing', 'Product packaging', 'Commercial broadcasts and publications'],
+    cannotUse: ['Use without explicit written agreement', 'Redistribution or resale of the file itself'],
+    note: 'A commercial license requires a direct agreement with the creator. Use the Download flow to acknowledge terms, then contact the creator.',
+  },
+];
+---
+
+<BaseLayout
+  title="Licensing Guide — SENSES"
+  description="Understand the license types used on SENSES and what you can do with each."
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+
+    <!-- Header -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 pt-16 pb-10">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Licensing</p>
+      <h1 class="text-senses-text text-3xl font-light mb-4">Licensing Guide</h1>
+      <p class="text-senses-text-2 text-sm leading-relaxed max-w-xl">
+        Every media item on SENSES carries a license set by the creator.
+        Understanding the license tells you exactly what you can do with a piece.
+      </p>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- Quick reference table -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-12 overflow-x-auto">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-6 font-medium">Quick Reference</p>
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="border-b border-senses-border">
+            <th class="text-left text-senses-text-3 text-xs font-medium py-3 pr-4">License</th>
+            <th class="text-center text-senses-text-3 text-xs font-medium py-3 px-2">Personal</th>
+            <th class="text-center text-senses-text-3 text-xs font-medium py-3 px-2">Commercial</th>
+            <th class="text-center text-senses-text-3 text-xs font-medium py-3 px-2">Attribution</th>
+            <th class="text-center text-senses-text-3 text-xs font-medium py-3 pl-2">Modify</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[
+            { name: 'CC0',           personal: true,  commercial: true,  attrib: false, modify: true  },
+            { name: 'CC BY 4.0',     personal: true,  commercial: true,  attrib: true,  modify: true  },
+            { name: 'CC BY-NC 4.0',  personal: true,  commercial: false, attrib: true,  modify: true  },
+            { name: 'Editorial',     personal: true,  commercial: false, attrib: true,  modify: false },
+            { name: 'Commercial',    personal: true,  commercial: true,  attrib: true,  modify: false },
+          ].map(row => (
+            <tr class="border-b border-senses-border/50">
+              <td class="py-3 pr-4 text-senses-text-2">{row.name}</td>
+              {[row.personal, row.commercial, row.attrib, row.modify].map((val, i) => (
+                <td class="text-center py-3 px-2">
+                  <span class={val ? 'text-emerald-400' : 'text-senses-text-3'}>
+                    {val ? '✓' : (i === 2 && !val ? '—' : '✗')}
+                  </span>
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="text-senses-text-3 text-xs mt-3">Commercial license requires a direct agreement with the creator.</p>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- Detailed breakdowns -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-12 space-y-8">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-2 font-medium">Detailed Breakdown</p>
+      {licenses.map(lic => (
+        <div class="p-6 rounded-2xl bg-senses-surface border border-senses-border" id={lic.id}>
+          <div class="flex items-center gap-2 mb-1">
+            <span class={`w-2 h-2 rounded-full ${lic.dot}`} />
+            <h2 class={`text-sm font-medium ${lic.color}`}>{lic.name}</h2>
+          </div>
+          <p class="text-senses-text-2 text-sm mb-4">{lic.short}</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <p class="text-senses-text-3 text-xs uppercase tracking-widest mb-2">Allowed</p>
+              <ul class="space-y-1">
+                {lic.canUse.map(item => (
+                  <li class="flex items-start gap-2 text-senses-text-3 text-xs leading-relaxed">
+                    <span class="mt-1 text-emerald-400 flex-shrink-0">✓</span> {item}
+                  </li>
+                ))}
+                {lic.canUse.length === 0 && <li class="text-senses-text-3 text-xs">None</li>}
+              </ul>
+            </div>
+            {lic.cannotUse.length > 0 && (
+              <div>
+                <p class="text-senses-text-3 text-xs uppercase tracking-widest mb-2">Not allowed</p>
+                <ul class="space-y-1">
+                  {lic.cannotUse.map(item => (
+                    <li class="flex items-start gap-2 text-senses-text-3 text-xs leading-relaxed">
+                      <span class="mt-1 text-red-400 flex-shrink-0">✗</span> {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <p class="text-senses-text-3 text-xs leading-relaxed border-t border-senses-border pt-4 mt-2">{lic.note}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- FAQ -->
+    <div class="max-w-[680px] mx-auto px-4 md:px-8 py-12">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-6 font-medium">Common Questions</p>
+      <div class="space-y-6">
+        {[
+          ['Where do I find the license for a specific item?', 'The license type is displayed on every media detail page, in the download modal, and in your downloads history.'],
+          ['Can I use CC0 media without crediting the creator?', 'Yes — CC0 waives all rights, including the right to attribution. Credit is still appreciated but never required.'],
+          ['What counts as "commercial use"?', 'Any use where the primary purpose is generating revenue or promoting a commercial product or service. Personal projects, editorial journalism, and educational materials are generally not commercial.'],
+          ['I need rights beyond what the license allows. What do I do?', 'Contact the creator directly. Their profile page links to their website and social media. For commercial licensing enquiries, email creators@senses.dhurta.com and we will help connect you.'],
+        ].map(([q, a]) => (
+          <div>
+            <p class="text-senses-text-2 text-sm font-medium mb-1">{q}</p>
+            <p class="text-senses-text-3 text-sm leading-relaxed">{a}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+  </div>
+</BaseLayout>

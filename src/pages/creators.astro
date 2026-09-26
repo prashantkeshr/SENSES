@@ -1,0 +1,116 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { provider } from '@/lib/providers';
+const featured = await provider.getCreators(6);
+const featuredCreators = featured.filter(c => c.featured);
+---
+
+<BaseLayout
+  title="Creators — SENSES"
+  description="Join the SENSES creator program. Share your photography, music, illustration, and sound design with a global audience."
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+
+    <!-- Hero -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 pt-20 pb-16 text-center">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Creator Program</p>
+      <h1 class="text-display-xl text-senses-text leading-tight mb-6">
+        Your work deserves<br class="hidden sm:block" /> to be discovered.
+      </h1>
+      <p class="text-senses-text-2 text-lg leading-relaxed max-w-2xl mx-auto">
+        SENSES features original work from photographers, videographers, musicians, illustrators,
+        and sound designers. Apply to become a featured creator.
+      </p>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- Featured creators strip -->
+    {featuredCreators.length > 0 && (
+      <div class="max-w-[800px] mx-auto px-4 md:px-8 py-12">
+        <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-6 font-medium">Featured Creators</p>
+        <div class="flex flex-wrap gap-4">
+          {featuredCreators.map(c => (
+            <a href={`/creator/${c.id}`} class="flex items-center gap-3 px-4 py-3 rounded-xl bg-senses-surface border border-senses-border hover:border-senses-border-2 transition-all group">
+              <img src={c.avatar} alt={c.displayName} class="w-8 h-8 rounded-lg object-cover" />
+              <div>
+                <p class="text-senses-text-2 text-sm group-hover:text-senses-text transition-colors">{c.displayName}</p>
+                <p class="text-senses-text-3 text-[10px]">@{c.username}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <div class="border-t border-senses-border" />
+
+    <!-- What we're looking for -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-16">
+      <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-8 font-medium">What We Look For</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {[
+          { div: 'sight', label: 'Visual Creators', items: ['Original photography and videography', 'Digital illustration and concept art', 'Motion graphics and experimental video', 'Wallpaper and texture design'] },
+          { div: 'hearing', label: 'Audio Creators', items: ['Original music composition', 'Ambient and atmospheric soundscapes', 'Lo-fi loops and instrumental tracks', 'Field recordings and sound design'] },
+        ].map(({ div, label, items }) => (
+          <div class={`p-6 rounded-2xl bg-senses-surface border ${div === 'sight' ? 'border-senses-sight/20' : 'border-senses-hearing/20'}`}>
+            <p class={`text-xs tracking-widest uppercase font-medium mb-4 ${div === 'sight' ? 'text-senses-sight' : 'text-senses-hearing'}`}>{label}</p>
+            <ul class="space-y-2">
+              {items.map(item => (
+                <li class="flex items-start gap-2 text-senses-text-3 text-sm">
+                  <span class={`mt-1.5 w-1 h-1 rounded-full flex-shrink-0 ${div === 'sight' ? 'bg-senses-sight' : 'bg-senses-hearing'}`} />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- Benefits -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-16">
+      <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-8 font-medium">Creator Benefits</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {[
+          ['Attribution', 'Your name and profile are always displayed with your work. We never strip creator credit.'],
+          ['Licensing control', 'You choose the license for each piece — CC0, Creative Commons, or commercial terms.'],
+          ['Discovery', 'Featured creators appear in search, on the home page, and in cross-sensory collections.'],
+        ].map(([title, body]) => (
+          <div class="p-5 rounded-xl bg-senses-surface border border-senses-border">
+            <p class="text-senses-text text-sm font-medium mb-2">{title}</p>
+            <p class="text-senses-text-3 text-sm leading-relaxed">{body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- Application form (static — real form handled server-side in v2) -->
+    <div class="max-w-[600px] mx-auto px-4 md:px-8 py-16">
+      <h2 class="text-senses-text text-xl font-light mb-2 text-center">Apply to join</h2>
+      <p class="text-senses-text-3 text-sm text-center mb-8">
+        Applications are reviewed within 2–3 weeks. We accept creators on a rolling basis.
+      </p>
+
+      <div class="p-6 rounded-2xl bg-senses-surface border border-senses-border text-center">
+        <p class="text-senses-text-2 text-sm leading-relaxed mb-4">
+          Creator applications are handled via email in V1. Send your portfolio, a short bio, and preferred division to:
+        </p>
+        <a
+          href="mailto:creators@senses.dhurta.com"
+          class="inline-block text-senses-accent text-sm font-medium hover:underline"
+        >
+          creators@senses.dhurta.com
+        </a>
+        <p class="text-senses-text-3 text-xs mt-4">
+          Include 5–10 sample works and your social/portfolio links.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</BaseLayout>

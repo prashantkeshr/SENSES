@@ -1,0 +1,156 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const faqs = [
+  {
+    category: 'Using SENSES',
+    items: [
+      {
+        q: 'Do I need an account to use SENSES?',
+        a: 'No. SENSES is fully functional without an account. Your likes, saves, collections, and preferences are stored locally in your browser using localStorage — no sign-up required.',
+      },
+      {
+        q: 'Will my data sync across devices?',
+        a: 'Not in V1. Since everything is stored locally, your activity on one device does not transfer to another. Cross-device sync is planned for a future version.',
+      },
+      {
+        q: 'Can I use SENSES offline?',
+        a: 'Partially. SENSES is a Progressive Web App (PWA). Once you have visited the site, the core shell and recently cached pages are available offline. New media content requires a connection.',
+      },
+      {
+        q: 'How do I install SENSES as an app?',
+        a: 'A install prompt appears after a few seconds on your first visit. You can also tap "Add to Home Screen" from your browser menu on mobile, or click the install icon in the address bar on desktop Chrome.',
+      },
+    ],
+  },
+  {
+    category: 'Content and Discovery',
+    items: [
+      {
+        q: 'What is the difference between SIGHT and HEARING?',
+        a: 'SIGHT covers visual media — photography, videography, illustration, wallpapers, and concept art. HEARING covers audio — original music, ambient soundscapes, lo-fi loops, field recordings, and sound design. Both live under the same roof because great experiences often combine both.',
+      },
+      {
+        q: 'How does the "For You" section work?',
+        a: 'SENSES builds an interest profile from the items you like, save, and view. It weights these signals (categories most heavily, then tags and moods) to surface media you are likely to enjoy. The more you interact, the better it gets. No data ever leaves your device.',
+      },
+      {
+        q: 'What is a Cross-Sensory Collection?',
+        a: 'A Cross-Sensory Collection pairs a curated set of SIGHT items with HEARING items that complement each other — think a photographer\'s series matched with the ambient track that was playing during the shoot. They\'re a core part of the SENSES curation philosophy.',
+      },
+      {
+        q: 'How is content curated?',
+        a: 'Everything on SENSES is reviewed before it appears. We prioritise originality, technical quality, and emotional resonance over follower count or popularity. Editors also flag items as Editor\'s Pick when a piece is exceptional.',
+      },
+    ],
+  },
+  {
+    category: 'Downloading and Licensing',
+    items: [
+      {
+        q: 'Can I download media for free?',
+        a: 'It depends on the license. CC0 and CC BY items are free to download. CC BY-NC, Editorial, and Commercial items require you to acknowledge the licensing terms before downloading. No payment is processed on SENSES — commercial licensing is arranged directly with the creator.',
+      },
+      {
+        q: 'Where is my download history?',
+        a: 'Your download history is in My SENSES → Downloads. It lists every item you have downloaded along with the license you acknowledged at the time.',
+      },
+      {
+        q: 'I accidentally downloaded under the wrong license. What do I do?',
+        a: 'Your download history is stored locally and is for your reference only. For licensing questions or disputes, contact the creator directly or email legal@senses.dhurta.com.',
+      },
+    ],
+  },
+  {
+    category: 'Creators',
+    items: [
+      {
+        q: 'How do I submit my work to SENSES?',
+        a: 'Send your portfolio and a short bio to creators@senses.dhurta.com. We review applications on a rolling basis and typically respond within 2–3 weeks. See the Creators page for full details.',
+      },
+      {
+        q: 'Do creators get paid?',
+        a: 'SENSES does not currently handle creator payments. Creators set their own licensing terms. For commercial usage, buyers contact creators directly. Monetisation features are on the roadmap for a future version.',
+      },
+      {
+        q: 'Can creators edit or remove their content?',
+        a: 'Yes. Email creators@senses.dhurta.com with your request and we will handle edits or takedowns within 48 hours.',
+      },
+    ],
+  },
+  {
+    category: 'Technical',
+    items: [
+      {
+        q: 'How do I clear my SENSES data?',
+        a: 'Open your browser\'s developer tools (F12), go to Application → Storage → Local Storage, find senses.dhurta.com, and delete the keys prefixed with "senses:". Alternatively, clear site data in your browser settings.',
+      },
+      {
+        q: 'Something is broken. How do I report it?',
+        a: 'Email support@senses.dhurta.com with a description of the issue, your browser and OS version, and if possible a screenshot. We aim to respond within 24 hours.',
+      },
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title="FAQ — SENSES"
+  description="Frequently asked questions about SENSES — using the platform, downloading media, creator submissions, and more."
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+
+    <!-- Header -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 pt-16 pb-10">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Help</p>
+      <h1 class="text-senses-text text-3xl font-light mb-4">Frequently Asked Questions</h1>
+      <p class="text-senses-text-2 text-sm leading-relaxed">
+        Can't find an answer here? Email
+        <a href="mailto:support@senses.dhurta.com" class="text-senses-accent hover:underline">support@senses.dhurta.com</a>.
+      </p>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- FAQ groups -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-12 space-y-14">
+      {faqs.map(group => (
+        <div>
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-6 font-medium">{group.category}</p>
+          <div class="space-y-0 divide-y divide-senses-border">
+            {group.items.map(item => (
+              <details class="group py-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <summary class="flex items-start justify-between gap-4 cursor-pointer select-none">
+                  <span class="text-senses-text-2 text-sm group-open:text-senses-text transition-colors">{item.q}</span>
+                  <span class="text-senses-text-3 mt-0.5 flex-shrink-0 transition-transform group-open:rotate-45 duration-200">
+                    <svg viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4">
+                      <path d="M8 1.5a.5.5 0 0 1 .5.5v5.5H14a.5.5 0 0 1 0 1H8.5V14a.5.5 0 0 1-1 0V8.5H2a.5.5 0 0 1 0-1h5.5V2a.5.5 0 0 1 .5-.5Z"/>
+                    </svg>
+                  </span>
+                </summary>
+                <p class="text-senses-text-3 text-sm leading-relaxed mt-3 pr-8">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- Contact CTA -->
+    <div class="max-w-[680px] mx-auto px-4 md:px-8 py-12 text-center">
+      <p class="text-senses-text-2 text-sm mb-1">Still need help?</p>
+      <p class="text-senses-text-3 text-sm mb-4">
+        Drop us a message and we'll get back to you within 24 hours.
+      </p>
+      <a
+        href="mailto:support@senses.dhurta.com"
+        class="inline-block px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 hover:text-senses-text transition-all"
+      >
+        Contact support
+      </a>
+    </div>
+
+  </div>
+</BaseLayout>

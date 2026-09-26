@@ -1,0 +1,121 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Privacy Policy — SENSES"
+  description="How SENSES collects, uses, and protects your information."
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+    <div class="max-w-[680px] mx-auto px-4 md:px-8 py-16">
+
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Legal</p>
+      <h1 class="text-senses-text text-3xl font-light mb-3">Privacy Policy</h1>
+      <p class="text-senses-text-3 text-sm mb-12">Last updated: September 2026</p>
+
+      <div class="prose-senses space-y-10">
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">1. Who we are</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            SENSES is a media discovery platform operated by Dhurta.Org. This policy explains how
+            we collect and process information when you use senses.dhurta.com.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">2. What data we store</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed mb-4">
+            SENSES is a local-first platform. The vast majority of your data — liked items, saved
+            media, collections, download history, comments, and interest signals — is stored only in
+            your browser's <code class="text-senses-accent text-xs">localStorage</code>.
+            It never leaves your device unless you explicitly export it.
+          </p>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            We do not operate user accounts, databases of personal data, or authentication servers
+            in Version 1 of this platform.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">3. Analytics and third-party services</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed mb-4">
+            SENSES may integrate privacy-respecting, cookieless analytics (such as Plausible or
+            Fathom) in a future version. No analytics are active in V1.
+          </p>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            Media thumbnails and previews may be served from third-party CDNs. These providers may
+            log standard web access data (IP address, user-agent, referer) per their own policies.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">4. Cookies</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            We do not use tracking or advertising cookies. The service worker and PWA manifest do
+            not set cookies. Your browser may cache static assets as part of normal web operation.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">5. Your rights</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed mb-3">
+            Because your data is stored locally in your browser, you have full control over it at
+            all times:
+          </p>
+          <ul class="space-y-2">
+            {['Clear your browser\'s localStorage to delete all SENSES data instantly.',
+              'Use your browser\'s developer tools to inspect exactly what is stored.',
+              'Clearing the site data or uninstalling the PWA removes all cached assets and local data.'].map(item => (
+              <li class="flex items-start gap-2 text-senses-text-3 text-sm">
+                <span class="mt-1.5 w-1 h-1 rounded-full bg-senses-accent flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">6. Children</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            SENSES is not directed at children under 13. We do not knowingly collect data from
+            children under 13. If you believe a child has submitted information, contact us below.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">7. Changes to this policy</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            We may update this policy as the platform evolves. Material changes will be noted with
+            an updated "Last updated" date at the top of this page.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">8. Contact</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            Questions about this policy? Email
+            <a href="mailto:privacy@senses.dhurta.com" class="text-senses-accent hover:underline">
+              privacy@senses.dhurta.com
+            </a>.
+          </p>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</BaseLayout>

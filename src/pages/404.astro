@@ -1,0 +1,33 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Page not found — SENSES"
+  description="The page you're looking for doesn't exist."
+  noIndex={true}
+>
+  <div class="pt-[var(--nav-height)] min-h-screen flex items-center justify-center px-4">
+    <div class="text-center max-w-md">
+
+      <p class="text-[120px] font-light text-senses-surface-3 leading-none select-none mb-6">404</p>
+
+      <h1 class="text-senses-text text-2xl font-light mb-3">Page not found</h1>
+      <p class="text-senses-text-3 text-sm leading-relaxed mb-10">
+        The page you're looking for has moved, been removed, or never existed. Try browsing from the home page.
+      </p>
+
+      <div class="flex flex-wrap gap-3 justify-center">
+        <a href="/" class="px-5 py-2.5 rounded-xl bg-senses-text text-senses-bg text-sm font-medium hover:bg-senses-accent transition-colors">
+          Go home
+        </a>
+        <a href="/explore" class="px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 hover:text-senses-text transition-all">
+          Explore media
+        </a>
+        <a href="/discover" class="px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 hover:text-senses-text transition-all">
+          Discover
+        </a>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

@@ -4,6 +4,7 @@ import { toggleLike, toggleSave, getLocalState, recordView } from '@lib/utils/lo
 import { formatCount } from '@lib/utils/formatters';
 import { DownloadModal }          from '@/components/download/DownloadModal';
 import { SaveToCollectionModal }  from '@/components/collections/SaveToCollectionModal';
+import { toast }                  from '@/lib/utils/toast';
 
 interface Props {
   media: Media;
@@ -21,15 +22,25 @@ export function MediaActions({ media }: Props) {
     recordView(media.id, media.tags, media.moods, media.category);
   }, [media.id]);
 
-  const handleLike = useCallback(() => setLiked(toggleLike(media.id)), [media.id]);
-  const handleSave = useCallback(() => setSaved(toggleSave(media.id)), [media.id]);
+  const handleLike = useCallback(() => {
+    const nowLiked = toggleLike(media.id);
+    setLiked(nowLiked);
+    toast(nowLiked ? 'Added to liked' : 'Removed from liked', 'success');
+  }, [media.id]);
+
+  const handleSave = useCallback(() => {
+    const nowSaved = toggleSave(media.id);
+    setSaved(nowSaved);
+    toast(nowSaved ? 'Saved to library' : 'Removed from library', 'success');
+  }, [media.id]);
 
   const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
+      toast('Link copied to clipboard', 'info');
       setTimeout(() => setCopied(false), 2000);
-    } catch { /* clipboard unavailable */ }
+    } catch { toast('Could not copy link', 'error'); }
   }, []);
 
   return (

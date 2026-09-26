@@ -1,0 +1,157 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Terms of Service — SENSES"
+  description="The terms and conditions for using the SENSES media discovery platform."
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+    <div class="max-w-[680px] mx-auto px-4 md:px-8 py-16">
+
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Legal</p>
+      <h1 class="text-senses-text text-3xl font-light mb-3">Terms of Service</h1>
+      <p class="text-senses-text-3 text-sm mb-12">Last updated: September 2026</p>
+
+      <div class="space-y-10">
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">1. Acceptance</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            By accessing or using senses.dhurta.com, you agree to these Terms of Service.
+            If you do not agree, please do not use the platform. These terms govern your access
+            to and use of SENSES, including all media content, creator profiles, and platform features.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">2. The platform</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed mb-3">
+            SENSES is a curated media discovery platform. We provide:
+          </p>
+          <ul class="space-y-2 mb-3">
+            {[
+              'Access to curated visual and audio media',
+              'Creator profiles and attribution information',
+              'Personal organisation tools (likes, saves, collections)',
+              'Discovery features (search, explore, personalisation)',
+            ].map(item => (
+              <li class="flex items-start gap-2 text-senses-text-3 text-sm">
+                <span class="mt-1.5 w-1 h-1 rounded-full bg-senses-border-2 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            We reserve the right to modify, suspend, or discontinue any feature at any time.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">3. Permitted use</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed mb-3">
+            You may use SENSES for personal, non-commercial discovery and enjoyment.
+            You may not:
+          </p>
+          <ul class="space-y-2">
+            {[
+              'Reproduce, distribute, or commercially exploit platform content without appropriate licensing',
+              'Scrape, mirror, or systematically download media or metadata',
+              'Impersonate creators or misrepresent attribution',
+              'Attempt to circumvent any technical measures of the platform',
+              'Use the platform in any way that violates applicable laws',
+            ].map(item => (
+              <li class="flex items-start gap-2 text-senses-text-3 text-sm">
+                <span class="mt-1.5 w-1 h-1 rounded-full bg-red-500/50 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">4. Media licensing</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            Each media item on SENSES carries its own license, set by the creator. The license type
+            is displayed on every media page. Downloading or using media is subject to the specific
+            license terms shown. SENSES does not grant any rights beyond what the creator's chosen
+            license allows. See the <a href="/licensing" class="text-senses-accent hover:underline">Licensing guide</a> for details.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">5. User-generated content</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            Comments and notes you write are stored locally in your browser and are not transmitted
+            to our servers. You are solely responsible for the content of any notes or annotations
+            you create.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">6. Intellectual property</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            The SENSES name, logo, design system, and platform code are owned by Dhurta.Org.
+            Media content belongs to the respective creators. Nothing in these terms transfers
+            any intellectual property rights to you.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">7. Disclaimer of warranties</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            SENSES is provided "as is" without warranties of any kind. We do not warrant that the
+            platform will be uninterrupted, error-free, or free of viruses. Your use of the platform
+            is at your own risk.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">8. Limitation of liability</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            To the maximum extent permitted by law, Dhurta.Org shall not be liable for any indirect,
+            incidental, special, or consequential damages arising from your use of SENSES.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">9. Changes to these terms</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            We may update these terms. Continued use of the platform after changes constitutes
+            acceptance of the updated terms. Material changes will be reflected in the "Last updated"
+            date above.
+          </p>
+        </section>
+
+        <div class="border-t border-senses-border" />
+
+        <section>
+          <h2 class="text-senses-text text-base font-medium mb-3">10. Contact</h2>
+          <p class="text-senses-text-3 text-sm leading-relaxed">
+            Questions about these terms? Email
+            <a href="mailto:legal@senses.dhurta.com" class="text-senses-accent hover:underline">
+              legal@senses.dhurta.com
+            </a>.
+          </p>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</BaseLayout>

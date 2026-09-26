@@ -1,0 +1,33 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="You're offline — SENSES"
+  description="No internet connection. Connect to browse SENSES media."
+  noIndex={true}
+>
+  <div class="pt-[var(--nav-height)] min-h-screen flex items-center justify-center px-4">
+    <div class="text-center max-w-sm">
+
+      <!-- Icon -->
+      <div class="w-20 h-20 rounded-2xl bg-senses-surface border border-senses-border mx-auto mb-6 flex items-center justify-center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-9 h-9 text-senses-text-3">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.584 10.587a2 2 0 0 0 2.828 2.83M8.877 8.877A9 9 0 0 0 3.515 15H2a1 1 0 0 0-.858 1.512l1 1.73c.17.295.48.476.815.488H5a9 9 0 0 0 13.485-1.498M17.25 9.75a4.5 4.5 0 0 0-6.086-4.206M21 12a9.004 9.004 0 0 0-4.5-7.794" />
+        </svg>
+      </div>
+
+      <h1 class="text-senses-text text-xl font-light mb-2">You're offline</h1>
+      <p class="text-senses-text-3 text-sm leading-relaxed mb-8">
+        Connect to the internet to discover new media. Pages you've already visited are available offline.
+      </p>
+
+      <button
+        onclick="window.location.reload()"
+        class="px-6 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 hover:text-senses-text transition-all"
+      >
+        Try again
+      </button>
+    </div>
+  </div>
+</BaseLayout>

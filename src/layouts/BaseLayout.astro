@@ -1,7 +1,8 @@
 ---
 import '../styles/globals.css';
-import GlobalNav from '@components/layout/GlobalNav';
+import GlobalNav    from '@components/layout/GlobalNav';
 import SearchOverlay from '@components/layout/SearchOverlay';
+import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 
 interface Props {
   title:        string;
@@ -86,10 +87,38 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
 <body class={`dark ${bodyClass}`}>
   <GlobalNav client:load />
   <SearchOverlay client:load />
+  <InstallPrompt client:idle />
 
   <main>
     <slot />
   </main>
+
+  <!-- SW registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+          reg.addEventListener('updatefound', () => {
+            const worker = reg.installing;
+            if (!worker) return;
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New version available — show a subtle banner
+                const banner = document.createElement('div');
+                banner.innerHTML = `
+                  <div style="position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:12px;font-size:13px;color:#ccc;box-shadow:0 8px 24px rgba(0,0,0,.6);">
+                    <span>Update available</span>
+                    <button onclick="window.location.reload()" style="background:#C8B89A;color:#080808;border:none;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:12px;font-weight:500;">Reload</button>
+                    <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;color:#666;cursor:pointer;font-size:16px;line-height:1;">×</button>
+                  </div>`;
+                document.body.appendChild(banner);
+              }
+            });
+          });
+        }).catch(() => { /* SW unavailable — silently ignore */ });
+      });
+    }
+  </script>
 
   {!noFooter && <footer class="border-t border-senses-border mt-20 py-12 px-4 md:px-8">
     <div class="max-w-[1440px] mx-auto">

@@ -55,7 +55,7 @@ export function InstallPrompt() {
   return (
     <div
       role="dialog"
-      aria-label="Install SENSES app"
+      aria-label="Install Senses app"
       className="fixed bottom-safe-area-inset-bottom left-4 right-4 sm:left-auto sm:right-6 sm:w-80 z-50 animate-in slide-in-from-bottom-4 duration-300"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
     >
@@ -71,7 +71,7 @@ export function InstallPrompt() {
 
           {/* Text */}
           <div className="flex-1 min-w-0">
-            <p className="text-senses-text text-sm font-medium leading-snug">Add SENSES to your home screen</p>
+            <p className="text-senses-text text-sm font-medium leading-snug">Add Senses to your home screen</p>
             <p className="text-senses-text-3 text-xs mt-0.5 leading-relaxed">
               Discover media faster with the installed app experience.
             </p>

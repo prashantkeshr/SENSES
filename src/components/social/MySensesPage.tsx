@@ -421,7 +421,7 @@ export function MySensesPage({ media, creators }: Props) {
           : (
             <div>
               <p className="text-senses-text-3 text-sm mb-6">
-                Media you've downloaded through SENSES, most recent first.
+                Media you've downloaded through Senses, most recent first.
               </p>
               <div className="masonry-grid">
                 {downloadItems.filter(m => m.division === 'sight').map(m => (

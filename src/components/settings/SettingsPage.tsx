@@ -129,7 +129,7 @@ export function SettingsPage() {
       ['senses:user-state','senses:comments','senses:user-collections','senses:downloads','senses:settings'].forEach(k => {
         try { localStorage.removeItem(k); } catch {}
       });
-      toast('All SENSES data cleared. Refreshing…', 'info');
+      toast('All Senses data cleared. Refreshing…', 'info');
       setTimeout(() => window.location.reload(), 1200);
     } catch {
       toast('Could not clear data', 'error');
@@ -354,7 +354,7 @@ export function SettingsPage() {
 
       {/* ── About ── */}
       <div className="pt-8 pb-4 text-center">
-        <p className="brand-shimmer text-2xl mb-1">SENSES</p>
+        <p className="brand-shimmer text-2xl mb-1">Senses</p>
         <p className="text-senses-text-3 text-xs">Premium Media Discovery &nbsp;·&nbsp; v1.0</p>
         <div className="flex justify-center gap-4 mt-3">
           <a href="/about"     className="text-senses-text-3 hover:text-senses-text text-xs transition-colors">About</a>

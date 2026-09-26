@@ -31,9 +31,19 @@ export default function Hero() {
 
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center text-center overflow-hidden px-4">
-      {/* Background: subtle noise texture via pseudo-element */}
+      {/* Background: punchy neon gradient */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(200,184,154,0.04) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 50% 100%, rgba(143,174,192,0.04) 0%, transparent 60%)',
+        background: [
+          'radial-gradient(ellipse 70% 50% at 15% 20%, rgba(255,45,85,0.13) 0%, transparent 55%)',
+          'radial-gradient(ellipse 60% 45% at 85% 75%, rgba(143,174,192,0.10) 0%, transparent 55%)',
+          'radial-gradient(ellipse 50% 40% at 50% 0%, rgba(255,45,85,0.06) 0%, transparent 50%)',
+          'radial-gradient(ellipse 40% 30% at 50% 100%, rgba(0,184,255,0.05) 0%, transparent 50%)',
+        ].join(', '),
+      }} />
+      {/* Subtle grid overlay */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.025]" style={{
+        backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
+        backgroundSize: '64px 64px',
       }} />
 
       <div className="relative z-10 w-full max-w-4xl mx-auto">

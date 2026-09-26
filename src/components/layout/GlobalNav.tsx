@@ -97,7 +97,7 @@ export default function GlobalNav() {
 
           {/* Animated Dancing Script brand */}
           <a href="/" className="brand-shimmer text-[1.7rem] flex-shrink-0 select-none">
-            SENSES
+            Senses
           </a>
 
           {/* Desktop nav */}

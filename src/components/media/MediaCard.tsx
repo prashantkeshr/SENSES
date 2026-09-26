@@ -149,9 +149,22 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
           {media.title}
         </p>
         <div className="flex items-center justify-between">
-          {creator && (
-            <span className="text-senses-text-3 text-xs">{creator.displayName}</span>
-          )}
+          <div className="flex items-center gap-1.5 min-w-0">
+            {creator && (
+              <span className="text-senses-text-3 text-xs truncate">{creator.displayName}</span>
+            )}
+            {(media as {source?: string}).source === 'pixabay' && (
+              <img
+                src="https://pixabay.com/favicon.ico"
+                alt="Pixabay"
+                title="Source: Pixabay"
+                width={12}
+                height={12}
+                className="opacity-40 flex-shrink-0"
+                loading="lazy"
+              />
+            )}
+          </div>
           <div className="flex items-center gap-2 text-senses-text-3 text-[11px] ml-auto">
             <span>{formatCount(media.stats.views)} views</span>
             <span>·</span>

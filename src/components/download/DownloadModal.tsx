@@ -14,7 +14,7 @@ const LICENSE_INFO: Record<string, { label: string; free: boolean; note: string 
   'cc-by-sa':     { label: 'Creative Commons BY-SA', free: true,  note: 'Free with attribution; derivatives must use the same license.' },
   editorial:      { label: 'Editorial Use Only',     free: false, note: 'May only be used in editorial contexts, not for commercial products.' },
   commercial:     { label: 'Commercial License',     free: false, note: 'A license must be purchased for commercial use.' },
-  'senses-original': { label: 'SENSES Original',    free: true,  note: 'Available under SENSES platform terms for personal use.' },
+  'senses-original': { label: 'Senses Original',    free: true,  note: 'Available under Senses platform terms for personal use.' },
   placeholder:    { label: 'Placeholder',             free: true,  note: 'Demo content — replace with real media in production.' },
 };
 

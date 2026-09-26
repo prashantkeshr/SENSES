@@ -33,15 +33,15 @@ const tagTitle = slugToTitle(tag);
 ---
 
 <BaseLayout
-  title={`#${tagTitle} — SENSES`}
-  description={`Browse ${items.length} items tagged "${tagTitle}" across visual and audio media on SENSES.`}
+  title={`#${tagTitle} — Senses`}
+  description={`Browse ${items.length} items tagged "${tagTitle}" across visual and audio media on Senses.`}
 >
   <div class="pt-[var(--nav-height)] pb-20">
 
     <!-- Header -->
     <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-10 border-b border-senses-border mb-8">
       <nav class="flex items-center gap-1.5 text-xs text-senses-text-3 mb-4">
-        <a href="/" class="hover:text-senses-text transition-colors">SENSES</a>
+        <a href="/" class="hover:text-senses-text transition-colors">Senses</a>
         <span>/</span>
         <a href={`/search?q=${encodeURIComponent(tag)}`} class="hover:text-senses-text transition-colors">Search</a>
         <span>/</span>

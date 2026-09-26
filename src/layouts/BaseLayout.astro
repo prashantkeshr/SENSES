@@ -30,7 +30,7 @@ const {
 const siteUrl  = 'https://senses.dhurta.com';
 const fullUrl  = canonical ?? new URL(Astro.url.pathname, siteUrl).toString();
 const ogImg    = ogImage ?? `${siteUrl}/og-default.jpg`;
-const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
+const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
 ---
 
 <!DOCTYPE html>
@@ -78,7 +78,7 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
   <meta property="og:title"       content={fullTitle} />
   <meta property="og:description" content={description} />
   <meta property="og:image"       content={ogImg} />
-  <meta property="og:site_name"   content="SENSES" />
+  <meta property="og:site_name"   content="Senses" />
 
   <!-- Twitter -->
   <meta name="twitter:card"        content="summary_large_image" />
@@ -100,7 +100,7 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "SENSES",
+    "name": "Senses",
     "url": siteUrl,
     "description": "A premium media discovery platform for visual and audio content.",
     "potentialAction": {
@@ -152,7 +152,7 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
 
         <!-- Brand -->
         <div class="col-span-2 sm:col-span-3 lg:col-span-1">
-          <a href="/" class="brand-shimmer text-3xl block mb-3 w-fit">SENSES</a>
+          <a href="/" class="brand-shimmer text-3xl block mb-3 w-fit">Senses</a>
           <p class="text-senses-text-3 text-sm leading-relaxed max-w-xs">
             A premium discovery platform for visual and audio media. Explore, collect, and feel.
           </p>
@@ -226,7 +226,7 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
       </div>
 
       <div class="border-t border-senses-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <p class="text-senses-text-3 text-xs">© 2026 SENSES · All media rights belong to their respective creators.</p>
+        <p class="text-senses-text-3 text-xs">© 2026 Senses · All media rights belong to their respective creators.</p>
         <div class="flex gap-4 items-center">
           <a href="/gallery"  class="text-senses-text-3 hover:text-senses-accent text-xs transition-colors">Gallery</a>
           <a href="/settings" class="text-senses-text-3 hover:text-senses-accent text-xs transition-colors">Settings</a>

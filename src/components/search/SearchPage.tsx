@@ -297,7 +297,6 @@ export function SearchPage({ media, creators }: Props) {
                 {sightResults.map(item => (
                   <MediaCard
                     key={item.id}
-                    client:visible
                     media={item}
                     creator={creatorMap[item.creator]}
                   />
@@ -321,7 +320,6 @@ export function SearchPage({ media, creators }: Props) {
                 {hearingResults.map(item => (
                   <MediaCard
                     key={item.id}
-                    client:visible
                     media={item}
                     creator={creatorMap[item.creator]}
                     layout="grid"

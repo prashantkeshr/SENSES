@@ -1,0 +1,29 @@
+---
+import BaseLayout   from '@/layouts/BaseLayout.astro';
+import { MySensesPage } from '@/components/social/MySensesPage';
+import { provider }     from '@/lib/providers';
+
+const [allMedia, allCreators] = await Promise.all([
+  provider.getMedia({}),
+  provider.getCreators(200),
+]);
+---
+
+<BaseLayout
+  title="My Senses — Personal Hub · SENSES"
+  description="Your liked media, saved items, followed creators, and personal collections."
+>
+  <div class="pt-[var(--nav-height)] pb-20">
+    <div class="max-w-[1200px] mx-auto px-4 md:px-8">
+
+      <!-- Page header -->
+      <div class="py-10 mb-2">
+        <h1 class="text-display-md text-senses-text mb-1">My Senses</h1>
+        <p class="text-senses-text-3 text-sm">Your personal library — all stored locally on this device.</p>
+      </div>
+
+      <MySensesPage client:load media={allMedia} creators={allCreators} />
+
+    </div>
+  </div>
+</BaseLayout>

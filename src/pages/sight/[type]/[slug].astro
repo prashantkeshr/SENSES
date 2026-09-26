@@ -2,9 +2,10 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { MediaHero }    from '@/components/media/MediaHero';
 import { MediaActions } from '@/components/media/MediaActions';
-import { MediaCard }    from '@/components/media/MediaCard';
-import { TypeBadge }    from '@/components/ui/Badge';
-import { provider }     from '@/lib/providers';
+import { MediaCard }       from '@/components/media/MediaCard';
+import { TypeBadge }       from '@/components/ui/Badge';
+import { CommentsSection } from '@/components/social/CommentsSection';
+import { provider }        from '@/lib/providers';
 import { formatCount, formatDate, mediaTypeLabel } from '@/lib/utils/formatters';
 import type { ImageData, VideoData, Creator } from '@/types/index';
 
@@ -346,6 +347,9 @@ const licenseLabels: Record<string, string> = {
           </div>
         </section>
       )}
+
+      <!-- Comments -->
+      <CommentsSection client:visible mediaId={media.id} division="sight" />
 
     </div>
   </div>

@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { MediaCard } from '@/components/media/MediaCard';
-import { provider }  from '@/lib/providers';
+import { MediaCard }    from '@/components/media/MediaCard';
+import { FollowButton } from '@/components/social/FollowButton';
+import { provider }     from '@/lib/providers';
 import { formatCount, formatDate } from '@/lib/utils/formatters';
 
 export async function getStaticPaths() {
@@ -92,18 +93,21 @@ const hasMedia     = creatorMedia.length > 0;
             <p class="text-senses-text-2 text-sm max-w-xl leading-relaxed">{creator.bio}</p>
           </div>
 
-          <!-- Stats -->
-          <div class="flex gap-6 flex-shrink-0 sm:text-right">
-            {[
-              [formatCount(creator.stats.mediaCount), 'items'],
-              [formatCount(creator.stats.totalViews), 'views'],
-              [formatCount(creator.stats.followers), 'followers'],
-            ].map(([n, l]) => (
-              <div>
-                <p class="text-senses-text text-xl font-light">{n}</p>
-                <p class="text-senses-text-3 text-[10px] uppercase tracking-widest">{l}</p>
-              </div>
-            ))}
+          <!-- Stats + Follow -->
+          <div class="flex flex-col items-end gap-4 flex-shrink-0">
+            <div class="flex gap-6 sm:text-right">
+              {[
+                [formatCount(creator.stats.mediaCount), 'items'],
+                [formatCount(creator.stats.totalViews), 'views'],
+                [formatCount(creator.stats.followers), 'followers'],
+              ].map(([n, l]) => (
+                <div>
+                  <p class="text-senses-text text-xl font-light">{n}</p>
+                  <p class="text-senses-text-3 text-[10px] uppercase tracking-widest">{l}</p>
+                </div>
+              ))}
+            </div>
+            <FollowButton client:load creatorId={creator.id} displayName={creator.displayName} />
           </div>
         </div>
 

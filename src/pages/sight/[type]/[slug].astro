@@ -1,0 +1,352 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaHero }    from '@/components/media/MediaHero';
+import { MediaActions } from '@/components/media/MediaActions';
+import { MediaCard }    from '@/components/media/MediaCard';
+import { TypeBadge }    from '@/components/ui/Badge';
+import { provider }     from '@/lib/providers';
+import { formatCount, formatDate, mediaTypeLabel } from '@/lib/utils/formatters';
+import type { ImageData, VideoData, Creator } from '@/types/index';
+
+export async function getStaticPaths() {
+  const allMedia = await provider.getMedia({ division: 'sight' });
+  return allMedia.map(m => ({
+    params: { type: m.type, slug: m.slug },
+    props:  { mediaId: m.id },
+  }));
+}
+
+interface Props { mediaId: string }
+const { mediaId } = Astro.props;
+
+const [media, related, crossSensory, creators] = await Promise.all([
+  provider.getMediaById(mediaId),
+  provider.getRelatedMedia(mediaId, 6),
+  provider.getCrossSensory(mediaId),
+  provider.getCreators(30),
+]);
+
+if (!media) return Astro.redirect('/404');
+
+const creatorMap  = Object.fromEntries(creators.map(c => [c.id, c]));
+const creator     = creatorMap[media.creator] as Creator | undefined;
+const creatorMore = await provider.getCreatorMedia(media.creator, { limit: 5 });
+const moreByCreator = creatorMore.filter(m => m.id !== media.id).slice(0, 4);
+
+const imgData     = media.data as ImageData;
+const ogImage     = imgData.previewUrl ?? imgData.thumbnailUrl ?? media.thumbnail;
+
+const licenseLabels: Record<string, string> = {
+  cc0:            'CC0 Public Domain',
+  'cc-by':        'Creative Commons BY',
+  'cc-by-sa':     'Creative Commons BY-SA',
+  editorial:      'Editorial Use Only',
+  commercial:     'Commercial License',
+  'senses-original': 'SENSES Original',
+  placeholder:    'Placeholder (V1)',
+};
+---
+
+<BaseLayout
+  title={media.seo.title}
+  description={media.seo.description}
+  ogImage={ogImage}
+  schema={{
+    "@context": "https://schema.org",
+    "@type": "ImageObject",
+    "name": media.title,
+    "description": media.description,
+    "contentUrl": ogImage,
+    "creator": creator ? { "@type": "Person", "name": creator.displayName } : undefined,
+    "license": media.license === 'cc0' ? 'https://creativecommons.org/publicdomain/zero/1.0/' : undefined,
+  }}
+>
+  <div class="pt-[var(--nav-height)] pb-20">
+    <div class="max-w-[1200px] mx-auto px-4 md:px-8">
+
+      <!-- Breadcrumb -->
+      <nav class="flex items-center gap-1.5 text-xs text-senses-text-3 py-5 flex-wrap" aria-label="Breadcrumb">
+        <a href="/" class="hover:text-senses-text transition-colors">SENSES</a>
+        <span>/</span>
+        <a href="/sight" class="text-senses-sight hover:text-senses-text transition-colors">SIGHT</a>
+        <span>/</span>
+        <span class="capitalize">{media.type}</span>
+        <span>/</span>
+        <span class="text-senses-text truncate max-w-[200px]">{media.title}</span>
+      </nav>
+
+      <!-- Hero -->
+      <div class="mb-6 rounded-xl overflow-hidden">
+        <MediaHero client:load media={media} />
+      </div>
+
+      <!-- Title + Actions -->
+      <div class="flex flex-col gap-4 mb-10 sm:flex-row sm:items-start sm:justify-between">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 mb-2 flex-wrap">
+            <TypeBadge type={media.type} division="sight" />
+            <span class="text-senses-sight text-xs tracking-widest font-medium uppercase">Sight</span>
+            {media.editorsPick && (
+              <span class="text-[10px] px-2 py-0.5 rounded border border-senses-sight/30 text-senses-sight/80 tracking-widest uppercase">
+                Editor's Pick
+              </span>
+            )}
+          </div>
+          <h1 class="text-display-lg text-senses-text leading-tight mb-1">{media.title}</h1>
+          {creator && (
+            <p class="text-senses-text-3 text-sm">
+              by <a href={`/creators/${creator.username}`} class="text-senses-text-2 hover:text-senses-text transition-colors">{creator.displayName}</a>
+            </p>
+          )}
+        </div>
+        <div class="flex-shrink-0">
+          <MediaActions client:load media={media} />
+        </div>
+      </div>
+
+      <!-- Main 2-col layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-14">
+
+        <!-- Left: description + metadata -->
+        <div class="lg:col-span-2 space-y-8">
+          <!-- Description -->
+          <section>
+            <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">About</h2>
+            <p class="text-senses-text-2 leading-relaxed text-base">{media.description}</p>
+          </section>
+
+          <!-- Tags -->
+          {media.tags.length > 0 && (
+            <section>
+              <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Tags</h2>
+              <div class="flex flex-wrap gap-1.5">
+                {media.tags.map(tag => (
+                  <a
+                    href={`/search?q=${encodeURIComponent(tag)}`}
+                    class="px-2.5 py-1 rounded-lg text-xs bg-senses-surface border border-senses-border text-senses-text-3 hover:border-senses-border-2 hover:text-senses-text-2 transition-all"
+                  >
+                    {tag}
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <!-- Moods + Styles -->
+          <section class="grid grid-cols-2 gap-6">
+            {media.moods.length > 0 && (
+              <div>
+                <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Mood</h2>
+                <div class="flex flex-wrap gap-1.5">
+                  {media.moods.map(m => (
+                    <span class="px-2.5 py-1 rounded-lg text-xs bg-senses-sight/10 border border-senses-sight/20 text-senses-sight/90 capitalize">
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {media.styles.length > 0 && (
+              <div>
+                <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Style</h2>
+                <div class="flex flex-wrap gap-1.5">
+                  {media.styles.map(s => (
+                    <span class="px-2.5 py-1 rounded-lg text-xs bg-senses-surface-2 border border-senses-border text-senses-text-3 capitalize">
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          <!-- Color palette (sight only) -->
+          {media.colors.length > 0 && (
+            <section>
+              <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Colors</h2>
+              <div class="flex gap-2 flex-wrap">
+                {media.colors.map(hex => (
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="w-8 h-8 rounded-lg border border-white/10 shadow-sm flex-shrink-0"
+                      style={`background-color: ${hex}`}
+                      title={hex}
+                    />
+                    <span class="text-senses-text-3 text-[11px] font-mono">{hex}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <!-- Technical info (for images) -->
+          {media.type !== 'video' && imgData.width && (
+            <section>
+              <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Technical</h2>
+              <dl class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
+                {[
+                  ['Dimensions', `${imgData.width} × ${imgData.height}`],
+                  ['Aspect Ratio', imgData.aspectRatio],
+                  ['Format', imgData.format],
+                  ['Orientation', media.orientation],
+                ].map(([label, value]) => (
+                  <div>
+                    <dt class="text-senses-text-3 text-[10px] uppercase tracking-wider mb-0.5">{label}</dt>
+                    <dd class="text-senses-text-2 text-sm font-mono">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
+        </div>
+
+        <!-- Right sidebar -->
+        <div class="space-y-4">
+
+          <!-- Creator card -->
+          {creator && (
+            <div class="rounded-xl bg-senses-surface border border-senses-border p-4">
+              <div class="flex items-center gap-3 mb-3">
+                <img
+                  src={creator.avatar}
+                  alt={creator.displayName}
+                  class="w-10 h-10 rounded-full object-cover bg-senses-surface-2"
+                />
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-senses-text text-sm font-medium truncate">{creator.displayName}</span>
+                    {creator.verified && (
+                      <svg viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 text-senses-hearing flex-shrink-0">
+                        <path fill-rule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.491 4.491 0 0 1-3.497-1.307 4.491 4.491 0 0 1-1.307-3.497A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd"/>
+                      </svg>
+                    )}
+                  </div>
+                  <span class="text-senses-text-3 text-xs">@{creator.username}</span>
+                </div>
+              </div>
+              <p class="text-senses-text-3 text-xs leading-relaxed mb-3 line-clamp-2">{creator.bio}</p>
+              <div class="grid grid-cols-3 gap-2 text-center mb-3">
+                {[
+                  [formatCount(creator.stats.mediaCount), 'Works'],
+                  [formatCount(creator.stats.followers), 'Followers'],
+                  [formatCount(creator.stats.totalViews), 'Views'],
+                ].map(([val, lbl]) => (
+                  <div>
+                    <p class="text-senses-text text-sm font-medium">{val}</p>
+                    <p class="text-senses-text-3 text-[10px]">{lbl}</p>
+                  </div>
+                ))}
+              </div>
+              <a
+                href={`/creators/${creator.username}`}
+                class="block text-center text-xs py-2 rounded-lg bg-senses-surface-2 border border-senses-border text-senses-text-2 hover:border-senses-border-2 hover:text-senses-text transition-all"
+              >
+                View Profile
+              </a>
+            </div>
+          )}
+
+          <!-- Stats -->
+          <div class="rounded-xl bg-senses-surface border border-senses-border p-4">
+            <h3 class="text-senses-text-3 text-[10px] uppercase tracking-widest mb-3">Stats</h3>
+            <div class="space-y-2">
+              {[
+                ['Views',     formatCount(media.stats.views)],
+                ['Likes',     formatCount(media.stats.likes)],
+                ['Saves',     formatCount(media.stats.saves)],
+                ['Downloads', formatCount(media.stats.downloads)],
+              ].map(([lbl, val]) => (
+                <div class="flex justify-between items-center">
+                  <span class="text-senses-text-3 text-xs">{lbl}</span>
+                  <span class="text-senses-text-2 text-sm font-medium">{val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <!-- License -->
+          <div class="rounded-xl bg-senses-surface border border-senses-border p-4">
+            <h3 class="text-senses-text-3 text-[10px] uppercase tracking-widest mb-2">License</h3>
+            <p class="text-senses-text-2 text-sm font-medium mb-1">
+              {licenseLabels[media.license] ?? media.license}
+            </p>
+            <p class="text-senses-text-3 text-xs leading-relaxed">
+              {media.license === 'cc0'
+                ? 'Free for any use, no attribution required.'
+                : media.license === 'senses-original'
+                  ? 'Available under SENSES platform terms.'
+                  : media.license === 'placeholder'
+                    ? 'Placeholder — real license will be set with actual media.'
+                    : 'Check license details before use.'}
+            </p>
+          </div>
+
+          <!-- Date -->
+          <p class="text-senses-text-3 text-xs px-1">
+            Published {formatDate(media.createdAt)}
+          </p>
+        </div>
+      </div>
+
+      <!-- Cross-sensory: Pair with Hearing -->
+      {crossSensory.hearing.length > 0 && (
+        <section class="mb-14">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="flex-1 h-px bg-senses-border" />
+            <h2 class="text-sm font-medium whitespace-nowrap">
+              <span class="text-senses-text-3">Pair with</span>
+              <span class="text-senses-hearing ml-1.5 tracking-widest uppercase text-xs">Hearing</span>
+            </h2>
+            <div class="flex-1 h-px bg-senses-border" />
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {crossSensory.hearing.map(item => (
+              <MediaCard
+                client:visible
+                media={item}
+                creator={creatorMap[item.creator]}
+                layout="grid"
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- More by this creator -->
+      {moreByCreator.length > 0 && creator && (
+        <section class="mb-14">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-senses-text text-sm font-medium">
+              More by <span class="text-senses-sight">{creator.displayName}</span>
+            </h2>
+            <a href={`/creators/${creator.username}`} class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">
+              View all →
+            </a>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {moreByCreator.map(item => (
+              <MediaCard client:visible media={item} creator={creator} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Related -->
+      {related.length > 0 && (
+        <section class="mb-14">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-senses-text text-sm font-medium">
+              Related <span class="text-senses-sight capitalize">{media.category}</span> media
+            </h2>
+          </div>
+          <div class="masonry-grid">
+            {related.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} />
+            ))}
+          </div>
+        </section>
+      )}
+
+    </div>
+  </div>
+</BaseLayout>

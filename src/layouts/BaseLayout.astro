@@ -34,11 +34,37 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
 ---
 
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark" data-theme="dark" data-accent="red" data-density="comfortable">
 <head>
+  <!-- Theme init: runs synchronously to prevent flash of wrong theme -->
+  <script is:inline>
+    (function(){
+      try {
+        var s = JSON.parse(localStorage.getItem('senses:settings') || '{}');
+        var mode = s.theme || 'dark';
+        var theme = mode === 'system'
+          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : mode;
+        var accent = s.accent || 'red';
+        var accents = { red:'#FF2D55', blue:'#00B8FF', amber:'#FFB800', green:'#00E676', purple:'#BF5FFF', cream:'#E8E4DC' };
+        var html = document.documentElement;
+        html.setAttribute('data-theme', theme);
+        html.setAttribute('data-accent', accent);
+        html.setAttribute('data-density', s.density || 'comfortable');
+        html.style.setProperty('--color-accent', accents[accent] || '#FF2D55');
+        if (theme === 'dark') html.classList.add('dark');
+        else html.classList.remove('dark');
+      } catch(e) {}
+    })();
+  </script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
   <!-- Primary meta -->
   <title>{fullTitle}</title>
@@ -61,17 +87,16 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
   <meta name="twitter:image"       content={ogImg} />
 
   <!-- PWA -->
-  <link rel="manifest"            href="/manifest.json" />
-  <meta name="theme-color"        content="#080808" />
-  <meta name="color-scheme"       content="dark" />
-  <link rel="icon"                href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest"     href="/manifest.json" />
+  <meta name="theme-color" content="#080808" />
+  <meta name="color-scheme" content="dark light" />
+  <link rel="icon"         href="/favicon.svg" type="image/svg+xml" />
 
   <!-- Structured data -->
   {schema && (
     <script type="application/ld+json" set:html={JSON.stringify(schema)} />
   )}
 
-  <!-- Site-wide JSON-LD -->
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -95,48 +120,56 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
     <slot />
   </main>
 
-  <!-- SW registration -->
-  <script>
+  <!-- SW update notification -->
+  <script is:inline>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => {
-          reg.addEventListener('updatefound', () => {
-            const worker = reg.installing;
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js').then(function(reg) {
+          reg.addEventListener('updatefound', function() {
+            var worker = reg.installing;
             if (!worker) return;
-            worker.addEventListener('statechange', () => {
+            worker.addEventListener('statechange', function() {
               if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New version available — show a subtle banner
-                const banner = document.createElement('div');
-                banner.innerHTML = `
-                  <div style="position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:12px;font-size:13px;color:#ccc;box-shadow:0 8px 24px rgba(0,0,0,.6);">
-                    <span>Update available</span>
-                    <button onclick="window.location.reload()" style="background:#C8B89A;color:#080808;border:none;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:12px;font-weight:500;">Reload</button>
-                    <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;color:#666;cursor:pointer;font-size:16px;line-height:1;">×</button>
-                  </div>`;
+                var accent = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#FF2D55';
+                var banner = document.createElement('div');
+                banner.innerHTML = '<div style="position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;background:var(--color-surface,#1a1a1a);border:1px solid var(--color-border-2,#333);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--color-text,#ccc);box-shadow:0 8px 24px rgba(0,0,0,.5);">'
+                  + '<span>Update available</span>'
+                  + '<button onclick="window.location.reload()" style="background:var(--color-accent,#FF2D55);color:#fff;border:none;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:12px;font-weight:600;">Reload</button>'
+                  + '<button onclick="this.closest(\'div\').parentElement.remove()" style="background:none;border:none;color:var(--color-text-3,#666);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;">×</button>'
+                  + '</div>';
                 document.body.appendChild(banner);
               }
             });
           });
-        }).catch(() => { /* SW unavailable — silently ignore */ });
+        }).catch(function() {});
       });
     }
   </script>
 
-  {!noFooter && <footer class="border-t border-senses-border mt-20 py-12 px-4 md:px-8">
+  {!noFooter && <footer class="border-t border-senses-border mt-20 py-14 px-4 md:px-8">
     <div class="max-w-[1440px] mx-auto">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 mb-12">
+
         <!-- Brand -->
-        <div class="col-span-2 md:col-span-1">
-          <a href="/" class="text-senses-text font-light tracking-[0.3em] text-sm uppercase block mb-3">SENSES</a>
+        <div class="col-span-2 sm:col-span-3 lg:col-span-1">
+          <a href="/" class="brand-shimmer text-3xl block mb-3 w-fit">SENSES</a>
           <p class="text-senses-text-3 text-sm leading-relaxed max-w-xs">
             A premium discovery platform for visual and audio media. Explore, collect, and feel.
           </p>
+          <div class="flex gap-3 mt-4">
+            <span class="inline-flex items-center gap-1.5 text-[11px] text-senses-text-3 border border-senses-border rounded-full px-3 py-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-senses-sight inline-block"></span>Sight
+            </span>
+            <span class="inline-flex items-center gap-1.5 text-[11px] text-senses-text-3 border border-senses-border rounded-full px-3 py-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-senses-hearing inline-block"></span>Hearing
+            </span>
+          </div>
         </div>
 
         <!-- Sight -->
         <div>
-          <p class="text-senses-sight text-xs tracking-widest uppercase mb-3 font-medium">Sight</p>
-          <ul class="space-y-2">
+          <p class="text-senses-sight text-xs tracking-widest uppercase mb-4 font-medium">Sight</p>
+          <ul class="space-y-2.5">
             {[['Photos', '/sight/photos'], ['Videos', '/sight/videos'], ['Illustrations', '/sight/illustrations'], ['Wallpapers', '/sight/wallpapers']].map(([l, h]) => (
               <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
             ))}
@@ -145,31 +178,60 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
 
         <!-- Hearing -->
         <div>
-          <p class="text-senses-hearing text-xs tracking-widest uppercase mb-3 font-medium">Hearing</p>
-          <ul class="space-y-2">
-            {[['Music', '/hearing/music'], ['Sounds', '/hearing/sounds'], ['Ambient', '/hearing/ambient']].map(([l, h]) => (
+          <p class="text-senses-hearing text-xs tracking-widest uppercase mb-4 font-medium">Hearing</p>
+          <ul class="space-y-2.5">
+            {[['Music', '/hearing/music'], ['Sounds', '/hearing/sounds'], ['Ambient', '/hearing/ambient'], ['Lo-Fi', '/hearing/lo-fi']].map(([l, h]) => (
               <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
             ))}
           </ul>
         </div>
 
-        <!-- Company -->
+        <!-- Discover -->
         <div>
-          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Company</p>
-          <ul class="space-y-2">
-            {[['About', '/about'], ['Creators', '/creators'], ['Licensing', '/licensing'], ['Privacy', '/privacy'], ['Terms', '/terms']].map(([l, h]) => (
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4 font-medium">Discover</p>
+          <ul class="space-y-2.5">
+            {[
+              ['Gallery Wall', '/gallery'],
+              ['Reels', '/discover'],
+              ['Explore', '/explore'],
+              ['Trending', '/trending'],
+              ['Editorial', '/editorial'],
+            ].map(([l, h]) => (
+              <li>
+                <a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">
+                  {l}{l === 'Gallery Wall' && <span class="ml-1.5 text-[10px] text-senses-accent border border-senses-accent/40 rounded px-1 py-0.5">New</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <!-- Account & Company -->
+        <div>
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4 font-medium">Account</p>
+          <ul class="space-y-2.5">
+            {[
+              ['My Senses', '/my-senses'],
+              ['Settings', '/settings'],
+              ['Collections', '/collections'],
+              ['About', '/about'],
+              ['Creators', '/creators'],
+              ['FAQ', '/faq'],
+            ].map(([l, h]) => (
               <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
             ))}
           </ul>
         </div>
+
       </div>
 
       <div class="border-t border-senses-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
         <p class="text-senses-text-3 text-xs">© 2026 SENSES · All media rights belong to their respective creators.</p>
-        <div class="flex gap-4">
-          <a href="/privacy" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Privacy</a>
-          <a href="/terms"   class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Terms</a>
-          <a href="/faq"     class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">FAQ</a>
+        <div class="flex gap-4 items-center">
+          <a href="/gallery"  class="text-senses-text-3 hover:text-senses-accent text-xs transition-colors">Gallery</a>
+          <a href="/settings" class="text-senses-text-3 hover:text-senses-accent text-xs transition-colors">Settings</a>
+          <a href="/privacy"  class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Privacy</a>
+          <a href="/terms"    class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Terms</a>
         </div>
       </div>
     </div>

@@ -37,6 +37,8 @@ export const GET: APIRoute = async () => {
     url('/trending',    '0.7', 'daily'),
     url('/editorial',   '0.7', 'weekly'),
     url('/my-senses',   '0.5', 'never'),
+    url('/gallery',     '0.8', 'daily'),
+    url('/settings',    '0.4', 'never'),
 
     // Sight sections
     url('/sight/photos',        '0.7'),

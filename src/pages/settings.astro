@@ -1,0 +1,24 @@
+---
+import BaseLayout      from '@/layouts/BaseLayout.astro';
+import { SettingsPage } from '@/components/settings/SettingsPage';
+---
+
+<BaseLayout
+  title="Settings — SENSES"
+  description="Customise your SENSES experience: theme, accent colour, display density, and personal preferences."
+  noIndex={true}
+>
+  <div class="pt-[var(--nav-height)] min-h-screen pb-20">
+
+    <!-- Page header -->
+    <div class="max-w-2xl mx-auto px-4 pt-10 pb-6 border-b border-senses-border">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-2">Customise</p>
+      <h1 class="text-display-xl text-senses-text leading-none mb-2">Settings</h1>
+      <p class="text-senses-text-3 text-sm">All preferences are stored in your browser. No account required.</p>
+    </div>
+
+    <!-- Settings client island -->
+    <SettingsPage client:load />
+
+  </div>
+</BaseLayout>

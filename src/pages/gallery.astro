@@ -1,0 +1,51 @@
+---
+import BaseLayout    from '@/layouts/BaseLayout.astro';
+import { GalleryWall } from '@/components/gallery/GalleryWall';
+import { provider }  from '@/lib/providers';
+
+const [allMedia, allCreators] = await Promise.all([
+  provider.getMedia({}),
+  provider.getCreators(500),
+]);
+---
+
+<BaseLayout
+  title="Gallery Wall — SENSES"
+  description="A full-bleed random wall of every sight and hearing piece in the SENSES catalog. Reshuffled on every visit."
+>
+  <div class="pt-[var(--nav-height)] min-h-screen bg-senses-bg">
+
+    <!-- Hero header -->
+    <div class="max-w-none px-4 md:px-8 pt-10 pb-6 border-b border-senses-border">
+      <div class="max-w-[1440px] mx-auto flex items-end justify-between gap-6">
+        <div class="animate-reveal-up">
+          <p class="text-senses-accent text-xs tracking-[0.25em] uppercase mb-2 font-medium">Random Discovery</p>
+          <h1 class="font-brand text-[clamp(2.5rem,7vw,5rem)] leading-none text-senses-text" style="font-weight:700">
+            Gallery Wall
+          </h1>
+          <p class="text-senses-text-3 text-sm mt-2 max-w-lg">
+            Every piece in the catalog, shuffled fresh. Click any item to dive deeper, or hit Shuffle for a new arrangement.
+          </p>
+        </div>
+        <div class="hidden sm:flex flex-col items-end gap-1 flex-shrink-0 pb-1">
+          <span class="text-senses-text-3 text-xs">{allMedia.length} total pieces</span>
+          <span class="text-[11px] text-senses-text-3/60 italic">reshuffled every visit</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full-bleed gallery island -->
+    <GalleryWall client:load media={allMedia} creators={allCreators} />
+
+  </div>
+</BaseLayout>
+
+<style>
+  @keyframes reveal-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-reveal-up {
+    animation: reveal-up 0.6s cubic-bezier(0.25,0.1,0.25,1) both;
+  }
+</style>

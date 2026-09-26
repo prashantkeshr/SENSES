@@ -11,6 +11,7 @@ interface Props {
   noIndex?:     boolean;
   schema?:      object;
   bodyClass?:   string;
+  noFooter?:    boolean;
 }
 
 const {
@@ -21,6 +22,7 @@ const {
   noIndex = false,
   schema,
   bodyClass = '',
+  noFooter = false,
 } = Astro.props;
 
 const siteUrl  = 'https://senses.dhurta.com';
@@ -89,7 +91,7 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
     <slot />
   </main>
 
-  <footer class="border-t border-senses-border mt-20 py-12 px-4 md:px-8">
+  {!noFooter && <footer class="border-t border-senses-border mt-20 py-12 px-4 md:px-8">
     <div class="max-w-[1440px] mx-auto">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
         <!-- Brand -->
@@ -140,6 +142,6 @@ const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
         </div>
       </div>
     </div>
-  </footer>
+  </footer>}
 </body>
 </html>

@@ -2,8 +2,8 @@ import { useState, useCallback, useEffect } from 'react';
 import type { Media } from '@/types/index';
 import { toggleLike, toggleSave, getLocalState, recordView } from '@lib/utils/localState';
 import { formatCount } from '@lib/utils/formatters';
-import { DownloadModal }          from '@/components/download/DownloadModal';
 import { SaveToCollectionModal }  from '@/components/collections/SaveToCollectionModal';
+import { ShareModal }             from '@/components/ui/ShareModal';
 import { toast }                  from '@/lib/utils/toast';
 
 interface Props {
@@ -14,8 +14,7 @@ export function MediaActions({ media }: Props) {
   const state  = getLocalState();
   const [liked,           setLiked]           = useState(state.likedMediaIds.includes(media.id));
   const [saved,           setSaved]           = useState(state.savedMediaIds.includes(media.id));
-  const [copied,          setCopied]          = useState(false);
-  const [showDownload,    setShowDownload]    = useState(false);
+  const [showShare,       setShowShare]       = useState(false);
   const [showCollection,  setShowCollection]  = useState(false);
 
   useEffect(() => {
@@ -34,14 +33,11 @@ export function MediaActions({ media }: Props) {
     toast(nowSaved ? 'Saved to library' : 'Removed from library', 'success');
   }, [media.id]);
 
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      toast('Link copied to clipboard', 'info');
-      setTimeout(() => setCopied(false), 2000);
-    } catch { toast('Could not copy link', 'error'); }
-  }, []);
+  const handleOpenFullSize = useCallback(() => {
+    const fullUrl = (media.data as { fullUrl?: string; previewUrl?: string }).fullUrl
+      ?? (media.data as { previewUrl?: string }).previewUrl;
+    if (fullUrl) window.open(fullUrl, '_blank', 'noopener,noreferrer');
+  }, [media.data]);
 
   return (
     <>
@@ -88,29 +84,29 @@ export function MediaActions({ media }: Props) {
 
         {/* Share */}
         <button
-          onClick={handleCopy}
+          onClick={() => setShowShare(true)}
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium bg-senses-surface border border-senses-border text-senses-text-2 hover:border-senses-border-2 hover:text-senses-text transition-all duration-200"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/>
           </svg>
-          {copied ? 'Copied!' : 'Share'}
+          Share
         </button>
 
-        {/* Download */}
+        {/* Open Full Size */}
         <button
-          onClick={() => setShowDownload(true)}
+          onClick={handleOpenFullSize}
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium bg-senses-surface border border-senses-border text-senses-text-2 hover:border-senses-border-2 hover:text-senses-text transition-all duration-200"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
           </svg>
-          Download
+          Open Full Size
         </button>
       </div>
 
       {/* Portals */}
-      {showDownload   && <DownloadModal   media={media} onClose={() => setShowDownload(false)} />}
+      {showShare      && <ShareModal media={media} onClose={() => setShowShare(false)} />}
       {showCollection && <SaveToCollectionModal mediaId={media.id} onClose={() => setShowCollection(false)} />}
     </>
   );

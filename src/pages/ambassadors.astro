@@ -1,0 +1,35 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Ambassadors — Senses"
+  description="Become a Senses Ambassador. Represent the platform, grow your audience, and earn exclusive perks."
+>
+  <div class="max-w-4xl mx-auto px-4 py-24 text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-senses-sight/10 border border-senses-sight/25 text-senses-sight text-xs tracking-widest uppercase mb-8">
+      <span class="w-1.5 h-1.5 rounded-full bg-senses-sight animate-pulse inline-block"></span>
+      Coming Soon
+    </div>
+    <h1 class="text-5xl font-light text-senses-text mb-6 leading-tight">
+      Senses <span class="brand-shimmer">Ambassadors</span>
+    </h1>
+    <p class="text-senses-text-2 text-lg leading-relaxed max-w-2xl mx-auto mb-16">
+      A curated program for passionate creators who love Senses and want to help grow the community.
+      Ambassadors get early access to new features, exclusive badges, and a direct line to the Senses team.
+    </p>
+    <div class="grid sm:grid-cols-3 gap-6 text-left mb-16">
+      {[
+        { icon: '🌟', title: 'Early Access', desc: 'Be first to try new features before they launch to the public.' },
+        { icon: '🤝', title: 'Community Voice', desc: 'Share feedback directly with the Senses team and influence the roadmap.' },
+        { icon: '🎁', title: 'Exclusive Perks', desc: 'Special ambassador badge, profile spotlight, and partnership opportunities.' },
+      ].map(f => (
+        <div class="bg-senses-surface border border-senses-border rounded-2xl p-6">
+          <div class="text-3xl mb-3">{f.icon}</div>
+          <h3 class="text-senses-text font-medium mb-2">{f.title}</h3>
+          <p class="text-senses-text-3 text-sm leading-relaxed">{f.desc}</p>
+        </div>
+      ))}
+    </div>
+    <a href="/" class="text-senses-text-3 text-sm hover:text-senses-text transition-colors">← Back to Senses</a>
+  </div>
+</BaseLayout>

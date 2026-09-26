@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Media, Creator, ImageData, AudioData } from '@/types/index';
 import { toggleLike, toggleSave, getLocalState } from '@/lib/utils/localState';
 import { formatCount } from '@/lib/utils/formatters';
+import { ShareModal } from '@/components/ui/ShareModal';
 
 interface Props {
   media:    Media[];
@@ -61,8 +62,9 @@ function ChevronUpIcon() {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function bgImage(m: Media): string {
-  const d = m.data as ImageData & { artworkUrl?: string; thumbnailUrl?: string };
-  return d.artworkUrl ?? d.thumbnailUrl ?? d.previewUrl ?? m.thumbnail;
+  const d = m.data as ImageData & { artworkUrl?: string; thumbnailUrl?: string; fullUrl?: string };
+  if (m.division === 'hearing') return d.artworkUrl ?? d.thumbnailUrl ?? m.thumbnail;
+  return d.fullUrl ?? d.previewUrl ?? d.thumbnailUrl ?? m.thumbnail;
 }
 
 function detailHref(m: Media) {
@@ -109,12 +111,13 @@ function ActionBtn({
 // ── DiscoverFeed ─────────────────────────────────────────────────────────────
 
 export function DiscoverFeed({ media, creators }: Props) {
-  const [current,  setCurrent]  = useState(0);
-  const [liked,    setLiked]    = useState<Set<string>>(new Set());
-  const [saved,    setSaved]    = useState<Set<string>>(new Set());
-  const [shared,   setShared]   = useState<string | null>(null);
-  const [playing,  setPlaying]  = useState<string | null>(null);
-  const [mounted,  setMounted]  = useState(false);
+  const [current,     setCurrent]     = useState(0);
+  const [liked,       setLiked]       = useState<Set<string>>(new Set());
+  const [saved,       setSaved]       = useState<Set<string>>(new Set());
+  const [shareTarget, setShareTarget] = useState<Media | null>(null);
+  const [playing,     setPlaying]     = useState<string | null>(null);
+  const [muted,       setMuted]       = useState(true);
+  const [mounted,     setMounted]     = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const audioRefs    = useRef<Record<string, HTMLAudioElement | null>>({});
 
@@ -205,17 +208,32 @@ export function DiscoverFeed({ media, creators }: Props) {
     });
   };
 
-  const handleShare = async (m: Media) => {
-    const url = window.location.origin + detailHref(m);
-    try { await navigator.clipboard.writeText(url); } catch {}
-    setShared(m.id);
-    setTimeout(() => setShared(null), 2000);
+  const handleShare = (m: Media) => {
+    setShareTarget(m);
   };
 
   if (!mounted) return null;
 
   return (
-    // Scroll-snap container covering the full viewport
+    <>
+    {/* Mute toggle — top-left, above all cards */}
+    <button
+      onClick={() => setMuted(m => !m)}
+      aria-label={muted ? 'Unmute' : 'Mute'}
+      className="fixed z-[60] top-[calc(var(--nav-height)+12px)] left-4 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm border border-white/15 text-white/70 hover:text-white flex items-center justify-center transition-all"
+    >
+      {muted ? (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+          <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM17.78 9.22a.75.75 0 1 0-1.06 1.06L18.44 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06l1.72-1.72 1.72 1.72a.75.75 0 1 0 1.06-1.06L20.56 12l1.72-1.72a.75.75 0 1 0-1.06-1.06l-1.72 1.72-1.72-1.72Z"/>
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+          <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM18.584 5.106a.75.75 0 0 1 1.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 0 1-1.06-1.06 8.25 8.25 0 0 0 0-11.668.75.75 0 0 1 0-1.06Z M15.932 7.757a.75.75 0 0 1 1.061 0 6 6 0 0 1 0 8.486.75.75 0 0 1-1.06-1.061 4.5 4.5 0 0 0 0-6.364.75.75 0 0 1 0-1.06Z"/>
+        </svg>
+      )}
+    </button>
+
+    {/* Scroll-snap container covering the full viewport */}
     <div
       ref={containerRef}
       className="fixed inset-0 overflow-y-scroll"
@@ -374,9 +392,6 @@ export function DiscoverFeed({ media, creators }: Props) {
               <ActionBtn
                 onClick={() => handleShare(m)}
                 label="Share"
-                count={shared === m.id ? 'Copied!' : undefined}
-                active={shared === m.id}
-                activeClass="bg-white/20 border-white/30 text-white"
               >
                 <ShareIcon />
               </ActionBtn>
@@ -449,5 +464,9 @@ export function DiscoverFeed({ media, creators }: Props) {
         );
       })}
     </div>
+
+    {/* Share modal */}
+    {shareTarget && <ShareModal media={shareTarget} onClose={() => setShareTarget(null)} />}
+    </>
   );
 }

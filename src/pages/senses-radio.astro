@@ -1,0 +1,37 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Senses Radio — Senses"
+  description="Senses Radio — curated audio streams for every mood. Ambient, lo-fi, nature sounds, and more. Always on."
+>
+  <div class="max-w-4xl mx-auto px-4 py-24 text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-senses-hearing/10 border border-senses-hearing/25 text-senses-hearing text-xs tracking-widest uppercase mb-8">
+      <span class="w-1.5 h-1.5 rounded-full bg-senses-hearing animate-pulse inline-block"></span>
+      Coming Soon
+    </div>
+    <h1 class="text-5xl font-light text-senses-text mb-6 leading-tight">
+      <span class="brand-shimmer">Senses Radio</span>
+    </h1>
+    <p class="text-senses-text-2 text-lg leading-relaxed max-w-2xl mx-auto mb-16">
+      Continuous, curated audio streams hand-picked by the Senses editorial team. Drift into focus with ambient
+      soundscapes, discover new artists in lo-fi, or let nature sounds carry you away. No skips needed.
+    </p>
+    <div class="grid sm:grid-cols-3 gap-6 text-left mb-16">
+      {[
+        { icon: '🎧', title: 'Curated Channels', desc: 'Ambient Focus, Lo-Fi Study, Nature Sounds, Chill Electronic, and more thematic channels.' },
+        { icon: '🌊', title: 'Mood-Based Streams', desc: 'Streams tuned to your mood — calm, energised, melancholic, joyful. Always the right sound.' },
+        { icon: '🎙️', title: 'Creator Mixes', desc: 'Hand-crafted playlists and mixes submitted by Senses creators from around the world.' },
+      ].map(f => (
+        <div class="bg-senses-surface border border-senses-border rounded-2xl p-6">
+          <div class="text-3xl mb-3">{f.icon}</div>
+          <h3 class="text-senses-text font-medium mb-2">{f.title}</h3>
+          <p class="text-senses-text-3 text-sm leading-relaxed">{f.desc}</p>
+        </div>
+      ))}
+    </div>
+    <a href="/hearing" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-senses-hearing/15 border border-senses-hearing/30 text-senses-hearing hover:bg-senses-hearing/20 transition-all text-sm font-medium">
+      Explore HEARING now
+    </a>
+  </div>
+</BaseLayout>

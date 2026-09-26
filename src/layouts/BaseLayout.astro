@@ -152,42 +152,29 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
 
   {!noFooter && <footer class="border-t border-senses-border mt-20 py-14 px-4 md:px-8">
     <div class="max-w-[1440px] mx-auto">
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 mb-12">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 mb-12">
 
         <!-- Brand -->
-        <div class="col-span-2 sm:col-span-3 lg:col-span-1">
-          <a href="/" class="brand-shimmer text-3xl block mb-3 w-fit">Senses</a>
-          <p class="text-senses-text-3 text-sm leading-relaxed max-w-xs">
+        <div class="col-span-2 sm:col-span-3 lg:col-span-2">
+          <a href="/" class="brand-shimmer text-[2rem] flex items-center gap-2 mb-3 w-fit">
+            <img src="/icons/favicon-dark.png" alt="" width={20} height={20} class="rounded-full opacity-90 flex-shrink-0 dark:block hidden" />
+            <img src="/icons/favicon-light.png" alt="" width={20} height={20} class="rounded-full opacity-90 flex-shrink-0 dark:hidden block" />
+            Senses
+          </a>
+          <p class="text-senses-text-3 text-sm leading-relaxed max-w-xs mb-4">
             A premium discovery platform for visual and audio media. Explore, collect, and feel.
           </p>
-          <div class="flex gap-3 mt-4">
+          <div class="flex gap-3 flex-wrap">
             <span class="inline-flex items-center gap-1.5 text-[11px] text-senses-text-3 border border-senses-border rounded-full px-3 py-1">
               <span class="w-1.5 h-1.5 rounded-full bg-senses-sight inline-block"></span>Sight
             </span>
             <span class="inline-flex items-center gap-1.5 text-[11px] text-senses-text-3 border border-senses-border rounded-full px-3 py-1">
               <span class="w-1.5 h-1.5 rounded-full bg-senses-hearing inline-block"></span>Hearing
             </span>
+            <span class="inline-flex items-center gap-1.5 text-[11px] text-senses-text-3 border border-senses-border rounded-full px-3 py-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-senses-accent inline-block"></span>More coming
+            </span>
           </div>
-        </div>
-
-        <!-- Sight -->
-        <div>
-          <p class="text-senses-sight text-xs tracking-widest uppercase mb-4 font-medium">Sight</p>
-          <ul class="space-y-2.5">
-            {[['Photos', '/sight/photos'], ['Videos', '/sight/videos'], ['Illustrations', '/sight/illustrations'], ['Wallpapers', '/sight/wallpapers']].map(([l, h]) => (
-              <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
-            ))}
-          </ul>
-        </div>
-
-        <!-- Hearing -->
-        <div>
-          <p class="text-senses-hearing text-xs tracking-widest uppercase mb-4 font-medium">Hearing</p>
-          <ul class="space-y-2.5">
-            {[['Music', '/hearing/music'], ['Sounds', '/hearing/sounds'], ['Ambient', '/hearing/ambient'], ['Lo-Fi', '/hearing/lo-fi']].map(([l, h]) => (
-              <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
-            ))}
-          </ul>
         </div>
 
         <!-- Discover -->
@@ -200,42 +187,89 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
               ['Explore', '/explore'],
               ['Trending', '/trending'],
               ['Editorial', '/editorial'],
+              ['Senses Radio', '/senses-radio'],
             ].map(([l, h]) => (
               <li>
-                <a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">
-                  {l}{l === 'Gallery Wall' && <span class="ml-1.5 text-[10px] text-senses-accent border border-senses-accent/40 rounded px-1 py-0.5">New</span>}
+                <a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors inline-flex items-center gap-1.5">
+                  {l}
+                  {(l === 'Senses Radio') && <span class="text-[9px] text-senses-text-3 border border-senses-border rounded px-1 py-0.5">Soon</span>}
                 </a>
               </li>
             ))}
           </ul>
         </div>
 
-        <!-- Account & Company -->
+        <!-- Community -->
         <div>
-          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4 font-medium">Account</p>
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4 font-medium">Community</p>
           <ul class="space-y-2.5">
             {[
+              ['Contests', '/contests'],
+              ['Live', '/live'],
+              ['Ambassadors', '/ambassadors'],
+              ['Forum', '/forum'],
+              ['Creators', '/creators'],
+            ].map(([l, h]) => (
+              <li>
+                <a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors inline-flex items-center gap-1.5">
+                  {l}
+                  <span class="text-[9px] text-senses-text-3 border border-senses-border rounded px-1 py-0.5">Soon</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <!-- Company -->
+        <div>
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4 font-medium">Company</p>
+          <ul class="space-y-2.5">
+            {[
+              ['About Us', '/about'],
+              ['Blog', '/blog'],
+              ['FAQ', '/faq'],
               ['My Senses', '/my-senses'],
               ['Settings', '/settings'],
-              ['Collections', '/collections'],
-              ['About', '/about'],
-              ['Creators', '/creators'],
-              ['FAQ', '/faq'],
             ].map(([l, h]) => (
               <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
             ))}
           </ul>
         </div>
 
+        <!-- Legal + Developers -->
+        <div>
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4 font-medium">Legal</p>
+          <ul class="space-y-2.5 mb-6">
+            {[
+              ['Terms of Service', '/terms'],
+              ['Privacy Policy', '/privacy'],
+              ['License Summary', '/license'],
+              ['Report Content', '/report'],
+            ].map(([l, h]) => (
+              <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
+            ))}
+          </ul>
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Developers</p>
+          <ul class="space-y-2.5">
+            <li>
+              <a href="/api" class="text-senses-text-3 hover:text-senses-text text-sm transition-colors inline-flex items-center gap-1.5">
+                API
+                <span class="text-[9px] text-senses-text-3 border border-senses-border rounded px-1 py-0.5">Soon</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
       </div>
 
       <div class="border-t border-senses-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <p class="text-senses-text-3 text-xs">© 2026 Senses · All media rights belong to their respective creators.</p>
-        <div class="flex gap-4 items-center">
+        <p class="text-senses-text-3 text-xs">© 2026 Senses · All media rights belong to their respective creators · CC0 images via Pixabay</p>
+        <div class="flex gap-4 items-center flex-wrap justify-center">
           <a href="/gallery"  class="text-senses-text-3 hover:text-senses-accent text-xs transition-colors">Gallery</a>
           <a href="/settings" class="text-senses-text-3 hover:text-senses-accent text-xs transition-colors">Settings</a>
           <a href="/privacy"  class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Privacy</a>
           <a href="/terms"    class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Terms</a>
+          <a href="/license"  class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">License</a>
         </div>
       </div>
     </div>

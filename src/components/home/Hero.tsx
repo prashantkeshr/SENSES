@@ -3,6 +3,28 @@ import { useUIStore } from '@/stores/uiStore';
 
 const WORDS = ['See more.', 'Hear more.', 'Feel more.'];
 
+const HERO_IMAGES = [
+  'https://cdn.pixabay.com/photo/2011/03/16/16/13/tree-5378_640.jpg',
+  'https://cdn.pixabay.com/photo/2010/12/13/09/51/fireworks-1758_640.jpg',
+  'https://cdn.pixabay.com/photo/2010/12/28/01/00/flowers-4232_640.jpg',
+  'https://cdn.pixabay.com/photo/2011/05/31/19/44/rose-7634_640.jpg',
+  'https://cdn.pixabay.com/photo/2011/06/29/15/27/wood-8196_640.jpg',
+  'https://cdn.pixabay.com/photo/2010/12/13/09/52/peafowl-1868_640.jpg',
+  'https://cdn.pixabay.com/photo/2012/01/07/21/56/sunflower-11574_640.jpg',
+  'https://cdn.pixabay.com/photo/2012/02/26/10/54/garden-17057_640.jpg',
+];
+
+const OVERLAY_COLORS = [
+  'rgba(255,45,85,0.18)',
+  'rgba(0,100,200,0.15)',
+  'rgba(150,60,200,0.15)',
+  'rgba(255,165,0,0.14)',
+  'rgba(0,180,100,0.14)',
+  'rgba(255,45,85,0.18)',
+  'rgba(255,200,0,0.14)',
+  'rgba(0,180,200,0.13)',
+];
+
 function SearchIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4 flex-shrink-0">
@@ -13,8 +35,10 @@ function SearchIcon() {
 
 export default function Hero() {
   const { openSearch } = useUIStore();
-  const [wordIndex, setWordIndex]   = useState(0);
-  const [visible, setVisible]       = useState(true);
+  const [wordIndex,  setWordIndex]  = useState(0);
+  const [visible,    setVisible]    = useState(true);
+  const [bgIndex,    setBgIndex]    = useState(0);
+  const [bgFading,   setBgFading]   = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -27,18 +51,47 @@ export default function Hero() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBgFading(true);
+      setTimeout(() => {
+        setBgIndex(i => (i + 1) % HERO_IMAGES.length);
+        setBgFading(false);
+      }, 800);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   const popularSearches = ['mountain landscapes', 'rain ambience', 'golden hour', 'ocean waves', 'lo-fi music', 'city night'];
 
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center text-center overflow-hidden px-4">
-      {/* Background: punchy neon gradient */}
+      {/* Rotating background images */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <img
+          key={bgIndex}
+          src={HERO_IMAGES[bgIndex]}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover scale-110"
+          style={{
+            opacity: bgFading ? 0 : 0.18,
+            transition: 'opacity 800ms ease-in-out',
+            filter: 'blur(2px)',
+          }}
+        />
+      </div>
+
+      {/* Dark + neon color-changing overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse 80% 60% at 50% 40%, ${OVERLAY_COLORS[bgIndex]} 0%, transparent 65%)`,
+          transition: 'background 1.2s ease-in-out',
+        }}
+      />
+      {/* Dark vignette */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: [
-          'radial-gradient(ellipse 70% 50% at 15% 20%, rgba(255,45,85,0.13) 0%, transparent 55%)',
-          'radial-gradient(ellipse 60% 45% at 85% 75%, rgba(143,174,192,0.10) 0%, transparent 55%)',
-          'radial-gradient(ellipse 50% 40% at 50% 0%, rgba(255,45,85,0.06) 0%, transparent 50%)',
-          'radial-gradient(ellipse 40% 30% at 50% 100%, rgba(0,184,255,0.05) 0%, transparent 50%)',
-        ].join(', '),
+        background: 'radial-gradient(ellipse 120% 100% at 50% 50%, transparent 30%, rgba(8,8,8,0.6) 100%)',
       }} />
       {/* Subtle grid overlay */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.025]" style={{

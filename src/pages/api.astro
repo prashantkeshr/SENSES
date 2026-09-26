@@ -1,0 +1,49 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="API — Senses"
+  description="Senses API — access our media library, search, and metadata programmatically. Built for developers."
+>
+  <div class="max-w-4xl mx-auto px-4 py-24 text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-senses-surface-2 border border-senses-border text-senses-text-3 text-xs tracking-widest uppercase mb-8">
+      <span class="w-1.5 h-1.5 rounded-full bg-senses-text-3 animate-pulse inline-block"></span>
+      Coming Soon
+    </div>
+    <h1 class="text-5xl font-light text-senses-text mb-6 leading-tight">
+      Senses <span class="brand-shimmer">API</span>
+    </h1>
+    <p class="text-senses-text-2 text-lg leading-relaxed max-w-2xl mx-auto mb-16">
+      A clean, RESTful API for developers to access the Senses media library. Build apps, integrations,
+      creative tools, and workflows on top of our curated collection of CC0 visual and audio content.
+    </p>
+    <div class="grid sm:grid-cols-3 gap-6 text-left mb-16">
+      {[
+        { icon: '🔌', title: 'REST Endpoints', desc: 'Search, browse, and retrieve media with simple JSON responses. No complex setup.' },
+        { icon: '🔑', title: 'API Keys', desc: 'Secure, rate-limited access tokens with generous free-tier quotas for open-source projects.' },
+        { icon: '📖', title: 'Full Docs', desc: 'Interactive documentation with code examples in JavaScript, Python, and cURL.' },
+      ].map(f => (
+        <div class="bg-senses-surface border border-senses-border rounded-2xl p-6">
+          <div class="text-3xl mb-3">{f.icon}</div>
+          <h3 class="text-senses-text font-medium mb-2">{f.title}</h3>
+          <p class="text-senses-text-3 text-sm leading-relaxed">{f.desc}</p>
+        </div>
+      ))}
+    </div>
+    <div class="bg-senses-surface border border-senses-border rounded-2xl p-6 text-left max-w-xl mx-auto font-mono text-sm">
+      <p class="text-senses-text-3 text-[10px] tracking-widest uppercase mb-3">Preview · GET /v1/media</p>
+      <pre class="text-senses-text-2 overflow-x-auto text-xs leading-relaxed">{`{
+  "id": "px-12345",
+  "title": "Cherry Blossom Tree",
+  "type": "photo",
+  "division": "sight",
+  "license": "cc0",
+  "data": {
+    "previewUrl": "https://cdn.pixabay.com/..._640.jpg",
+    "fullUrl":    "https://cdn.pixabay.com/..._1280.jpg",
+    "width": 3264, "height": 2448
+  }
+}`}</pre>
+    </div>
+  </div>
+</BaseLayout>

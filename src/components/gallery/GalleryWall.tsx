@@ -8,7 +8,53 @@ interface Props {
   creators: Creator[];
 }
 
-function shuffle<T>(arr: T[]): T[] {
+function mulberry32(seed: number) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function dailySeed(): number {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+function interleavedShuffle<T extends { category?: string }>(arr: T[], seed: number): T[] {
+  const rng = mulberry32(seed);
+  const groups = new Map<string, T[]>();
+  arr.forEach(item => {
+    const cat = item.category ?? 'other';
+    if (!groups.has(cat)) groups.set(cat, []);
+    groups.get(cat)!.push(item);
+  });
+  const shuffled = new Map<string, T[]>();
+  groups.forEach((items, cat) => {
+    const a = [...items];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    shuffled.set(cat, a);
+  });
+  const result: T[] = [];
+  const keys = Array.from(shuffled.keys());
+  const idxMap = new Map(keys.map(k => [k, 0]));
+  let added = true;
+  while (added) {
+    added = false;
+    for (const key of keys) {
+      const idx = idxMap.get(key)!;
+      const grp = shuffled.get(key)!;
+      if (idx < grp.length) { result.push(grp[idx]); idxMap.set(key, idx + 1); added = true; }
+    }
+  }
+  return result;
+}
+
+function randomShuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -36,15 +82,14 @@ export function GalleryWall({ media, creators }: Props) {
 
   const reshuffle = useCallback(() => {
     setIsShuffling(true);
-    // Brief fade-out effect
     setTimeout(() => {
-      setItems(shuffle(media));
+      setItems(randomShuffle(media));
       setIsShuffling(false);
     }, 180);
   }, [media]);
 
   useEffect(() => {
-    setItems(shuffle(media));
+    setItems(interleavedShuffle(media, dailySeed()));
     setMounted(true);
   }, [media]);
 
@@ -96,7 +141,7 @@ export function GalleryWall({ media, creators }: Props) {
                      text-sm transition-all duration-200 disabled:opacity-40"
         >
           <ShuffleIcon />
-          Shuffle
+          Surprise me
         </button>
       </div>
 

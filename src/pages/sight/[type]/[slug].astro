@@ -77,7 +77,7 @@ const licenseLabels: Record<string, string> = {
       </nav>
 
       <!-- Hero -->
-      <div class="mb-6 rounded-xl overflow-hidden">
+      <div class="mb-6 rounded-xl overflow-hidden" style="touch-action: pinch-zoom;">
         <MediaHero client:load media={media} />
       </div>
 
@@ -187,9 +187,10 @@ const licenseLabels: Record<string, string> = {
               <dl class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
                 {[
                   ['Dimensions', `${imgData.width} × ${imgData.height}`],
-                  ['Aspect Ratio', imgData.aspectRatio],
-                  ['Format', imgData.format],
-                  ['Orientation', media.orientation],
+                  ['Aspect Ratio', String(imgData.aspectRatio ?? (imgData.width && imgData.height ? (imgData.width / imgData.height).toFixed(2) : '—'))],
+                  ['Format', imgData.format ?? 'jpg'],
+                  ['Orientation', media.orientation ?? '—'],
+                  ['Est. File Size', imgData.width && imgData.height ? `~${(imgData.width * imgData.height * 0.25 / 1048576).toFixed(1)} MB` : '—'],
                 ].map(([label, value]) => (
                   <div>
                     <dt class="text-senses-text-3 text-[10px] uppercase tracking-wider mb-0.5">{label}</dt>

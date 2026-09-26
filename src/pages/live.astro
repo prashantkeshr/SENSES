@@ -1,0 +1,35 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+<BaseLayout
+  title="Live — Senses"
+  description="Watch live photography and art sessions. Learn from creators in real time on Senses Live."
+>
+  <div class="max-w-4xl mx-auto px-4 py-24 text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/25 text-red-400 text-xs tracking-widest uppercase mb-8">
+      <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block"></span>
+      Coming Soon
+    </div>
+    <h1 class="text-5xl font-light text-senses-text mb-6 leading-tight">
+      Senses <span class="brand-shimmer">Live</span>
+    </h1>
+    <p class="text-senses-text-2 text-lg leading-relaxed max-w-2xl mx-auto mb-16">
+      Real-time sessions from photographers, videographers, and musicians. Watch creators work, ask questions live,
+      and join a global audience discovering media as it's made.
+    </p>
+    <div class="grid sm:grid-cols-3 gap-6 text-left mb-16">
+      {[
+        { icon: '📡', title: 'Live Streams', desc: 'Watch creators capture, edit, and share in real time. Interact via live chat.' },
+        { icon: '🎬', title: 'Replay Library', desc: 'Missed a session? Every live stream is archived and available to replay.' },
+        { icon: '🔔', title: 'Creator Alerts', desc: 'Follow your favourite creators and get notified the moment they go live.' },
+      ].map(f => (
+        <div class="bg-senses-surface border border-senses-border rounded-2xl p-6">
+          <div class="text-3xl mb-3">{f.icon}</div>
+          <h3 class="text-senses-text font-medium mb-2">{f.title}</h3>
+          <p class="text-senses-text-3 text-sm leading-relaxed">{f.desc}</p>
+        </div>
+      ))}
+    </div>
+    <a href="/" class="text-senses-text-3 text-sm hover:text-senses-text transition-colors">← Back to Senses</a>
+  </div>
+</BaseLayout>

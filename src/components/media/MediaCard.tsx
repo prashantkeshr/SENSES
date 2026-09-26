@@ -68,8 +68,9 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
   const audioUrl = `/hearing/${media.type}/${media.slug}`;
   const href = isAudio ? audioUrl : mediaUrl;
 
-  const imgData = media.data as { thumbnailUrl?: string; artworkUrl?: string };
-  const thumbSrc = imgData.thumbnailUrl ?? imgData.artworkUrl ?? 'https://picsum.photos/seed/fallback/600/400';
+  const imgData = media.data as { thumbnailUrl?: string; artworkUrl?: string; previewUrl?: string; aspectRatio?: number; width?: number; height?: number };
+  const thumbSrc = imgData.previewUrl ?? imgData.thumbnailUrl ?? imgData.artworkUrl ?? 'https://picsum.photos/seed/fallback/600/400';
+  const aspectRatio = imgData.aspectRatio ?? (imgData.width && imgData.height ? +(imgData.width / imgData.height).toFixed(3) : undefined);
 
   return (
     <a
@@ -79,7 +80,7 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
                  hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
     >
       {/* Image / Artwork */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden" style={aspectRatio ? { aspectRatio: String(aspectRatio) } : {}}>
         {imgError ? (
           <div className="w-full aspect-video bg-senses-surface-2 flex items-center justify-center text-senses-text-3 text-sm">
             Media unavailable

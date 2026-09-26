@@ -1,0 +1,123 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Hero from '@/components/home/Hero';
+import CategoryStrip from '@/components/home/CategoryStrip';
+import DiscoverySection from '@/components/home/DiscoverySection';
+import CrossSensorySection from '@/components/home/CrossSensorySection';
+import CreatorsRow from '@/components/home/CreatorsRow';
+import { provider } from '@/lib/providers/index';
+
+// Parallel data fetching
+const [trending, featured, editorsPicks, latest, creators, categories, collections] = await Promise.all([
+  provider.getTrendingMedia(12),
+  provider.getFeaturedMedia(8),
+  provider.getEditorsPicks(6),
+  provider.getLatestMedia(8),
+  provider.getCreators(10),
+  provider.getCategories(),
+  provider.getCollections(),
+]);
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "SENSES — Visual & Audio Media Discovery",
+  "description": "Discover premium photos, videos, illustrations, music, and ambient sounds. SENSES is a media discovery platform combining visual and audio creativity.",
+  "url": "https://senses.dhurta.com",
+};
+---
+
+<BaseLayout
+  title="SENSES — See More. Hear More. Feel More."
+  description="Discover premium photos, videos, illustrations, music, and ambient sounds. A visual and audio media discovery platform."
+  schema={schema}
+>
+  <!-- Hero section -->
+  <Hero client:load />
+
+  <!-- Category strip (sticky on scroll) -->
+  <div class="sticky top-[var(--nav-height)] z-30 bg-senses-bg/95 backdrop-blur-md border-b border-senses-border py-3">
+    <CategoryStrip categories={categories} client:load />
+  </div>
+
+  <!-- Content -->
+  <div class="max-w-[1440px] mx-auto">
+
+    <!-- Trending Now -->
+    <DiscoverySection
+      title="Trending Now"
+      subtitle="Most viewed and saved this week"
+      media={trending}
+      creators={creators}
+      viewAllHref="/explore?sort=trending"
+      layout="masonry"
+      client:load
+    />
+
+    <!-- Editor's Picks -->
+    <div class="border-t border-senses-border">
+      <DiscoverySection
+        title="Editor's Picks"
+        subtitle="Curated highlights from our team"
+        media={editorsPicks}
+        creators={creators}
+        viewAllHref="/explore?filter=editors-pick"
+        layout="row"
+        accent="none"
+        client:load
+      />
+    </div>
+
+    <!-- Cross-Sensory Collections -->
+    <div class="border-t border-senses-border">
+      <CrossSensorySection collections={collections} client:load />
+    </div>
+
+    <!-- SIGHT: Featured -->
+    <div class="border-t border-senses-border">
+      <DiscoverySection
+        title="Visual Discoveries"
+        subtitle="Photography, video, and illustration"
+        media={featured.filter(m => m.division === 'sight')}
+        creators={creators}
+        viewAllHref="/sight"
+        layout="masonry"
+        accent="sight"
+        client:load
+      />
+    </div>
+
+    <!-- Rising Creators -->
+    <div class="border-t border-senses-border">
+      <CreatorsRow creators={creators.filter(c => c.featured)} client:load />
+    </div>
+
+    <!-- HEARING: Featured -->
+    <div class="border-t border-senses-border">
+      <DiscoverySection
+        title="Sonic Spaces"
+        subtitle="Music, ambient, and sound design"
+        media={latest.filter(m => m.division === 'hearing')}
+        creators={creators}
+        viewAllHref="/hearing"
+        layout="row"
+        accent="hearing"
+        client:load
+      />
+    </div>
+
+    <!-- Fresh Discoveries -->
+    <div class="border-t border-senses-border">
+      <DiscoverySection
+        title="Fresh Discoveries"
+        subtitle="Recently added to SENSES"
+        media={latest}
+        creators={creators}
+        viewAllHref="/explore?sort=latest"
+        layout="grid"
+        client:load
+      />
+    </div>
+
+  </div>
+</BaseLayout>

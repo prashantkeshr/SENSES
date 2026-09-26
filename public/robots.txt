@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://senses.dhurta.com/sitemap-index.xml
+
+# Disallow user-specific pages
+Disallow: /my-senses
+Disallow: /saved
+Disallow: /liked
+Disallow: /history
+Disallow: /settings
+Disallow: /search?

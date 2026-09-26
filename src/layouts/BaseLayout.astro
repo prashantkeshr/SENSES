@@ -1,0 +1,145 @@
+---
+import '../styles/globals.css';
+import GlobalNav from '@components/layout/GlobalNav';
+import SearchOverlay from '@components/layout/SearchOverlay';
+
+interface Props {
+  title:        string;
+  description:  string;
+  canonical?:   string;
+  ogImage?:     string;
+  noIndex?:     boolean;
+  schema?:      object;
+  bodyClass?:   string;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogImage,
+  noIndex = false,
+  schema,
+  bodyClass = '',
+} = Astro.props;
+
+const siteUrl  = 'https://senses.dhurta.com';
+const fullUrl  = canonical ?? new URL(Astro.url.pathname, siteUrl).toString();
+const ogImg    = ogImage ?? `${siteUrl}/og-default.jpg`;
+const fullTitle = title.includes('SENSES') ? title : `${title} — SENSES`;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <!-- Primary meta -->
+  <title>{fullTitle}</title>
+  <meta name="description" content={description} />
+  {noIndex && <meta name="robots" content="noindex,nofollow" />}
+  <link rel="canonical" href={fullUrl} />
+
+  <!-- OpenGraph -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content={fullUrl} />
+  <meta property="og:title"       content={fullTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image"       content={ogImg} />
+  <meta property="og:site_name"   content="SENSES" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content={fullTitle} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image"       content={ogImg} />
+
+  <!-- PWA -->
+  <link rel="manifest"            href="/manifest.json" />
+  <meta name="theme-color"        content="#080808" />
+  <meta name="color-scheme"       content="dark" />
+  <link rel="icon"                href="/favicon.svg" type="image/svg+xml" />
+
+  <!-- Structured data -->
+  {schema && (
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  )}
+
+  <!-- Site-wide JSON-LD -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "SENSES",
+    "url": siteUrl,
+    "description": "A premium media discovery platform for visual and audio content.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": { "@type": "EntryPoint", "urlTemplate": `${siteUrl}/search?q={search_term_string}` },
+      "query-input": "required name=search_term_string"
+    }
+  })} />
+</head>
+<body class={`dark ${bodyClass}`}>
+  <GlobalNav client:load />
+  <SearchOverlay client:load />
+
+  <main>
+    <slot />
+  </main>
+
+  <footer class="border-t border-senses-border mt-20 py-12 px-4 md:px-8">
+    <div class="max-w-[1440px] mx-auto">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+        <!-- Brand -->
+        <div class="col-span-2 md:col-span-1">
+          <a href="/" class="text-senses-text font-light tracking-[0.3em] text-sm uppercase block mb-3">SENSES</a>
+          <p class="text-senses-text-3 text-sm leading-relaxed max-w-xs">
+            A premium discovery platform for visual and audio media. Explore, collect, and feel.
+          </p>
+        </div>
+
+        <!-- Sight -->
+        <div>
+          <p class="text-senses-sight text-xs tracking-widest uppercase mb-3 font-medium">Sight</p>
+          <ul class="space-y-2">
+            {[['Photos', '/sight/photos'], ['Videos', '/sight/videos'], ['Illustrations', '/sight/illustrations'], ['Wallpapers', '/sight/wallpapers']].map(([l, h]) => (
+              <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
+            ))}
+          </ul>
+        </div>
+
+        <!-- Hearing -->
+        <div>
+          <p class="text-senses-hearing text-xs tracking-widest uppercase mb-3 font-medium">Hearing</p>
+          <ul class="space-y-2">
+            {[['Music', '/hearing/music'], ['Sounds', '/hearing/sounds'], ['Ambient', '/hearing/ambient']].map(([l, h]) => (
+              <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
+            ))}
+          </ul>
+        </div>
+
+        <!-- Company -->
+        <div>
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Company</p>
+          <ul class="space-y-2">
+            {[['About', '/about'], ['Creators', '/creators'], ['Licensing', '/licensing'], ['Privacy', '/privacy'], ['Terms', '/terms']].map(([l, h]) => (
+              <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div class="border-t border-senses-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-senses-text-3 text-xs">© 2026 SENSES · All media rights belong to their respective creators.</p>
+        <div class="flex gap-4">
+          <a href="/privacy" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Privacy</a>
+          <a href="/terms"   class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Terms</a>
+          <a href="/faq"     class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">FAQ</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

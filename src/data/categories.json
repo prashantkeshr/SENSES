@@ -1,0 +1,122 @@
+[
+  {
+    "id": "cat-001",
+    "slug": "nature",
+    "label": "Nature",
+    "description": "Landscapes, wildlife, forests, oceans, and the natural world in all its forms.",
+    "division": "sight",
+    "icon": "mountain",
+    "mediaCount": 2840,
+    "featured": true,
+    "coverImage": "https://picsum.photos/seed/category-nature/800/500",
+    "moods": ["peaceful", "awe-inspiring", "meditative"]
+  },
+  {
+    "id": "cat-002",
+    "slug": "urban",
+    "label": "Urban",
+    "description": "Cities, architecture, streets, night life, and the geometry of human spaces.",
+    "division": "sight",
+    "icon": "building",
+    "mediaCount": 1920,
+    "featured": true,
+    "coverImage": "https://picsum.photos/seed/category-urban/800/500",
+    "moods": ["dynamic", "cinematic", "atmospheric"]
+  },
+  {
+    "id": "cat-003",
+    "slug": "minimal",
+    "label": "Minimal",
+    "description": "Simplicity, negative space, geometry, and the power of restraint.",
+    "division": "sight",
+    "icon": "circle",
+    "mediaCount": 980,
+    "featured": true,
+    "coverImage": "https://picsum.photos/seed/category-minimal/800/500",
+    "moods": ["calm", "focused", "clean"]
+  },
+  {
+    "id": "cat-004",
+    "slug": "abstract",
+    "label": "Abstract",
+    "description": "Textures, patterns, forms without literal subject — pure visual experience.",
+    "division": "sight",
+    "icon": "layers",
+    "mediaCount": 1150,
+    "featured": false,
+    "coverImage": "https://picsum.photos/seed/category-abstract/800/500",
+    "moods": ["energetic", "creative", "mysterious"]
+  },
+  {
+    "id": "cat-005",
+    "slug": "cinematic",
+    "label": "Cinematic",
+    "description": "Film-quality imagery and video with dramatic lighting, movement, and narrative feel.",
+    "division": "sight",
+    "icon": "film",
+    "mediaCount": 740,
+    "featured": true,
+    "coverImage": "https://picsum.photos/seed/category-cinematic/800/500",
+    "moods": ["dramatic", "cinematic", "intense"]
+  },
+  {
+    "id": "cat-006",
+    "slug": "illustration",
+    "label": "Illustration",
+    "description": "Digital art, hand-drawn styles, concept art, and creative interpretations.",
+    "division": "sight",
+    "icon": "pen",
+    "mediaCount": 620,
+    "featured": false,
+    "coverImage": "https://picsum.photos/seed/category-illustration/800/500",
+    "moods": ["creative", "whimsical", "expressive"]
+  },
+  {
+    "id": "cat-007",
+    "slug": "ambient",
+    "label": "Ambient",
+    "description": "Atmospheric soundscapes for focus, relaxation, and immersive environments.",
+    "division": "hearing",
+    "icon": "waves",
+    "mediaCount": 1340,
+    "featured": true,
+    "coverImage": "https://picsum.photos/seed/category-ambient/800/500",
+    "moods": ["peaceful", "meditative", "focused"]
+  },
+  {
+    "id": "cat-008",
+    "slug": "nature-sounds",
+    "label": "Nature Sounds",
+    "description": "Field recordings from forests, coasts, mountains, rain, and wildlife.",
+    "division": "hearing",
+    "icon": "tree",
+    "mediaCount": 890,
+    "featured": true,
+    "coverImage": "https://picsum.photos/seed/category-nature-sounds/800/500",
+    "moods": ["peaceful", "grounding", "restorative"]
+  },
+  {
+    "id": "cat-009",
+    "slug": "cinematic-music",
+    "label": "Cinematic Music",
+    "description": "Orchestral and hybrid scores, film music, and emotionally charged compositions.",
+    "division": "hearing",
+    "icon": "music",
+    "mediaCount": 560,
+    "featured": true,
+    "coverImage": "https://picsum.photos/seed/category-cinematic-music/800/500",
+    "moods": ["dramatic", "emotional", "cinematic"]
+  },
+  {
+    "id": "cat-010",
+    "slug": "lo-fi",
+    "label": "Lo-Fi",
+    "description": "Mellow, nostalgic beats for studying, creating, and slow afternoons.",
+    "division": "hearing",
+    "icon": "headphones",
+    "mediaCount": 430,
+    "featured": false,
+    "coverImage": "https://picsum.photos/seed/category-lo-fi/800/500",
+    "moods": ["relaxed", "nostalgic", "focused"]
+  }
+]

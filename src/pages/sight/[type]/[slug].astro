@@ -95,7 +95,7 @@ const licenseLabels: Record<string, string> = {
           <h1 class="text-display-lg text-senses-text leading-tight mb-1">{media.title}</h1>
           {creator && (
             <p class="text-senses-text-3 text-sm">
-              by <a href={`/creators/${creator.username}`} class="text-senses-text-2 hover:text-senses-text transition-colors">{creator.displayName}</a>
+              by <a href={`/creator/${creator.id}`} class="text-senses-text-2 hover:text-senses-text transition-colors">{creator.displayName}</a>
             </p>
           )}
         </div>
@@ -238,7 +238,7 @@ const licenseLabels: Record<string, string> = {
                 ))}
               </div>
               <a
-                href={`/creators/${creator.username}`}
+                href={`/creator/${creator.id}`}
                 class="block text-center text-xs py-2 rounded-lg bg-senses-surface-2 border border-senses-border text-senses-text-2 hover:border-senses-border-2 hover:text-senses-text transition-all"
               >
                 View Profile
@@ -319,7 +319,7 @@ const licenseLabels: Record<string, string> = {
             <h2 class="text-senses-text text-sm font-medium">
               More by <span class="text-senses-sight">{creator.displayName}</span>
             </h2>
-            <a href={`/creators/${creator.username}`} class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">
+            <a href={`/creator/${creator.id}`} class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">
               View all →
             </a>
           </div>

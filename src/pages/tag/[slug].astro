@@ -1,0 +1,120 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import { provider }  from '@/lib/providers';
+import { slugToTitle } from '@/lib/utils/formatters';
+
+export async function getStaticPaths() {
+  const allMedia = await provider.getMedia();
+  // Collect all unique tags across all media
+  const tagSet = new Set<string>();
+  allMedia.forEach(m => m.tags.forEach(t => tagSet.add(t)));
+  return [...tagSet].map(tag => ({
+    params: { slug: tag },
+    props:  { tag },
+  }));
+}
+
+interface Props { tag: string }
+const { tag } = Astro.props;
+
+const [allMedia, allCreators] = await Promise.all([
+  provider.getMedia(),
+  provider.getCreators(50),
+]);
+
+const items = allMedia.filter(m => m.tags.includes(tag));
+const creatorMap = Object.fromEntries(allCreators.map(c => [c.id, c]));
+
+const sightItems   = items.filter(m => m.division === 'sight');
+const hearingItems = items.filter(m => m.division === 'hearing');
+
+const tagTitle = slugToTitle(tag);
+---
+
+<BaseLayout
+  title={`#${tagTitle} — SENSES`}
+  description={`Browse ${items.length} items tagged "${tagTitle}" across visual and audio media on SENSES.`}
+>
+  <div class="pt-[var(--nav-height)] pb-20">
+
+    <!-- Header -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-10 border-b border-senses-border mb-8">
+      <nav class="flex items-center gap-1.5 text-xs text-senses-text-3 mb-4">
+        <a href="/" class="hover:text-senses-text transition-colors">SENSES</a>
+        <span>/</span>
+        <a href={`/search?q=${encodeURIComponent(tag)}`} class="hover:text-senses-text transition-colors">Search</a>
+        <span>/</span>
+        <span class="text-senses-text">#{tag}</span>
+      </nav>
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-2">Tag</p>
+          <h1 class="text-display-lg text-senses-text leading-none">#{tagTitle}</h1>
+          <p class="text-senses-text-3 text-sm mt-2">
+            {items.length} items tagged with "{tag}"
+          </p>
+        </div>
+        <div class="flex gap-4">
+          {sightItems.length > 0 && (
+            <div class="text-center">
+              <p class="text-senses-sight text-xl font-light">{sightItems.length}</p>
+              <p class="text-senses-text-3 text-[10px] uppercase tracking-wider">visual</p>
+            </div>
+          )}
+          {hearingItems.length > 0 && (
+            <div class="text-center">
+              <p class="text-senses-hearing text-xl font-light">{hearingItems.length}</p>
+              <p class="text-senses-text-3 text-[10px] uppercase tracking-wider">audio</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+
+      {items.length === 0 && (
+        <div class="py-24 text-center">
+          <p class="text-senses-text-3 text-lg">No items tagged #{tag}</p>
+          <a href="/search" class="mt-4 inline-block text-senses-text-3 hover:text-senses-text text-sm transition-colors">
+            ← Back to search
+          </a>
+        </div>
+      )}
+
+      {sightItems.length > 0 && (
+        <section class="mb-12">
+          {hearingItems.length > 0 && (
+            <div class="flex items-center gap-2 mb-5">
+              <div class="w-2 h-2 rounded-full bg-senses-sight" />
+              <h2 class="text-senses-sight text-xs tracking-widest uppercase font-medium">Visual</h2>
+            </div>
+          )}
+          <div class="masonry-grid">
+            {sightItems.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {hearingItems.length > 0 && (
+        <section class="mb-12">
+          {sightItems.length > 0 && (
+            <div class="flex items-center gap-2 mb-5">
+              <div class="w-2 h-2 rounded-full bg-senses-hearing" />
+              <h2 class="text-senses-hearing text-xs tracking-widest uppercase font-medium">Audio</h2>
+            </div>
+          )}
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {hearingItems.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+    </div>
+  </div>
+</BaseLayout>

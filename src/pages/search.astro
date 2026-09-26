@@ -1,0 +1,41 @@
+---
+import BaseLayout  from '@/layouts/BaseLayout.astro';
+import { SearchPage } from '@/components/search/SearchPage';
+import { provider }   from '@/lib/providers';
+
+const [allMedia, allCreators] = await Promise.all([
+  provider.getMedia(),
+  provider.getCreators(50),
+]);
+---
+
+<BaseLayout
+  title="Search — SENSES"
+  description="Search thousands of premium photos, videos, music, and ambient sounds. Filter by mood, style, category, and more."
+>
+  <div class="pt-[var(--nav-height)] pb-20">
+
+    <!-- Header -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-10 border-b border-senses-border mb-8">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-senses-sight text-xs tracking-widest uppercase font-medium">SIGHT</span>
+        <span class="text-senses-text-3 text-xs">×</span>
+        <span class="text-senses-hearing text-xs tracking-widest uppercase font-medium">HEARING</span>
+      </div>
+      <h1 class="text-display-lg text-senses-text leading-tight">Search</h1>
+      <p class="text-senses-text-3 text-sm mt-1 max-w-lg">
+        {allMedia.length} items across visual and audio media
+      </p>
+    </div>
+
+    <!-- Search island -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+      <SearchPage
+        client:load
+        media={allMedia}
+        creators={allCreators}
+      />
+    </div>
+
+  </div>
+</BaseLayout>

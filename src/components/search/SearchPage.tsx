@@ -1,0 +1,337 @@
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import Fuse from 'fuse.js';
+import type { Media, Creator, MediaDivision, MediaType } from '@/types/index';
+import { MediaCard } from '@/components/media/MediaCard';
+import { mediaTypeLabel, formatCount } from '@/lib/utils/formatters';
+import { addSearchHistory } from '@/lib/utils/localState';
+
+interface Props {
+  media:    Media[];
+  creators: Creator[];
+}
+
+type SortKey = 'relevance' | 'latest' | 'trending' | 'popular';
+
+const SIGHT_TYPES:   MediaType[] = ['photo', 'video', 'illustration', 'vector', '3d', 'gif'];
+const HEARING_TYPES: MediaType[] = ['music', 'sound', 'ambient', 'loop'];
+
+const TYPE_LABELS: Partial<Record<MediaType, string>> = {
+  photo: 'Photos', video: 'Videos', illustration: 'Illustrations',
+  music: 'Music',  sound: 'Sounds',  ambient: 'Ambient', loop: 'Lo-Fi',
+};
+
+function SearchIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+    </svg>
+  );
+}
+
+export function SearchPage({ media, creators }: Props) {
+  const [query,      setQuery]      = useState('');
+  const [division,   setDivision]   = useState<MediaDivision | 'all'>('all');
+  const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all');
+  const [sort,       setSort]       = useState<SortKey>('relevance');
+  const [mounted,    setMounted]    = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const creatorMap = useMemo(
+    () => Object.fromEntries(creators.map(c => [c.id, c])),
+    [creators]
+  );
+
+  const fuse = useMemo(() => new Fuse(media, {
+    keys: [
+      { name: 'title',       weight: 3   },
+      { name: 'description', weight: 2   },
+      { name: 'tags',        weight: 2   },
+      { name: 'moods',       weight: 1   },
+      { name: 'styles',      weight: 1   },
+      { name: 'category',    weight: 1.5 },
+    ],
+    threshold: 0.35,
+    includeScore: true,
+  }), [media]);
+
+  // Bootstrap from URL params once mounted
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const q   = p.get('q')        ?? '';
+    const div = p.get('division') as MediaDivision | null;
+    const typ = p.get('type')     as MediaType | null;
+    const srt = p.get('sort')     as SortKey | null;
+    setQuery(q);
+    if (div) setDivision(div);
+    if (typ) setTypeFilter(typ);
+    if (srt) setSort(srt);
+    setMounted(true);
+    if (q) addSearchHistory(q);
+  }, []);
+
+  // Sync URL
+  useEffect(() => {
+    if (!mounted) return;
+    const p = new URLSearchParams();
+    if (query)              p.set('q',        query);
+    if (division !== 'all') p.set('division', division);
+    if (typeFilter !== 'all') p.set('type',   typeFilter);
+    if (sort !== 'relevance') p.set('sort',   sort);
+    const newUrl = `${window.location.pathname}${p.toString() ? '?' + p.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
+  }, [query, division, typeFilter, sort, mounted]);
+
+  // Reset type filter when division changes
+  const handleDivision = useCallback((d: MediaDivision | 'all') => {
+    setDivision(d);
+    setTypeFilter('all');
+  }, []);
+
+  const results = useMemo(() => {
+    let items: Media[];
+    if (!query.trim()) {
+      items = [...media];
+    } else {
+      items = fuse.search(query).map(r => r.item);
+    }
+    if (division !== 'all')   items = items.filter(m => m.division === division);
+    if (typeFilter !== 'all') items = items.filter(m => m.type === typeFilter);
+
+    if (sort === 'latest')   return [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    if (sort === 'trending')  return [...items].sort((a, b) => (b.trending ? 1 : 0) - (a.trending ? 1 : 0) || b.stats.views - a.stats.views);
+    if (sort === 'popular')   return [...items].sort((a, b) => b.stats.views - a.stats.views);
+    // relevance: fuse order when querying, otherwise trending-first
+    if (!query.trim()) return [...items].sort((a, b) => (b.trending ? 1 : 0) - (a.trending ? 1 : 0));
+    return items;
+  }, [query, division, typeFilter, sort, fuse, media]);
+
+  const sightResults   = useMemo(() => results.filter(m => m.division === 'sight'),   [results]);
+  const hearingResults = useMemo(() => results.filter(m => m.division === 'hearing'), [results]);
+
+  const availableTypes = useMemo(() => {
+    const base = division === 'all' ? media : media.filter(m => m.division === division);
+    return [...new Set(base.map(m => m.type))];
+  }, [media, division]);
+
+  const SORTS: { key: SortKey; label: string }[] = [
+    { key: 'relevance', label: 'Relevance' },
+    { key: 'latest',    label: 'Latest'    },
+    { key: 'trending',  label: 'Trending'  },
+    { key: 'popular',   label: 'Popular'   },
+  ];
+
+  // No-query suggestions
+  const suggestions = ['mountains', 'rain', 'lo-fi', 'ocean', 'minimal', 'city night', 'cinematic', 'ambient'];
+
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center py-32 text-senses-text-3 text-sm">
+        <SearchIcon className="w-5 h-5 mr-2 opacity-50" />
+        <span>Loading search…</span>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* ── Search input ─────────────────────────────────────── */}
+      <div className="mb-6">
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-senses-text-3 pointer-events-none">
+            <SearchIcon className="w-5 h-5" />
+          </span>
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Escape') { setQuery(''); inputRef.current?.blur(); } }}
+            placeholder="Search photos, sounds, music, moods, creators…"
+            className="w-full bg-senses-surface border border-senses-border rounded-2xl pl-12 pr-12 py-4 text-senses-text text-base placeholder:text-senses-text-3 outline-none focus:border-senses-border-2 transition-colors"
+            autoComplete="off"
+            spellCheck="false"
+          />
+          {query && (
+            <button
+              onClick={() => { setQuery(''); inputRef.current?.focus(); }}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-senses-text-3 hover:text-senses-text transition-colors"
+              aria-label="Clear"
+            >
+              <XIcon />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Filter bar ───────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-2 mb-6 pb-6 border-b border-senses-border">
+        {/* Division */}
+        <div className="flex gap-1 p-1 rounded-xl bg-senses-surface border border-senses-border">
+          {(['all', 'sight', 'hearing'] as const).map(d => (
+            <button
+              key={d}
+              onClick={() => handleDivision(d)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                division === d
+                  ? d === 'sight'   ? 'bg-senses-sight   text-senses-bg'
+                  : d === 'hearing' ? 'bg-senses-hearing text-senses-bg'
+                  :                   'bg-senses-surface-3 text-senses-text'
+                  : 'text-senses-text-3 hover:text-senses-text'
+              }`}
+            >
+              {d === 'all' ? 'All' : d === 'sight' ? 'SIGHT' : 'HEARING'}
+            </button>
+          ))}
+        </div>
+
+        {/* Type chips */}
+        {availableTypes.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {availableTypes.map(t => (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(typeFilter === t ? 'all' : t)}
+                className={`px-3 py-1.5 rounded-lg text-xs transition-all border ${
+                  typeFilter === t
+                    ? 'bg-senses-surface-3 border-senses-border-2 text-senses-text'
+                    : 'bg-transparent border-senses-border text-senses-text-3 hover:text-senses-text hover:border-senses-border-2'
+                }`}
+              >
+                {TYPE_LABELS[t] ?? mediaTypeLabel(t)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Sort */}
+        <div className="ml-auto flex gap-1">
+          {SORTS.map(s => (
+            <button
+              key={s.key}
+              onClick={() => setSort(s.key)}
+              className={`px-3 py-1.5 rounded-lg text-xs transition-all border ${
+                sort === s.key
+                  ? 'bg-senses-surface-3 border-senses-border-2 text-senses-text'
+                  : 'bg-transparent border-transparent text-senses-text-3 hover:text-senses-text'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── No-query state ───────────────────────────────────── */}
+      {!query.trim() && (
+        <div className="mb-8">
+          <p className="text-senses-text-3 text-sm mb-3">Try searching for:</p>
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map(s => (
+              <button
+                key={s}
+                onClick={() => { setQuery(s); addSearchHistory(s); }}
+                className="px-4 py-2 rounded-full bg-senses-surface border border-senses-border text-senses-text-3 text-sm hover:text-senses-text hover:border-senses-border-2 transition-all"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Results header ───────────────────────────────────── */}
+      <div className="flex items-center justify-between mb-6">
+        <p className="text-senses-text-2 text-sm">
+          {query.trim()
+            ? <><span className="text-senses-text font-medium">{results.length}</span> {results.length === 1 ? 'result' : 'results'} for <span className="text-senses-accent">"{query}"</span></>
+            : <><span className="text-senses-text font-medium">{results.length}</span> items</>
+          }
+        </p>
+        {results.length > 0 && (
+          <p className="text-senses-text-3 text-xs">
+            {sightResults.length > 0 && <span className="text-senses-sight">{sightResults.length} visual</span>}
+            {sightResults.length > 0 && hearingResults.length > 0 && <span className="mx-1 opacity-30">·</span>}
+            {hearingResults.length > 0 && <span className="text-senses-hearing">{hearingResults.length} audio</span>}
+          </p>
+        )}
+      </div>
+
+      {/* ── Empty results ────────────────────────────────────── */}
+      {results.length === 0 && query.trim() && (
+        <div className="py-24 text-center">
+          <SearchIcon className="w-10 h-10 mx-auto text-senses-text-3 opacity-30 mb-4" />
+          <p className="text-senses-text-2 text-lg mb-2">No results for "{query}"</p>
+          <p className="text-senses-text-3 text-sm mb-6">Try different words, or explore by browsing below.</p>
+          <button
+            onClick={() => setQuery('')}
+            className="px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 transition-all"
+          >
+            Clear search
+          </button>
+        </div>
+      )}
+
+      {/* ── Results ──────────────────────────────────────────── */}
+      {results.length > 0 && (
+        <>
+          {/* SIGHT section */}
+          {(division === 'all' || division === 'sight') && sightResults.length > 0 && (
+            <section className="mb-12">
+              {division === 'all' && (
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-2 h-2 rounded-full bg-senses-sight" />
+                  <h2 className="text-senses-sight text-xs tracking-widest uppercase font-medium">
+                    Visual · {sightResults.length} {sightResults.length === 1 ? 'item' : 'items'}
+                  </h2>
+                </div>
+              )}
+              <div className="masonry-grid">
+                {sightResults.map(item => (
+                  <MediaCard
+                    key={item.id}
+                    client:visible
+                    media={item}
+                    creator={creatorMap[item.creator]}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* HEARING section */}
+          {(division === 'all' || division === 'hearing') && hearingResults.length > 0 && (
+            <section className="mb-12">
+              {division === 'all' && (
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-2 h-2 rounded-full bg-senses-hearing" />
+                  <h2 className="text-senses-hearing text-xs tracking-widest uppercase font-medium">
+                    Audio · {hearingResults.length} {hearingResults.length === 1 ? 'item' : 'items'}
+                  </h2>
+                </div>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {hearingResults.map(item => (
+                  <MediaCard
+                    key={item.id}
+                    client:visible
+                    media={item}
+                    creator={creatorMap[item.creator]}
+                    layout="grid"
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

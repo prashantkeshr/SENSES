@@ -1,0 +1,151 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import { provider }  from '@/lib/providers';
+import { MOOD_META, MOOD_GROUP_LABEL } from '@/lib/data/moodMeta';
+
+export async function getStaticPaths() {
+  const allMedia = await provider.getMedia();
+  const moodSet  = new Set<string>();
+  allMedia.forEach(m => m.moods.forEach(mood => moodSet.add(mood)));
+  return [...moodSet].map(slug => ({ params: { slug }, props: { slug } }));
+}
+
+interface Props { slug: string }
+const { slug } = Astro.props;
+
+const [allMedia, allCreators] = await Promise.all([
+  provider.getMedia(),
+  provider.getCreators(50),
+]);
+
+const items       = allMedia.filter(m => m.moods.includes(slug));
+const creatorMap  = Object.fromEntries(allCreators.map(c => [c.id, c]));
+const sightItems  = items.filter(m => m.division === 'sight');
+const hearingItems= items.filter(m => m.division === 'hearing');
+
+const meta = MOOD_META[slug];
+const label = slug.charAt(0).toUpperCase() + slug.slice(1);
+const groupLabel = meta ? MOOD_GROUP_LABEL[meta.group] : '';
+
+// Related moods: other moods that co-appear with this one across items
+const coMoodCount: Record<string, number> = {};
+items.forEach(m =>
+  m.moods.forEach(mood => {
+    if (mood !== slug) coMoodCount[mood] = (coMoodCount[mood] ?? 0) + 1;
+  }),
+);
+const relatedMoods = Object.entries(coMoodCount)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 8)
+  .map(([m]) => m);
+---
+
+<BaseLayout
+  title={`${label} — SENSES Mood`}
+  description={meta?.description ?? `Browse ${items.length} ${label.toLowerCase()} media across visual and audio on SENSES.`}
+>
+  <div class="pt-[var(--nav-height)] pb-20">
+
+    <!-- Header -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-10 border-b border-senses-border mb-8">
+      <nav class="flex items-center gap-1.5 text-xs text-senses-text-3 mb-4">
+        <a href="/" class="hover:text-senses-text transition-colors">SENSES</a>
+        <span>/</span>
+        <a href="/explore" class="hover:text-senses-text transition-colors">Explore</a>
+        <span>/</span>
+        <span class="text-senses-text">Mood</span>
+      </nav>
+
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          {groupLabel && (
+            <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-2">{groupLabel}</p>
+          )}
+          <h1 class="text-display-lg text-senses-text leading-none capitalize">{label}</h1>
+          {meta && (
+            <p class="text-senses-text-2 text-base leading-relaxed mt-2 max-w-lg">{meta.description}</p>
+          )}
+          <p class="text-senses-text-3 text-sm mt-2">{items.length} items match this mood</p>
+        </div>
+        <div class="flex gap-4 flex-shrink-0">
+          {sightItems.length > 0 && (
+            <div class="text-center">
+              <p class="text-senses-sight text-xl font-light">{sightItems.length}</p>
+              <p class="text-senses-text-3 text-[10px] uppercase tracking-wider">visual</p>
+            </div>
+          )}
+          {hearingItems.length > 0 && (
+            <div class="text-center">
+              <p class="text-senses-hearing text-xl font-light">{hearingItems.length}</p>
+              <p class="text-senses-text-3 text-[10px] uppercase tracking-wider">audio</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <!-- Media -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+
+      {items.length === 0 && (
+        <div class="py-24 text-center">
+          <p class="text-senses-text-3 text-lg">No items with this mood yet</p>
+          <a href="/explore" class="mt-4 inline-block text-senses-text-3 hover:text-senses-text text-sm transition-colors">
+            ← Back to Explore
+          </a>
+        </div>
+      )}
+
+      {sightItems.length > 0 && (
+        <section class="mb-12">
+          {hearingItems.length > 0 && (
+            <div class="flex items-center gap-2 mb-5">
+              <div class="w-2 h-2 rounded-full bg-senses-sight" />
+              <h2 class="text-senses-sight text-xs tracking-widest uppercase font-medium">Visual</h2>
+            </div>
+          )}
+          <div class="masonry-grid">
+            {sightItems.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {hearingItems.length > 0 && (
+        <section class="mb-12">
+          {sightItems.length > 0 && (
+            <div class="flex items-center gap-2 mb-5">
+              <div class="w-2 h-2 rounded-full bg-senses-hearing" />
+              <h2 class="text-senses-hearing text-xs tracking-widest uppercase font-medium">Audio</h2>
+            </div>
+          )}
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {hearingItems.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Related moods -->
+      {relatedMoods.length > 0 && (
+        <section class="mt-12 pt-10 border-t border-senses-border">
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Related moods</p>
+          <div class="flex flex-wrap gap-2">
+            {relatedMoods.map(mood => (
+              <a
+                href={`/mood/${mood}`}
+                class="px-4 py-2 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 hover:text-senses-text transition-all capitalize"
+              >
+                {mood}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+    </div>
+  </div>
+</BaseLayout>

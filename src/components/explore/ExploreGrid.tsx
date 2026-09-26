@@ -10,15 +10,18 @@ interface Props {
   media:            Media[];
   creators:         Creator[];
   initialDivision?: Division;
+  initialMood?:     string;
 }
 
 const PAGE = 12;
 
-export function ExploreGrid({ media, creators, initialDivision = 'all' }: Props) {
-  const [division,   setDivision]   = useState<Division>(initialDivision);
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [sort,       setSort]       = useState<Sort>('trending');
-  const [page,       setPage]       = useState(1);
+export function ExploreGrid({ media, creators, initialDivision = 'all', initialMood = 'all' }: Props) {
+  const [division,    setDivision]   = useState<Division>(initialDivision);
+  const [typeFilter,  setTypeFilter] = useState('all');
+  const [moodFilter,  setMoodFilter] = useState(initialMood);
+  const [sort,        setSort]       = useState<Sort>('trending');
+  const [page,        setPage]       = useState(1);
+  const [showMoods,   setShowMoods]  = useState(initialMood !== 'all');
 
   const creatorMap = useMemo(
     () => Object.fromEntries(creators.map(c => [c.id, c])),
@@ -34,10 +37,19 @@ export function ExploreGrid({ media, creators, initialDivision = 'all' }: Props)
     return ['all', ...Array.from(types)];
   }, [media, division]);
 
+  const availableMoods = useMemo(() => {
+    const moodCount: Record<string, number> = {};
+    media
+      .filter(m => division === 'all' || m.division === division)
+      .forEach(m => m.moods.forEach(mood => { moodCount[mood] = (moodCount[mood] ?? 0) + 1; }));
+    return Object.entries(moodCount).sort((a, b) => b[1] - a[1]).map(([mood]) => mood);
+  }, [media, division]);
+
   const filtered = useMemo(() => {
     let items = media;
-    if (division !== 'all')  items = items.filter(m => m.division === division);
+    if (division !== 'all')   items = items.filter(m => m.division === division);
     if (typeFilter !== 'all') items = items.filter(m => m.type === typeFilter);
+    if (moodFilter !== 'all') items = items.filter(m => m.moods.includes(moodFilter));
 
     return [...items].sort((a, b) => {
       if (sort === 'trending') {
@@ -55,6 +67,7 @@ export function ExploreGrid({ media, creators, initialDivision = 'all' }: Props)
   const handleDivision = (d: Division) => {
     setDivision(d);
     setTypeFilter('all');
+    setMoodFilter('all');
     setPage(1);
   };
 
@@ -122,7 +135,49 @@ export function ExploreGrid({ media, creators, initialDivision = 'all' }: Props)
               </button>
             ))}
           </div>
+
+          {/* Mood toggle */}
+          <button
+            onClick={() => { setShowMoods(v => !v); if (showMoods) { setMoodFilter('all'); setPage(1); } }}
+            className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] border transition-all duration-150
+              ${moodFilter !== 'all'
+                ? 'bg-senses-accent/15 border-senses-accent/40 text-senses-accent'
+                : showMoods
+                  ? 'bg-senses-surface-2 border-senses-border text-senses-text'
+                  : 'border-transparent text-senses-text-3 hover:text-senses-text'}`}
+          >
+            Mood
+            {moodFilter !== 'all' && <span className="capitalize">{moodFilter}</span>}
+            <span className={`transition-transform duration-150 ${showMoods ? 'rotate-180' : ''}`}>▾</span>
+          </button>
         </div>
+
+        {/* Mood chips row */}
+        {showMoods && (
+          <div className="max-w-[1440px] mx-auto px-4 md:px-8 pb-2.5 flex flex-wrap gap-1.5">
+            <button
+              onClick={() => { setMoodFilter('all'); setPage(1); }}
+              className={`px-2.5 py-1 rounded-full text-[11px] border transition-all duration-150
+                ${moodFilter === 'all'
+                  ? 'bg-senses-surface-2 border-senses-border text-senses-text'
+                  : 'border-transparent text-senses-text-3 hover:text-senses-text'}`}
+            >
+              All moods
+            </button>
+            {availableMoods.map(mood => (
+              <button
+                key={mood}
+                onClick={() => { setMoodFilter(mood === moodFilter ? 'all' : mood); setPage(1); }}
+                className={`px-2.5 py-1 rounded-full text-[11px] border capitalize transition-all duration-150
+                  ${moodFilter === mood
+                    ? 'bg-senses-accent/15 border-senses-accent/40 text-senses-accent'
+                    : 'border-transparent text-senses-text-3 hover:text-senses-text'}`}
+              >
+                {mood}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ─── Count bar ──────────────────────────────────────────────── */}

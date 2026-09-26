@@ -1,0 +1,95 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { TrendingCharts } from '@/components/trending/TrendingCharts';
+import { provider }       from '@/lib/providers';
+
+const [allMedia, allCreators] = await Promise.all([
+  provider.getMedia(),
+  provider.getCreators(50),
+]);
+
+const trendingCount = allMedia.filter(m => m.trending).length;
+const editorsCount  = allMedia.filter(m => m.editorsPick).length;
+
+// Quick stat: top 3 most liked for the header callout
+const top3 = [...allMedia].sort((a, b) => b.stats.likes - a.stats.likes).slice(0, 3);
+---
+
+<BaseLayout
+  title="Trending — SENSES"
+  description="Discover the most liked, most viewed, and most saved media on SENSES. Updated charts across visual and audio."
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+
+    <!-- Header -->
+    <div class="max-w-[1000px] mx-auto px-4 md:px-8 pt-14 pb-10">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-3">Charts</p>
+      <h1 class="text-display-xl text-senses-text leading-tight mb-3">Trending on SENSES</h1>
+      <p class="text-senses-text-2 text-sm leading-relaxed max-w-lg">
+        The most liked, most viewed, and most saved work across SIGHT and HEARING.
+      </p>
+
+      <!-- Quick stats bar -->
+      <div class="flex flex-wrap gap-4 mt-8">
+        <div class="px-4 py-3 rounded-xl bg-senses-surface border border-senses-border flex items-center gap-3">
+          <div class="w-1.5 h-1.5 rounded-full bg-senses-accent" />
+          <div>
+            <p class="text-senses-text text-sm font-medium">{trendingCount}</p>
+            <p class="text-senses-text-3 text-[10px] uppercase tracking-widest">Trending items</p>
+          </div>
+        </div>
+        <div class="px-4 py-3 rounded-xl bg-senses-surface border border-senses-border flex items-center gap-3">
+          <div class="w-1.5 h-1.5 rounded-full bg-senses-sight" />
+          <div>
+            <p class="text-senses-text text-sm font-medium">{allMedia.filter(m => m.division === 'sight').length}</p>
+            <p class="text-senses-text-3 text-[10px] uppercase tracking-widest">Visual items</p>
+          </div>
+        </div>
+        <div class="px-4 py-3 rounded-xl bg-senses-surface border border-senses-border flex items-center gap-3">
+          <div class="w-1.5 h-1.5 rounded-full bg-senses-hearing" />
+          <div>
+            <p class="text-senses-text text-sm font-medium">{allMedia.filter(m => m.division === 'hearing').length}</p>
+            <p class="text-senses-text-3 text-[10px] uppercase tracking-widest">Audio items</p>
+          </div>
+        </div>
+        <div class="px-4 py-3 rounded-xl bg-senses-surface border border-senses-border flex items-center gap-3">
+          <div class="w-1.5 h-1.5 rounded-full bg-senses-text-3" />
+          <div>
+            <p class="text-senses-text text-sm font-medium">{editorsCount}</p>
+            <p class="text-senses-text-3 text-[10px] uppercase tracking-widest">Editor's picks</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- Top 3 spotlight -->
+    <div class="max-w-[1000px] mx-auto px-4 md:px-8 py-10">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-5 font-medium">Top 3 most liked right now</p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {top3.map((item, i) => {
+          const href = `/${item.division}/${item.type}/${item.slug}`;
+          return (
+            <a href={href} class="group relative rounded-2xl overflow-hidden aspect-[4/3] bg-senses-surface border border-senses-border hover:border-senses-border-2 transition-all">
+              <img src={item.thumbnail} alt={item.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div class="absolute inset-0 bg-gradient-to-t from-senses-bg/90 via-senses-bg/20 to-transparent" />
+              <div class="absolute bottom-0 left-0 right-0 p-4">
+                <span class={`text-3xl font-light leading-none ${i === 0 ? 'text-senses-accent' : 'text-senses-text-3'}`}>#{i + 1}</span>
+                <p class="text-senses-text text-sm font-medium mt-1 truncate">{item.title}</p>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- Interactive charts -->
+    <div class="max-w-[1000px] mx-auto px-4 md:px-8 py-10">
+      <TrendingCharts client:load media={allMedia} creators={allCreators} />
+    </div>
+
+  </div>
+</BaseLayout>

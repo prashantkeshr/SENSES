@@ -2,6 +2,7 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Hero from '@/components/home/Hero';
 import CategoryStrip from '@/components/home/CategoryStrip';
+import MoodStrip from '@/components/home/MoodStrip.astro';
 import DiscoverySection from '@/components/home/DiscoverySection';
 import CrossSensorySection from '@/components/home/CrossSensorySection';
 import CreatorsRow from '@/components/home/CreatorsRow';
@@ -42,6 +43,11 @@ const schema = {
   <!-- Category strip (sticky on scroll) -->
   <div class="sticky top-[var(--nav-height)] z-30 bg-senses-bg/95 backdrop-blur-md border-b border-senses-border py-3">
     <CategoryStrip categories={categories} client:load />
+  </div>
+
+  <!-- Mood strip -->
+  <div class="border-b border-senses-border/50 bg-senses-bg/80">
+    <MoodStrip media={allMedia} />
   </div>
 
   <!-- Recently Viewed (client island — hidden when empty) -->

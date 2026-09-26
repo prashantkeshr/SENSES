@@ -1,0 +1,139 @@
+---
+import BaseLayout   from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import { provider }  from '@/lib/providers';
+
+const [allMedia, allCreators] = await Promise.all([
+  provider.getMedia(),
+  provider.getCreators(50),
+]);
+
+const picks      = allMedia.filter(m => m.editorsPick);
+const creatorMap = Object.fromEntries(allCreators.map(c => [c.id, c]));
+
+// Spotlight: highest views among editor's picks
+const spotlight  = [...picks].sort((a, b) => b.stats.views - a.stats.views)[0];
+const rest        = picks.filter(m => m.id !== spotlight?.id);
+const sightRest   = rest.filter(m => m.division === 'sight');
+const hearingRest = rest.filter(m => m.division === 'hearing');
+
+const spotlightCreator = spotlight ? creatorMap[spotlight.creator] : null;
+---
+
+<BaseLayout
+  title="Editor's Picks — SENSES"
+  description="Handpicked highlights from the SENSES editorial team. The finest visual and audio work in our catalog."
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+
+    <!-- Header -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 pt-14 pb-8">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-3">Editorial</p>
+      <div class="flex flex-col sm:flex-row sm:items-end gap-4 justify-between">
+        <div>
+          <h1 class="text-display-xl text-senses-text leading-tight">Editor's Picks</h1>
+          <p class="text-senses-text-2 text-sm leading-relaxed mt-2 max-w-md">
+            Handpicked by the SENSES team. The most exceptional work in our catalog, across both divisions.
+          </p>
+        </div>
+        <p class="text-senses-text-3 text-sm flex-shrink-0">{picks.length} selections</p>
+      </div>
+    </div>
+
+    <!-- Spotlight -->
+    {spotlight && (
+      <div class="max-w-[1440px] mx-auto px-4 md:px-8 mb-12">
+        <a
+          href={`/${spotlight.division}/${spotlight.type}/${spotlight.slug}`}
+          class="group block relative rounded-3xl overflow-hidden aspect-video sm:aspect-[16/7] bg-senses-surface border border-senses-border hover:border-senses-border-2 transition-all"
+        >
+          <img
+            src={spotlight.thumbnail}
+            alt={spotlight.title}
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-senses-bg via-senses-bg/40 to-transparent" />
+
+          <div class="absolute top-5 left-5">
+            <span class="px-2.5 py-1 rounded-full bg-senses-accent/20 border border-senses-accent/40 text-senses-accent text-[10px] uppercase tracking-widest font-medium">
+              Editor's Spotlight
+            </span>
+          </div>
+
+          <div class="absolute bottom-0 left-0 right-0 p-6 sm:p-10">
+            <div class="max-w-2xl">
+              {spotlightCreator && (
+                <div class="flex items-center gap-2 mb-3">
+                  <img src={spotlightCreator.avatar} alt={spotlightCreator.displayName} class="w-6 h-6 rounded-full object-cover" />
+                  <p class="text-senses-text-3 text-xs">{spotlightCreator.displayName}</p>
+                </div>
+              )}
+              <h2 class="text-senses-text text-2xl sm:text-3xl font-light leading-tight mb-2">
+                {spotlight.title}
+              </h2>
+              <p class="text-senses-text-2 text-sm leading-relaxed line-clamp-2 max-w-xl">
+                {spotlight.description}
+              </p>
+              <div class="flex flex-wrap gap-2 mt-3">
+                {spotlight.moods.slice(0, 4).map(mood => (
+                  <span class="px-2 py-0.5 rounded-lg bg-senses-surface/60 text-senses-text-3 text-[10px] capitalize">
+                    {mood}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+    )}
+
+    <!-- Rest of picks -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+
+      {sightRest.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center gap-2 mb-5">
+            <div class="w-2 h-2 rounded-full bg-senses-sight" />
+            <h2 class="text-senses-sight text-xs tracking-widest uppercase font-medium">Visual Picks</h2>
+            <span class="text-senses-text-3 text-xs ml-auto">{sightRest.length} items</span>
+          </div>
+          <div class="masonry-grid">
+            {sightRest.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {hearingRest.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center gap-2 mb-5">
+            <div class="w-2 h-2 rounded-full bg-senses-hearing" />
+            <h2 class="text-senses-hearing text-xs tracking-widest uppercase font-medium">Audio Picks</h2>
+            <span class="text-senses-text-3 text-xs ml-auto">{hearingRest.length} items</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {hearingRest.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+    </div>
+
+    <!-- CTA footer -->
+    <div class="border-t border-senses-border mt-4">
+      <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-12 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <p class="text-senses-text-2 text-sm font-medium">Want your work featured here?</p>
+          <p class="text-senses-text-3 text-xs mt-0.5">Editor's Picks are chosen by the SENSES team from creator submissions.</p>
+        </div>
+        <a href="/creators" class="px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 hover:text-senses-text transition-all flex-shrink-0">
+          Apply as a creator
+        </a>
+      </div>
+    </div>
+
+  </div>
+</BaseLayout>

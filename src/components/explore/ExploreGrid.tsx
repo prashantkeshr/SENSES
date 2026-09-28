@@ -13,7 +13,7 @@ interface Props {
   initialMood?:     string;
 }
 
-const PAGE = 12;
+const PAGE = 24;
 
 export function ExploreGrid({ media, creators, initialDivision = 'all', initialMood = 'all' }: Props) {
   const [division,    setDivision]   = useState<Division>(initialDivision);

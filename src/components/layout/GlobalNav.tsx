@@ -188,15 +188,15 @@ export default function GlobalNav() {
               </kbd>
             </button>
 
-            {/* Dedicated Reel button */}
+            {/* Dedicated Reel button — always visible; text hidden on small screens */}
             <a
               href="/discover"
-              className="reel-glow hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full
+              className="reel-glow flex items-center gap-2 px-3 py-1.5 rounded-full
                          bg-senses-accent text-white text-sm font-semibold
                          transition-all duration-200 select-none"
             >
               <PlayIcon />
-              <span className="hidden md:inline">Reel</span>
+              <span className="hidden sm:inline">Reel</span>
             </a>
 
             {/* Settings icon */}

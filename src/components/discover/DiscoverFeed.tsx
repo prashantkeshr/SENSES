@@ -276,10 +276,6 @@ export function DiscoverFeed({ media, creators }: Props) {
 
   if (!mounted) return null;
 
-  // Progress dots: show up to 7, centered on current
-  const totalDots = Math.min(items.length, 7);
-  const dotOffset = Math.max(0, Math.min(current - 3, items.length - 7));
-
   return (
     <>
     {/* Controls bar — fixed above cards */}
@@ -323,7 +319,6 @@ export function DiscoverFeed({ media, creators }: Props) {
               m={m} i={i} current={current} liked={liked} saved={saved}
               playing={playing} muted={muted} creatorMap={creatorMap}
               audioRefs={audioRefs} totalItems={items.length}
-              totalDots={totalDots} dotOffset={dotOffset}
               onLike={handleLike} onSave={handleSave}
               onShare={setShareTarget} onDownload={handleDownload}
               onToggleAudio={toggleAudio}
@@ -335,7 +330,6 @@ export function DiscoverFeed({ media, creators }: Props) {
               m={m} i={i} current={current} liked={liked} saved={saved}
               playing={playing} muted={muted} creatorMap={creatorMap}
               audioRefs={audioRefs} totalItems={items.length}
-              totalDots={totalDots} dotOffset={dotOffset}
               onLike={handleLike} onSave={handleSave}
               onShare={setShareTarget} onDownload={handleDownload}
               onToggleAudio={toggleAudio} onScrollTo={scrollTo}
@@ -376,35 +370,12 @@ interface CardProps {
   creatorMap: Record<string, Creator>;
   audioRefs: React.MutableRefObject<Record<string, HTMLAudioElement | null>>;
   totalItems: number;
-  totalDots: number;
-  dotOffset: number;
   onLike: (id: string) => void;
   onSave: (id: string) => void;
   onShare: (m: Media) => void;
   onDownload: (m: Media) => void;
   onToggleAudio: (id: string) => void;
   onScrollTo?: (idx: number) => void;
-}
-
-function ProgressDots({ totalDots, dotOffset, current }: { totalDots: number; dotOffset: number; current: number }) {
-  return (
-    <div className="absolute top-0 left-0 right-0 z-20 flex gap-[3px] px-3 pt-2" style={{ top: 'calc(var(--nav-height) + 8px)' }}>
-      {Array.from({ length: totalDots }).map((_, k) => {
-        const realIdx = k + dotOffset;
-        const isActive = realIdx === current;
-        return (
-          <div
-            key={k}
-            className="h-[2.5px] rounded-full flex-1 transition-all duration-300"
-            style={{
-              background: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.25)',
-              transform: isActive ? 'scaleY(1.5)' : 'scaleY(1)',
-            }}
-          />
-        );
-      })}
-    </div>
-  );
 }
 
 function CardContent({ m, creator, isLiked, isSaved, isAudio, isPlaying, isPlaceholder, audioRefs, onLike, onSave, onShare, onDownload, onToggleAudio }: {
@@ -515,7 +486,7 @@ function CardContent({ m, creator, isLiked, isSaved, isAudio, isPlaying, isPlace
   );
 }
 
-function FullscreenCard({ m, i, current, liked, saved, playing, muted, creatorMap, audioRefs, totalItems, totalDots, dotOffset, onLike, onSave, onShare, onDownload, onToggleAudio, onScrollTo }: CardProps) {
+function FullscreenCard({ m, i, current, liked, saved, playing, muted, creatorMap, audioRefs, totalItems, onLike, onSave, onShare, onDownload, onToggleAudio, onScrollTo }: CardProps) {
   const isActive  = i === current;
   const isLiked   = liked.has(m.id);
   const isSaved   = saved.has(m.id);
@@ -541,16 +512,6 @@ function FullscreenCard({ m, i, current, liked, saved, playing, muted, creatorMa
       </div>
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/88 pointer-events-none" />
 
-      {/* Progress dots */}
-      {isActive && <ProgressDots totalDots={totalDots} dotOffset={dotOffset} current={current} />}
-
-      {/* Counter */}
-      {isActive && (
-        <div className="absolute text-white/35 text-[11px] font-mono tabular-nums" style={{ top: 'calc(var(--nav-height) + 16px)', right: '60px' }}>
-          {i + 1} / {totalItems}
-        </div>
-      )}
-
       <CardContent
         m={m} creator={creatorMap[m.creator]} isLiked={isLiked} isSaved={isSaved}
         isAudio={isAudio} isPlaying={isPlaying} isPlaceholder={isPlaceholder}
@@ -563,7 +524,7 @@ function FullscreenCard({ m, i, current, liked, saved, playing, muted, creatorMa
   );
 }
 
-function PortraitCard({ m, i, current, liked, saved, playing, muted, creatorMap, audioRefs, totalItems, totalDots, dotOffset, onLike, onSave, onShare, onDownload, onToggleAudio }: CardProps) {
+function PortraitCard({ m, i, current, liked, saved, playing, muted, creatorMap, audioRefs, totalItems, onLike, onSave, onShare, onDownload, onToggleAudio }: CardProps) {
   const isActive  = i === current;
   const isLiked   = liked.has(m.id);
   const isSaved   = saved.has(m.id);
@@ -587,15 +548,14 @@ function PortraitCard({ m, i, current, liked, saved, playing, muted, creatorMap,
         justifyContent: 'center',
       } as React.CSSProperties}
     >
-      {/* Visible 9:16 card */}
+      {/* Visible 9:16 card — fills available height on desktop, width-capped on narrow screens */}
       <div
         className="relative overflow-hidden rounded-2xl"
         style={{
-          width: 'min(400px, calc(100vw - 32px))',
-          height: 'calc(min(400px, calc(100vw - 32px)) * 16 / 9)',
-          maxHeight: 'calc(100vh - 80px)',
+          width: 'min(calc((100vh - 80px) * 9 / 16), calc(100vw - 32px))',
+          aspectRatio: '9/16',
           boxShadow: isActive ? '0 0 0 2px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.7)' : '0 8px 32px rgba(0,0,0,0.5)',
-        }}
+        } as React.CSSProperties}
       >
         <div className="absolute inset-0 rounded-2xl overflow-hidden">
           <img
@@ -606,14 +566,6 @@ function PortraitCard({ m, i, current, liked, saved, playing, muted, creatorMap,
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90 rounded-2xl pointer-events-none" />
-
-        {isActive && <ProgressDots totalDots={totalDots} dotOffset={dotOffset} current={current} />}
-
-        {isActive && (
-          <div className="absolute text-white/40 text-[11px] font-mono" style={{ top: '12px', right: '12px' }}>
-            {i + 1}/{totalItems}
-          </div>
-        )}
 
         <CardContent
           m={m} creator={creatorMap[m.creator]} isLiked={isLiked} isSaved={isSaved}

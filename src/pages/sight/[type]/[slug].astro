@@ -22,7 +22,7 @@ const { mediaId } = Astro.props;
 
 const [media, related, crossSensory, creators] = await Promise.all([
   provider.getMediaById(mediaId),
-  provider.getRelatedMedia(mediaId, 6),
+  provider.getRelatedMedia(mediaId, 24),
   provider.getCrossSensory(mediaId),
   provider.getCreators(30),
 ]);
@@ -358,12 +358,38 @@ const licenseLabels: Record<string, string> = {
             <h2 class="text-senses-text text-sm font-medium">
               Related <span class="text-senses-sight capitalize">{media.category}</span> media
             </h2>
+            <span class="text-senses-text-3 text-xs">{related.length} items</span>
           </div>
-          <div class="masonry-grid">
-            {related.map(item => (
+          <!-- First 12 always visible -->
+          <div class="masonry-grid" id="related-grid">
+            {related.slice(0, 12).map(item => (
               <MediaCard client:visible media={item} creator={creatorMap[item.creator]} />
             ))}
           </div>
+          <!-- Extra items hidden until "Show More" clicked -->
+          {related.length > 12 && (
+            <>
+              <div id="related-more" class="masonry-grid hidden">
+                {related.slice(12).map(item => (
+                  <MediaCard client:visible media={item} creator={creatorMap[item.creator]} />
+                ))}
+              </div>
+              <div class="text-center mt-6" id="related-more-btn-wrap">
+                <button
+                  id="related-more-btn"
+                  class="px-6 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 hover:border-senses-border-2 hover:text-senses-text text-sm transition-all"
+                >
+                  Show more · {related.length - 12} remaining
+                </button>
+              </div>
+              <script is:inline>
+                document.getElementById('related-more-btn').addEventListener('click', function() {
+                  document.getElementById('related-more').classList.remove('hidden');
+                  document.getElementById('related-more-btn-wrap').remove();
+                });
+              </script>
+            </>
+          )}
         </section>
       )}
 

@@ -165,6 +165,7 @@ const tagGroups = Array.from(tagMap.entries())
             {tagGroups.map(({ tag, slug, label, count, thumbnails }) => (
               <a
                 href={`/tag/${slug}`}
+                data-mosaic
                 class="group relative rounded-2xl overflow-hidden bg-senses-surface border border-senses-border hover:border-senses-border-2 transition-all aspect-[4/3]"
               >
                 {/* 2×2 mosaic of real thumbnails */}
@@ -207,3 +208,18 @@ const tagGroups = Array.from(tagMap.entries())
     </div>
   </div>
 </BaseLayout>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', function () {
+    var cards = document.querySelectorAll('[data-mosaic]');
+    cards.forEach(function (card) {
+      var imgs = Array.from(card.querySelectorAll('img'));
+      var srcs = imgs.map(function (img) { return img.src; });
+      for (var i = srcs.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = srcs[i]; srcs[i] = srcs[j]; srcs[j] = tmp;
+      }
+      imgs.forEach(function (img, idx) { img.src = srcs[idx]; });
+    });
+  });
+</script>

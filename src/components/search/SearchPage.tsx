@@ -36,12 +36,16 @@ function XIcon() {
   );
 }
 
+const SEARCH_PAGE = 24;
+
 export function SearchPage({ media, creators }: Props) {
-  const [query,      setQuery]      = useState('');
-  const [division,   setDivision]   = useState<MediaDivision | 'all'>('all');
-  const [typeFilter, setTypeFilter] = useState<MediaType | 'all'>('all');
-  const [sort,       setSort]       = useState<SortKey>('relevance');
-  const [mounted,    setMounted]    = useState(false);
+  const [query,       setQuery]       = useState('');
+  const [division,    setDivision]    = useState<MediaDivision | 'all'>('all');
+  const [typeFilter,  setTypeFilter]  = useState<MediaType | 'all'>('all');
+  const [sort,        setSort]        = useState<SortKey>('relevance');
+  const [mounted,     setMounted]     = useState(false);
+  const [sightPage,   setSightPage]   = useState(1);
+  const [hearingPage, setHearingPage] = useState(1);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const creatorMap = useMemo(
@@ -89,10 +93,12 @@ export function SearchPage({ media, creators }: Props) {
     window.history.replaceState({}, '', newUrl);
   }, [query, division, typeFilter, sort, mounted]);
 
-  // Reset type filter when division changes
+  // Reset type filter and pagination when division changes
   const handleDivision = useCallback((d: MediaDivision | 'all') => {
     setDivision(d);
     setTypeFilter('all');
+    setSightPage(1);
+    setHearingPage(1);
   }, []);
 
   const results = useMemo(() => {
@@ -115,6 +121,9 @@ export function SearchPage({ media, creators }: Props) {
 
   const sightResults   = useMemo(() => results.filter(m => m.division === 'sight'),   [results]);
   const hearingResults = useMemo(() => results.filter(m => m.division === 'hearing'), [results]);
+
+  // Reset pagination when results change
+  useEffect(() => { setSightPage(1); setHearingPage(1); }, [query, division, typeFilter, sort]);
 
   const availableTypes = useMemo(() => {
     const base = division === 'all' ? media : media.filter(m => m.division === division);
@@ -294,14 +303,20 @@ export function SearchPage({ media, creators }: Props) {
                 </div>
               )}
               <div className="masonry-grid">
-                {sightResults.map(item => (
-                  <MediaCard
-                    key={item.id}
-                    media={item}
-                    creator={creatorMap[item.creator]}
-                  />
+                {sightResults.slice(0, sightPage * SEARCH_PAGE).map(item => (
+                  <MediaCard key={item.id} media={item} creator={creatorMap[item.creator]} />
                 ))}
               </div>
+              {sightPage * SEARCH_PAGE < sightResults.length && (
+                <div className="text-center mt-8">
+                  <button
+                    onClick={() => setSightPage(p => p + 1)}
+                    className="px-6 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 hover:border-senses-border-2 hover:text-senses-text text-sm transition-all"
+                  >
+                    View more · {sightResults.length - sightPage * SEARCH_PAGE} remaining
+                  </button>
+                </div>
+              )}
             </section>
           )}
 
@@ -317,15 +332,20 @@ export function SearchPage({ media, creators }: Props) {
                 </div>
               )}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {hearingResults.map(item => (
-                  <MediaCard
-                    key={item.id}
-                    media={item}
-                    creator={creatorMap[item.creator]}
-                    layout="grid"
-                  />
+                {hearingResults.slice(0, hearingPage * SEARCH_PAGE).map(item => (
+                  <MediaCard key={item.id} media={item} creator={creatorMap[item.creator]} layout="grid" />
                 ))}
               </div>
+              {hearingPage * SEARCH_PAGE < hearingResults.length && (
+                <div className="text-center mt-8">
+                  <button
+                    onClick={() => setHearingPage(p => p + 1)}
+                    className="px-6 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 hover:border-senses-border-2 hover:text-senses-text text-sm transition-all"
+                  >
+                    View more · {hearingResults.length - hearingPage * SEARCH_PAGE} remaining
+                  </button>
+                </div>
+              )}
             </section>
           )}
         </>

@@ -29,7 +29,7 @@ const {
 
 const siteUrl  = 'https://senses.dhurta.org';
 const fullUrl  = canonical ?? new URL(Astro.url.pathname, siteUrl).toString();
-const ogImg    = ogImage ?? `${siteUrl}/og-default.jpg`;
+const ogImg    = ogImage ?? `${siteUrl}/og-default.svg`;
 const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
 ---
 

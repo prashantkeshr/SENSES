@@ -9,15 +9,11 @@ function url(
   opts: { priority?: string; freq?: string; lastmod?: string; images?: { loc: string; title: string }[] } = {},
 ): string {
   const { priority = '0.6', freq = 'weekly', lastmod = TODAY, images = [] } = opts;
-  const imgTags = images
-    .map(img => `    <image:image>\n      <image:loc>${img.loc}</image:loc>\n      <image:title>${escXml(img.title)}</image:title>\n    </image:image>`)
-    .join('\n');
-  return `  <url>
-    <loc>${SITE}${path}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>${freq}</changefreq>
-    <priority>${priority}</priority>${imgTags ? '\n' + imgTags : ''}
-  </url>`;
+  const imgTags = images.map(img =>
+    `    <image:image>\n      <image:loc>${escXml(img.loc)}</image:loc>\n      <image:title>${escXml(img.title)}</image:title>\n    </image:image>`
+  ).join('\n');
+  const imgBlock = imgTags ? `\n${imgTags}` : '';
+  return `  <url>\n    <loc>${SITE}${path}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${freq}</changefreq>\n    <priority>${priority}</priority>${imgBlock}\n  </url>`;
 }
 
 function escXml(s: string) {

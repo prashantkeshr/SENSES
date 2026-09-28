@@ -1,7 +1,7 @@
-import type { APIRoute } from 'astro';
+﻿import type { APIRoute } from 'astro';
 import { provider } from '@/lib/providers';
 
-const SITE = 'https://senses.dhurta.com';
+const SITE = 'https://senses.dhurta.org';
 
 function url(path: string, priority = '0.6', freq = 'weekly'): string {
   return `  <url>

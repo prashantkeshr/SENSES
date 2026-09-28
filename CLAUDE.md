@@ -1,10 +1,10 @@
-# SENSES — Claude Code Context
+﻿# SENSES — Claude Code Context
 
 ## Project
 
 Premium media discovery platform with two divisions: **SIGHT** (visual) and **HEARING** (audio).
 
-- **Live site:** https://senses.dhurta.com
+- **Live site:** https://senses.dhurta.org
 - **Repo:** prashantkeshr/SENSES (GitHub Pages via Actions)
 - **Stack:** Astro 4 SSG + React 18 islands + TypeScript + Tailwind CSS
 - **Location:** `C:\Users\prash\OneDrive\Projects\Claude project\senses\`

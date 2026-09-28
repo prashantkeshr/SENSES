@@ -1,7 +1,7 @@
-User-agent: *
+﻿User-agent: *
 Allow: /
 
-Sitemap: https://senses.dhurta.com/sitemap.xml
+Sitemap: https://senses.dhurta.org/sitemap.xml
 
 # Disallow user-specific pages
 Disallow: /my-senses

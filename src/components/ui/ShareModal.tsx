@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+﻿import { useEffect, useRef, useCallback } from 'react';
 import type { Media } from '@/types/index';
 import { toast } from '@/lib/utils/toast';
 
@@ -15,7 +15,7 @@ function CopyIcon()      { return <svg viewBox="0 0 24 24" fill="none" stroke="c
 function NativeShareIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3-3-3m0 0-3 3m3-3V15"/></svg>; }
 
 function buildPageUrl(media: Media): string {
-  const base = typeof window !== 'undefined' ? window.location.origin : 'https://senses.dhurta.com';
+  const base = typeof window !== 'undefined' ? window.location.origin : 'https://senses.dhurta.org';
   const path = media.division === 'hearing'
     ? `/hearing/${media.type}/${media.slug}`
     : `/sight/${media.type}/${media.slug}`;
@@ -105,7 +105,7 @@ export function ShareModal({ media, onClose }: Props) {
               />
               <div className="min-w-0">
                 <p className="text-white text-sm font-medium line-clamp-1">{media.title}</p>
-                <p className="text-white/50 text-[11px]">senses.dhurta.com</p>
+                <p className="text-white/50 text-[11px]">senses.dhurta.org</p>
               </div>
             </div>
           </div>

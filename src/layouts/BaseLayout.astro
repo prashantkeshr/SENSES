@@ -1,4 +1,4 @@
----
+﻿---
 import '../styles/globals.css';
 import GlobalNav      from '@components/layout/GlobalNav';
 import SearchOverlay   from '@components/layout/SearchOverlay';
@@ -27,7 +27,7 @@ const {
   noFooter = false,
 } = Astro.props;
 
-const siteUrl  = 'https://senses.dhurta.com';
+const siteUrl  = 'https://senses.dhurta.org';
 const fullUrl  = canonical ?? new URL(Astro.url.pathname, siteUrl).toString();
 const ogImg    = ogImage ?? `${siteUrl}/og-default.jpg`;
 const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;

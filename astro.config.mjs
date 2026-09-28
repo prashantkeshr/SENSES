@@ -1,9 +1,9 @@
-import { defineConfig } from 'astro/config';
+﻿import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
-  site: 'https://senses.dhurta.com',
+  site: 'https://senses.dhurta.org',
   integrations: [
     react(),
     tailwind({ applyBaseStyles: false }),

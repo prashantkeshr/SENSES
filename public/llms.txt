@@ -1,0 +1,53 @@
+# Senses
+
+> Senses is a premium media discovery platform for visual and audio content. All media is CC0 — completely free to use, share, adapt, or build upon commercially with no attribution required.
+
+## About
+
+Senses combines two creative divisions: **SIGHT** (photos, videos, illustrations, vectors, 3D renders, GIFs) and **HEARING** (music tracks, sound effects, ambient soundscapes, lo-fi loops). The platform is built around discovery — editorial curation, mood-based browsing, trending charts, and a full-screen reel feed.
+
+The site is built with Astro + React and served as a static site from GitHub Pages. Content is sourced from Pixabay (CC0).
+
+## Content types
+
+- High-resolution photos and wallpapers
+- Videos and cinematic clips
+- Digital illustrations, vectors, and 3D renders
+- Animated GIFs
+- Music tracks (various genres)
+- Sound effects and ambient soundscapes
+- Lo-fi and loop tracks
+
+All content is CC0 (Creative Commons Zero) — no copyright, no attribution required, free for any use including commercial.
+
+## Key pages
+
+- [Home](https://senses.dhurta.org/) — Featured, trending, and personalised media
+- [Explore](https://senses.dhurta.org/explore) — Filterable library with 1,000+ media items
+- [Sight](https://senses.dhurta.org/sight) — Visual media hub
+- [Hearing](https://senses.dhurta.org/hearing) — Audio media hub
+- [Gallery Wall](https://senses.dhurta.org/gallery) — Randomised full-bleed masonry gallery
+- [Reels](https://senses.dhurta.org/discover) — Full-screen vertical reel feed
+- [Collections](https://senses.dhurta.org/collections) — Curated themed collections
+- [Trending](https://senses.dhurta.org/trending) — Trending media charts
+- [Editorial](https://senses.dhurta.org/editorial) — Editor's picks and spotlights
+- [About](https://senses.dhurta.org/about) — About the platform
+- [FAQ](https://senses.dhurta.org/faq) — Frequently asked questions
+- [Creators](https://senses.dhurta.org/creators) — Creator programme information
+- [Licensing](https://senses.dhurta.org/licensing) — CC0 licensing explained
+
+## Sitemap
+
+Full machine-readable sitemap at: https://senses.dhurta.org/sitemap.xml
+
+## Licensing
+
+All media is CC0 (Creative Commons Zero). You may use, modify, distribute, and build upon all content for any purpose — personal, educational, or commercial — without permission or attribution. See [https://senses.dhurta.org/licensing](https://senses.dhurta.org/licensing) for full details.
+
+## Contact
+
+- General enquiries: Senses.dhurta@outlook.com
+- Creator applications: creators@senses.dhurta.org
+- Privacy: privacy@senses.dhurta.org
+- Support: support@senses.dhurta.org
+- Legal / licensing: legal@senses.dhurta.org

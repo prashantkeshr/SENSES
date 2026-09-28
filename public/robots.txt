@@ -1,12 +1,41 @@
-﻿User-agent: *
+User-agent: *
 Allow: /
-
-Sitemap: https://senses.dhurta.org/sitemap.xml
-
-# Disallow user-specific pages
 Disallow: /my-senses
-Disallow: /saved
-Disallow: /liked
-Disallow: /history
 Disallow: /settings
 Disallow: /search?
+
+# ── AI crawlers — explicitly welcome ──────────────────────────────
+# All content is CC0. AI training and indexing are permitted.
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+# ── Sitemaps ───────────────────────────────────────────────────────
+Sitemap: https://senses.dhurta.org/sitemap.xml

@@ -69,22 +69,37 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
   <!-- Primary meta -->
   <title>{fullTitle}</title>
   <meta name="description" content={description} />
-  {noIndex && <meta name="robots" content="noindex,nofollow" />}
+  <meta name="author"      content="Senses" />
+  <!-- Allow AI overviews, rich snippets, and large image previews; noIndex pages blocked entirely -->
+  {noIndex
+    ? <meta name="robots" content="noindex, nofollow" />
+    : <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  }
   <link rel="canonical" href={fullUrl} />
 
+  <!-- Performance: preconnect to image CDN used by all media thumbnails -->
+  <link rel="preconnect"  href="https://cdn.pixabay.com" crossorigin />
+  <link rel="dns-prefetch" href="https://cdn.pixabay.com" />
+
   <!-- OpenGraph -->
-  <meta property="og:type"        content="website" />
-  <meta property="og:url"         content={fullUrl} />
-  <meta property="og:title"       content={fullTitle} />
-  <meta property="og:description" content={description} />
-  <meta property="og:image"       content={ogImg} />
-  <meta property="og:site_name"   content="Senses" />
+  <meta property="og:type"         content="website" />
+  <meta property="og:url"          content={fullUrl} />
+  <meta property="og:title"        content={fullTitle} />
+  <meta property="og:description"  content={description} />
+  <meta property="og:image"        content={ogImg} />
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt"    content={fullTitle} />
+  <meta property="og:site_name"    content="Senses" />
+  <meta property="og:locale"       content="en_US" />
 
   <!-- Twitter -->
   <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:site"        content="@senses_dhurta" />
   <meta name="twitter:title"       content={fullTitle} />
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image"       content={ogImg} />
+  <meta name="twitter:image:alt"   content={fullTitle} />
 
   <!-- PWA -->
   <link rel="manifest"     href="/manifest.json" />
@@ -103,15 +118,40 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
 
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "Senses",
-    "url": siteUrl,
-    "description": "A premium media discovery platform for visual and audio content.",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": { "@type": "EntryPoint", "urlTemplate": `${siteUrl}/search?q={search_term_string}` },
-      "query-input": "required name=search_term_string"
-    }
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl}/#website`,
+        "name": "Senses",
+        "url": siteUrl,
+        "description": "A premium media discovery platform for visual and audio content.",
+        "publisher": { "@id": `${siteUrl}/#organization` },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": { "@type": "EntryPoint", "urlTemplate": `${siteUrl}/search?q={search_term_string}` },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": `${siteUrl}/#organization`,
+        "name": "Senses",
+        "url": siteUrl,
+        "logo": {
+          "@type": "ImageObject",
+          "url": `${siteUrl}/icons/favicon-dark.png`,
+          "width": 192,
+          "height": 192
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "Senses.dhurta@outlook.com",
+          "contactType": "customer support",
+          "availableLanguage": "English"
+        },
+        "description": "Senses is a premium media discovery platform offering CC0 visual and audio content — photos, videos, illustrations, music, and ambient sounds."
+      }
+    ]
   })} />
 </head>
 <body class={`dark ${bodyClass}`}>

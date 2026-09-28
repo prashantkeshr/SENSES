@@ -1,14 +1,27 @@
-﻿import type { APIRoute } from 'astro';
+import type { APIRoute } from 'astro';
 import { provider } from '@/lib/providers';
 
-const SITE = 'https://senses.dhurta.org';
+const SITE  = 'https://senses.dhurta.org';
+const TODAY = new Date().toISOString().split('T')[0];
 
-function url(path: string, priority = '0.6', freq = 'weekly'): string {
+function url(
+  path: string,
+  opts: { priority?: string; freq?: string; lastmod?: string; images?: { loc: string; title: string }[] } = {},
+): string {
+  const { priority = '0.6', freq = 'weekly', lastmod = TODAY, images = [] } = opts;
+  const imgTags = images
+    .map(img => `    <image:image>\n      <image:loc>${img.loc}</image:loc>\n      <image:title>${escXml(img.title)}</image:title>\n    </image:image>`)
+    .join('\n');
   return `  <url>
     <loc>${SITE}${path}</loc>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>${freq}</changefreq>
-    <priority>${priority}</priority>
+    <priority>${priority}</priority>${imgTags ? '\n' + imgTags : ''}
   </url>`;
+}
+
+function escXml(s: string) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 export const GET: APIRoute = async () => {
@@ -24,62 +37,74 @@ export const GET: APIRoute = async () => {
 
   const lines = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
-    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"`,
+    `        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">`,
 
-    // Core pages
-    url('/',            '1.0', 'daily'),
-    url('/sight',       '0.9', 'daily'),
-    url('/hearing',     '0.9', 'daily'),
-    url('/explore',     '0.8', 'daily'),
-    url('/discover',    '0.8', 'daily'),
-    url('/search',      '0.7', 'weekly'),
-    url('/collections', '0.7', 'weekly'),
-    url('/trending',    '0.7', 'daily'),
-    url('/editorial',   '0.7', 'weekly'),
-    url('/my-senses',   '0.5', 'never'),
-    url('/gallery',     '0.8', 'daily'),
-    url('/settings',    '0.4', 'never'),
+    // ── Core pages ────────────────────────────────────────────────
+    url('/',            { priority: '1.0', freq: 'daily' }),
+    url('/sight',       { priority: '0.9', freq: 'daily' }),
+    url('/hearing',     { priority: '0.9', freq: 'daily' }),
+    url('/explore',     { priority: '0.8', freq: 'daily' }),
+    url('/discover',    { priority: '0.8', freq: 'daily' }),
+    url('/gallery',     { priority: '0.8', freq: 'daily' }),
+    url('/collections', { priority: '0.7', freq: 'weekly' }),
+    url('/trending',    { priority: '0.7', freq: 'daily' }),
+    url('/editorial',   { priority: '0.7', freq: 'weekly' }),
+    url('/search',      { priority: '0.7', freq: 'weekly' }),
 
-    // Sight sections
-    url('/sight/photos',        '0.7'),
-    url('/sight/videos',        '0.7'),
-    url('/sight/illustrations', '0.7'),
-    url('/sight/wallpapers',    '0.7'),
+    // ── Static info pages ─────────────────────────────────────────
+    url('/about',      { priority: '0.7', freq: 'monthly' }),
+    url('/faq',        { priority: '0.7', freq: 'monthly' }),
+    url('/creators',   { priority: '0.7', freq: 'weekly' }),
+    url('/licensing',  { priority: '0.6', freq: 'monthly' }),
+    url('/privacy',    { priority: '0.5', freq: 'monthly' }),
+    url('/terms',      { priority: '0.5', freq: 'monthly' }),
 
-    // Hearing sections
-    url('/hearing/music',   '0.7'),
-    url('/hearing/sounds',  '0.7'),
-    url('/hearing/ambient', '0.7'),
-    url('/hearing/lo-fi',   '0.7'),
+    // ── Sight sections ────────────────────────────────────────────
+    url('/sight/photos',        { priority: '0.7' }),
+    url('/sight/videos',        { priority: '0.7' }),
+    url('/sight/illustrations', { priority: '0.7' }),
+    url('/sight/wallpapers',    { priority: '0.7' }),
 
-    // Media detail pages
-    ...allMedia.map(m =>
-      url(`/${m.division}/${m.type}/${m.slug}`, '0.8', 'monthly')
-    ),
+    // ── Hearing sections ──────────────────────────────────────────
+    url('/hearing/music',   { priority: '0.7' }),
+    url('/hearing/sounds',  { priority: '0.7' }),
+    url('/hearing/ambient', { priority: '0.7' }),
+    url('/hearing/lo-fi',   { priority: '0.7' }),
 
-    // Creator pages
+    // ── Media detail pages (with image extensions for sight) ──────
+    ...allMedia.map(m => {
+      const lastmod = m.createdAt ? new Date(m.createdAt).toISOString().split('T')[0] : TODAY;
+      const thumbnail = (m as any).data?.thumbnailUrl ?? (m as any).thumbnail ?? '';
+      const images = m.division === 'sight' && thumbnail
+        ? [{ loc: thumbnail, title: m.title }]
+        : [];
+      return url(`/${m.division}/${m.type}/${m.slug}`, { priority: '0.8', freq: 'monthly', lastmod, images });
+    }),
+
+    // ── Creator pages ─────────────────────────────────────────────
     ...allCreators.map(c =>
-      url(`/creator/${c.id}`, '0.7', 'weekly')
+      url(`/creator/${c.id}`, { priority: '0.7', freq: 'weekly' })
     ),
 
-    // Collection pages
+    // ── Collection pages ──────────────────────────────────────────
     ...allCollections.map(c =>
-      url(`/collections/${c.slug}`, '0.6', 'monthly')
+      url(`/collections/${c.slug}`, { priority: '0.6', freq: 'monthly' })
     ),
 
-    // Tag pages (top 100 only to avoid bloat)
-    ...allTags.slice(0, 100).map(t =>
-      url(`/tag/${encodeURIComponent(t)}`, '0.5', 'weekly')
+    // ── Tag pages (top 150) ───────────────────────────────────────
+    ...allTags.slice(0, 150).map(t =>
+      url(`/tag/${encodeURIComponent(t)}`, { priority: '0.5', freq: 'weekly' })
     ),
 
-    // Mood pages
+    // ── Mood pages ────────────────────────────────────────────────
     ...allMoods.map(m =>
-      url(`/mood/${encodeURIComponent(m)}`, '0.6', 'weekly')
+      url(`/mood/${encodeURIComponent(m)}`, { priority: '0.6', freq: 'weekly' })
     ),
 
-    // Style pages
+    // ── Style pages ───────────────────────────────────────────────
     ...allStyles.map(s =>
-      url(`/style/${encodeURIComponent(s)}`, '0.6', 'weekly')
+      url(`/style/${encodeURIComponent(s)}`, { priority: '0.6', freq: 'weekly' })
     ),
 
     `</urlset>`,

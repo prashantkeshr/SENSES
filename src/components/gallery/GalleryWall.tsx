@@ -120,19 +120,13 @@ export function GalleryWall({ media, creators }: Props) {
     );
   }
 
-  const sightCount   = items.filter(m => m.division === 'sight').length;
-  const hearingCount = items.filter(m => m.division === 'hearing').length;
-
   return (
     <div ref={wallRef}>
       {/* Controls bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-senses-border sticky top-[var(--nav-height)] bg-senses-bg/95 backdrop-blur-md z-20">
         <div className="flex items-center gap-4">
           <span className="text-senses-text-3 text-xs">
-            {items.length} items &nbsp;·&nbsp;
-            <span className="text-senses-sight">{sightCount} sight</span>
-            {' · '}
-            <span className="text-senses-hearing">{hearingCount} hearing</span>
+            8.8 million+ high quality photos, videos &amp; music
           </span>
         </div>
         <button

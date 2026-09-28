@@ -58,7 +58,7 @@ export default function CrossSensorySection({ collections }: CrossSensorySection
               </div>
               <h3 className="text-white font-light text-lg leading-tight mb-1">{col.title}</h3>
               <p className="text-white/60 text-xs leading-snug line-clamp-2">{col.description}</p>
-              <p className="text-white/40 text-[11px] mt-2">{col.mediaIds.length} items</p>
+              <p className="text-white/40 text-[11px] mt-2">Curated by Senses</p>
             </div>
           </a>
         ))}

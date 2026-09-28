@@ -173,7 +173,8 @@ export function DiscoverFeed({ media, creators }: Props) {
   const [playing,     setPlaying]     = useState<string | null>(null);
   const [muted,       setMuted]       = useState(true);
   const [mounted,     setMounted]     = useState(false);
-  const [portrait,    setPortrait]    = useState(false); // false = fullscreen, true = portrait
+  const [portrait,    setPortrait]    = useState(false);
+  const [showHint,    setShowHint]    = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const audioRefs    = useRef<Record<string, HTMLAudioElement | null>>({});
 
@@ -183,8 +184,19 @@ export function DiscoverFeed({ media, creators }: Props) {
     const state = getLocalState();
     setLiked(new Set(state.likedMediaIds));
     setSaved(new Set(state.savedMediaIds));
-    // Fresh shuffle every time the page opens
     setItems(interleave(randomShuffle(media)));
+    // Desktop (≥768px) defaults to portrait 9:16 like Instagram; mobile stays fullscreen
+    setPortrait(window.innerWidth >= 768);
+    // First-visit swipe hint
+    try {
+      if (!localStorage.getItem('senses:reels-hint-shown')) {
+        setShowHint(true);
+        setTimeout(() => {
+          setShowHint(false);
+          localStorage.setItem('senses:reels-hint-shown', '1');
+        }, 2500);
+      }
+    } catch {}
     setMounted(true);
   }, [media]);
 
@@ -367,6 +379,20 @@ export function DiscoverFeed({ media, creators }: Props) {
     </div>
 
     {shareTarget && <ShareModal media={shareTarget} onClose={() => setShareTarget(null)} />}
+
+    {/* First-visit swipe hint */}
+    {showHint && (
+      <div
+        className="fixed left-1/2 -translate-x-1/2 z-[80] pointer-events-none flex flex-col items-center gap-1"
+        style={{ bottom: '140px', animation: 'senses-hint-fade 2.5s ease forwards' }}
+      >
+        <style>{`@keyframes senses-hint-fade{0%,60%{opacity:1}100%{opacity:0}}`}</style>
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={1.5} className="w-8 h-8 animate-bounce opacity-80">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+        </svg>
+        <span className="text-white/70 text-xs tracking-widest uppercase font-medium px-3 py-1 rounded-full bg-black/40 backdrop-blur-sm">Swipe up</span>
+      </div>
+    )}
     </>
   );
 }
@@ -537,7 +563,7 @@ function FullscreenCard({ m, i, current, liked, saved, playing, muted, creatorMa
     <div
       data-index={i}
       className="relative w-full h-screen flex-shrink-0 overflow-hidden"
-      style={{ scrollSnapAlign: 'start' }}
+      style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' } as React.CSSProperties}
     >
       <div className="absolute inset-0">
         <img
@@ -557,27 +583,6 @@ function FullscreenCard({ m, i, current, liked, saved, playing, muted, creatorMa
         <div className="absolute text-white/35 text-[11px] font-mono tabular-nums" style={{ top: 'calc(var(--nav-height) + 16px)', right: '60px' }}>
           {i + 1} / {totalItems}
         </div>
-      )}
-
-      {/* Up / Down arrows */}
-      {i > 0 && isActive && (
-        <button onClick={() => onScrollTo?.(i - 1)} aria-label="Previous"
-          className="absolute left-1/2 -translate-x-1/2 text-white/25 hover:text-white/60 transition-colors z-10"
-          style={{ top: 'calc(var(--nav-height) + 20px)' }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
-          </svg>
-        </button>
-      )}
-      {i < totalItems - 1 && isActive && (
-        <button onClick={() => onScrollTo?.(i + 1)} aria-label="Next"
-          className="absolute bottom-28 left-1/2 -translate-x-1/2 text-white/30 hover:text-white/60 transition-colors animate-bounce z-10"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-          </svg>
-        </button>
       )}
 
       <CardContent

@@ -184,8 +184,8 @@ export function ExploreGrid({ media, creators, initialDivision = 'all', initialM
       <div className="max-w-[1440px] mx-auto px-4 md:px-8 pt-5 pb-3">
         <p className="text-senses-text-3 text-xs">
           {filtered.length === media.length
-            ? `${filtered.length} items`
-            : `${filtered.length} of ${media.length} items`}
+            ? '8.8 million+ high quality photos, videos & music'
+            : `${filtered.length} results`}
         </p>
       </div>
 

@@ -48,6 +48,24 @@ const licenseLabels: Record<string, string> = {
 };
 ---
 
+<script is:inline>
+  (function() {
+    var _ambientStyle = null;
+    function applyAmbient(color, enabled) {
+      if (_ambientStyle) { _ambientStyle.remove(); _ambientStyle = null; }
+      if (!enabled || !color) return;
+      var s = document.createElement('style');
+      s.id = 'senses-ambient-body';
+      s.textContent = 'body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 45% at 50% 0%,' + color + '18 0%,transparent 70%);transition:opacity 1s ease}';
+      document.head.appendChild(s);
+      _ambientStyle = s;
+    }
+    window.addEventListener('senses:ambient', function(e) {
+      applyAmbient(e.detail.color, e.detail.enabled);
+    });
+  })();
+</script>
+
 <BaseLayout
   title={media.seo.title}
   description={media.seo.description}

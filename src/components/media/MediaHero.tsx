@@ -40,6 +40,20 @@ export function MediaHero({ media }: Props) {
     }
   }, [media]);
 
+  // Dispatch ambient event whenever ambient state or color changes
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('senses:ambient', {
+      detail: { color: ambientColor, enabled: ambientOn },
+    }));
+  }, [ambientColor, ambientOn]);
+
+  // Listen for open-lightbox event from MediaActions (same page, different island)
+  useEffect(() => {
+    const handler = () => setLightboxOpen(true);
+    window.addEventListener('senses:open-lightbox', handler);
+    return () => window.removeEventListener('senses:open-lightbox', handler);
+  }, []);
+
   const toggleAmbient = useCallback(() => {
     setAmbientOn(prev => {
       const next = !prev;

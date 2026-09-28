@@ -252,7 +252,7 @@ export function SearchPage({ media, creators }: Props) {
         <p className="text-senses-text-2 text-sm">
           {query.trim()
             ? <><span className="text-senses-text font-medium">{results.length}</span> {results.length === 1 ? 'result' : 'results'} for <span className="text-senses-accent">"{query}"</span></>
-            : <><span className="text-senses-text font-medium">{results.length}</span> items</>
+            : <>8.8 million+ photos, videos &amp; music to explore</>
           }
         </p>
         {results.length > 0 && (

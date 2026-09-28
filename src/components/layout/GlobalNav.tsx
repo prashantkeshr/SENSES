@@ -96,9 +96,9 @@ export default function GlobalNav() {
         <nav className="max-w-[1440px] mx-auto px-4 md:px-8 h-full flex items-center justify-between gap-6">
 
           {/* Animated Dancing Script brand */}
-          <a href="/" className="brand-shimmer text-[2.4rem] flex-shrink-0 select-none flex items-center gap-2">
-            <img src="/icons/favicon-dark.png" alt="" width={22} height={22} className="rounded-full opacity-90 flex-shrink-0 dark:block hidden" />
-            <img src="/icons/favicon-light.png" alt="" width={22} height={22} className="rounded-full opacity-90 flex-shrink-0 dark:hidden block" />
+          <a href="/" className="brand-shimmer text-[3rem] flex-shrink-0 select-none flex items-center gap-2.5" style={{ lineHeight: 1 }}>
+            <img src="/icons/favicon-dark.png" alt="" width={28} height={28} className="rounded-full opacity-90 flex-shrink-0 dark:block hidden" />
+            <img src="/icons/favicon-light.png" alt="" width={28} height={28} className="rounded-full opacity-90 flex-shrink-0 dark:hidden block" />
             Senses
           </a>
 

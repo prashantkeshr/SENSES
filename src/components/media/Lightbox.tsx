@@ -1,5 +1,7 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import type { Media, ImageData } from '@/types/index';
+import { downloadFile } from '@/lib/utils/download';
+import { ShareModal }   from '@/components/ui/ShareModal';
 
 interface Props {
   media: Media;
@@ -7,9 +9,11 @@ interface Props {
 }
 
 export function Lightbox({ media, onClose }: Props) {
+  const [showShare, setShowShare] = useState(false);
+
   const handleKey = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') onClose();
-  }, [onClose]);
+    if (e.key === 'Escape' && !showShare) onClose();
+  }, [onClose, showShare]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKey);
@@ -24,10 +28,17 @@ export function Lightbox({ media, onClose }: Props) {
   const src = imgData.fullUrl ?? imgData.previewUrl ?? media.thumbnail;
   const alt = imgData.altText ?? media.title;
 
+  const handleDownload = useCallback(() => {
+    const ext = src.split('.').pop()?.split('?')[0] ?? 'jpg';
+    const filename = `senses-${media.slug}.${ext}`;
+    downloadFile(src, filename);
+  }, [src, media.slug]);
+
   return (
+    <>
     <div
       className="fixed inset-0 z-[200] bg-black/96 backdrop-blur-sm flex flex-col animate-fade-in"
-      onClick={onClose}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       {/* Top bar */}
       <div
@@ -36,20 +47,17 @@ export function Lightbox({ media, onClose }: Props) {
       >
         <p className="text-white/60 text-sm truncate max-w-[60%]">{media.title}</p>
         <div className="flex items-center gap-2">
-          <a
-            href={src}
-            download
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={handleDownload}
             className="px-3 py-1.5 rounded-lg bg-white/8 text-white/70 hover:bg-white/15 hover:text-white text-sm transition-all flex items-center gap-1.5"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
             </svg>
             Download
-          </a>
+          </button>
           <button
-            onClick={() => { navigator.clipboard.writeText(window.location.href).catch(() => {}); }}
+            onClick={() => setShowShare(true)}
             className="px-3 py-1.5 rounded-lg bg-white/8 text-white/70 hover:bg-white/15 hover:text-white text-sm transition-all flex items-center gap-1.5"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
@@ -90,5 +98,8 @@ export function Lightbox({ media, onClose }: Props) {
         </span>
       </div>
     </div>
+
+    {showShare && <ShareModal media={media} onClose={() => setShowShare(false)} />}
+    </>
   );
 }

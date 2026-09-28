@@ -3,17 +3,42 @@ import type { Media, Creator, ImageData, AudioData } from '@/types/index';
 import { toggleLike, toggleSave, getLocalState } from '@/lib/utils/localState';
 import { formatCount } from '@/lib/utils/formatters';
 import { ShareModal } from '@/components/ui/ShareModal';
+import { downloadFile } from '@/lib/utils/download';
 
 interface Props {
   media:    Media[];
   creators: Creator[];
 }
 
+// ── Random shuffle (Fisher-Yates, new seed every open) ────────────────────────
+
+function randomShuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Interleave so same-division items aren't consecutive
+function interleave<T extends { division?: string }>(arr: T[]): T[] {
+  const sight   = arr.filter(m => m.division !== 'hearing');
+  const hearing = arr.filter(m => m.division === 'hearing');
+  const result: T[] = [];
+  const maxLen = Math.max(sight.length, hearing.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (i < sight.length)   result.push(sight[i]);
+    if (i < hearing.length) result.push(hearing[i]);
+  }
+  return result;
+}
+
 // ── Icons ────────────────────────────────────────────────────────────────────
 
-function HeartIcon({ filled }: { filled: boolean }) {
+function HeartIcon({ filled, className = 'w-5 h-5' }: { filled: boolean; className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.5} className={className}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
     </svg>
   );
@@ -35,26 +60,50 @@ function ShareIcon() {
   );
 }
 
-function ExternalLinkIcon() {
+function DownloadIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+    </svg>
+  );
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
     </svg>
   );
 }
 
-function ChevronDownIcon() {
+function MuteIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-6 h-6">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+      <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM17.78 9.22a.75.75 0 1 0-1.06 1.06L18.44 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06l1.72-1.72 1.72 1.72a.75.75 0 1 0 1.06-1.06L20.56 12l1.72-1.72a.75.75 0 1 0-1.06-1.06l-1.72 1.72-1.72-1.72Z"/>
     </svg>
   );
 }
 
-function ChevronUpIcon() {
+function UnmuteIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-6 h-6">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+      <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM18.584 5.106a.75.75 0 0 1 1.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 0 1-1.06-1.06 8.25 8.25 0 0 0 0-11.668.75.75 0 0 1 0-1.06Z M15.932 7.757a.75.75 0 0 1 1.061 0 6 6 0 0 1 0 8.486.75.75 0 0 1-1.06-1.061 4.5 4.5 0 0 0 0-6.364.75.75 0 0 1 0-1.06Z"/>
+    </svg>
+  );
+}
+
+function PortraitIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+      <rect x="7" y="2" width="10" height="20" rx="2"/>
+    </svg>
+  );
+}
+
+function FullscreenIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
     </svg>
   );
 }
@@ -94,15 +143,20 @@ function ActionBtn({
     <button
       onClick={onClick}
       aria-label={label}
-      className="flex flex-col items-center gap-1 group"
+      className="flex flex-col items-center gap-1"
     >
-      <div className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10 transition-all
-        ${active ? activeClass : 'bg-black/30 text-white/70 hover:bg-black/50 hover:text-white'}`}
+      <div className={`w-11 h-11 rounded-full flex items-center justify-center
+        backdrop-blur-md border transition-all duration-200
+        ${active
+          ? activeClass
+          : 'bg-black/35 border-white/15 text-white/80 hover:bg-black/55 hover:text-white hover:scale-105'
+        }`}
+        style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.4)' }}
       >
         {children}
       </div>
       {count !== undefined && (
-        <span className="text-white/50 text-[10px] tabular-nums">{count}</span>
+        <span className="text-white/55 text-[10px] tabular-nums font-medium">{count}</span>
       )}
     </button>
   );
@@ -111,6 +165,7 @@ function ActionBtn({
 // ── DiscoverFeed ─────────────────────────────────────────────────────────────
 
 export function DiscoverFeed({ media, creators }: Props) {
+  const [items,       setItems]       = useState<Media[]>([]);
   const [current,     setCurrent]     = useState(0);
   const [liked,       setLiked]       = useState<Set<string>>(new Set());
   const [saved,       setSaved]       = useState<Set<string>>(new Set());
@@ -118,6 +173,7 @@ export function DiscoverFeed({ media, creators }: Props) {
   const [playing,     setPlaying]     = useState<string | null>(null);
   const [muted,       setMuted]       = useState(true);
   const [mounted,     setMounted]     = useState(false);
+  const [portrait,    setPortrait]    = useState(false); // false = fullscreen, true = portrait
   const containerRef = useRef<HTMLDivElement>(null);
   const audioRefs    = useRef<Record<string, HTMLAudioElement | null>>({});
 
@@ -127,24 +183,24 @@ export function DiscoverFeed({ media, creators }: Props) {
     const state = getLocalState();
     setLiked(new Set(state.likedMediaIds));
     setSaved(new Set(state.savedMediaIds));
+    // Fresh shuffle every time the page opens
+    setItems(interleave(randomShuffle(media)));
     setMounted(true);
-  }, []);
+  }, [media]);
 
   // Track current card via IntersectionObserver
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || !items.length) return;
     const io = new IntersectionObserver(
       entries => {
         entries.forEach(e => {
           if (e.isIntersecting) {
             const idx = parseInt((e.target as HTMLElement).dataset.index ?? '0', 10);
             setCurrent(idx);
-            // Pause any playing audio when leaving a card
             setPlaying(prev => {
-              if (prev && media[idx].id !== prev) {
-                const audio = audioRefs.current[prev];
-                audio?.pause();
+              if (prev && items[idx]?.id !== prev) {
+                audioRefs.current[prev]?.pause();
                 return null;
               }
               return prev;
@@ -156,34 +212,32 @@ export function DiscoverFeed({ media, creators }: Props) {
     );
     Array.from(container.children).forEach(c => io.observe(c));
     return () => io.disconnect();
-  }, [media]);
+  }, [items]);
 
   const scrollTo = useCallback((idx: number) => {
     const container = containerRef.current;
     if (!container) return;
-    const child = container.children[idx] as HTMLElement | undefined;
-    child?.scrollIntoView({ behavior: 'smooth' });
+    (container.children[idx] as HTMLElement | undefined)?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); scrollTo(Math.min(current + 1, media.length - 1)); }
+      if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); scrollTo(Math.min(current + 1, items.length - 1)); }
       if (e.key === 'ArrowUp'   || e.key === 'k') { e.preventDefault(); scrollTo(Math.max(current - 1, 0)); }
-      if (e.key === ' ') { e.preventDefault(); toggleAudio(media[current]?.id); }
+      if (e.key === ' ') { e.preventDefault(); toggleAudio(items[current]?.id); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [current, media, scrollTo]);
+  }, [current, items, scrollTo]);
 
   const toggleAudio = useCallback((id: string | undefined) => {
     if (!id) return;
     const audio = audioRefs.current[id];
     if (!audio) return;
     if (playing === id) {
-      audio.pause();
-      setPlaying(null);
+      audio.pause(); setPlaying(null);
     } else {
       Object.values(audioRefs.current).forEach(a => a?.pause());
       audio.play().then(() => setPlaying(id)).catch(() => {});
@@ -192,281 +246,400 @@ export function DiscoverFeed({ media, creators }: Props) {
 
   const handleLike = (id: string) => {
     toggleLike(id);
-    setLiked(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    setLiked(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
 
   const handleSave = (id: string) => {
     toggleSave(id);
-    setSaved(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    setSaved(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
 
-  const handleShare = (m: Media) => {
-    setShareTarget(m);
-  };
+  const handleDownload = useCallback((m: Media) => {
+    const d = m.data as { fullUrl?: string; previewUrl?: string };
+    const url = d.fullUrl ?? d.previewUrl;
+    if (!url) return;
+    const ext = url.split('.').pop()?.split('?')[0] ?? 'jpg';
+    downloadFile(url, `senses-${m.slug}.${ext}`);
+  }, []);
 
   if (!mounted) return null;
 
+  // Progress dots: show up to 7, centered on current
+  const totalDots = Math.min(items.length, 7);
+  const dotOffset = Math.max(0, Math.min(current - 3, items.length - 7));
+
   return (
     <>
-    {/* Mute toggle — top-left, above all cards */}
-    <button
-      onClick={() => setMuted(m => !m)}
-      aria-label={muted ? 'Unmute' : 'Mute'}
-      className="fixed z-[60] top-[calc(var(--nav-height)+12px)] left-4 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm border border-white/15 text-white/70 hover:text-white flex items-center justify-center transition-all"
-    >
-      {muted ? (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-          <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM17.78 9.22a.75.75 0 1 0-1.06 1.06L18.44 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06l1.72-1.72 1.72 1.72a.75.75 0 1 0 1.06-1.06L20.56 12l1.72-1.72a.75.75 0 1 0-1.06-1.06l-1.72 1.72-1.72-1.72Z"/>
-        </svg>
-      ) : (
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-          <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM18.584 5.106a.75.75 0 0 1 1.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 0 1-1.06-1.06 8.25 8.25 0 0 0 0-11.668.75.75 0 0 1 0-1.06Z M15.932 7.757a.75.75 0 0 1 1.061 0 6 6 0 0 1 0 8.486.75.75 0 0 1-1.06-1.061 4.5 4.5 0 0 0 0-6.364.75.75 0 0 1 0-1.06Z"/>
-        </svg>
-      )}
-    </button>
-
-    {/* Scroll-snap container covering the full viewport */}
+    {/* Controls bar — fixed above cards */}
     <div
-      ref={containerRef}
-      className="fixed inset-0 overflow-y-scroll"
+      className="fixed z-[65] flex items-center gap-2"
+      style={{ top: 'calc(var(--nav-height) + 10px)', right: '16px' }}
+    >
+      {/* Mute toggle */}
+      <button
+        onClick={() => setMuted(m => !m)}
+        aria-label={muted ? 'Unmute' : 'Mute'}
+        className="w-8 h-8 rounded-full bg-black/45 backdrop-blur-md border border-white/15 text-white/70 hover:text-white flex items-center justify-center transition-all"
+        style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
+      >
+        {muted ? <MuteIcon /> : <UnmuteIcon />}
+      </button>
+
+      {/* Portrait / Fullscreen toggle */}
+      <button
+        onClick={() => setPortrait(p => !p)}
+        aria-label={portrait ? 'Switch to fullscreen' : 'Switch to portrait'}
+        className="w-8 h-8 rounded-full bg-black/45 backdrop-blur-md border border-white/15 text-white/70 hover:text-white flex items-center justify-center transition-all"
+        style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
+        title={portrait ? 'Fullscreen' : 'Portrait'}
+      >
+        {portrait ? <FullscreenIcon /> : <PortraitIcon />}
+      </button>
+    </div>
+
+    {/* Scroll-snap container */}
+    <div
+      className={`fixed inset-0 overflow-y-scroll ${portrait ? 'bg-black flex items-center justify-center' : ''}`}
       style={{
-        scrollSnapType:  'y mandatory',
+        scrollSnapType:  portrait ? 'none' : 'y mandatory',
         scrollbarWidth:  'none',
         msOverflowStyle: 'none',
       } as React.CSSProperties}
     >
-      {media.map((m, i) => {
-        const creator  = creatorMap[m.creator];
-        const isLiked  = liked.has(m.id);
-        const isSaved  = saved.has(m.id);
-        const isActive = i === current;
-        const bg       = bgImage(m);
-        const isAudio  = m.division === 'hearing';
-        const isPlaying = playing === m.id;
-        const audioData = isAudio ? (m.data as AudioData) : null;
-        const isPlaceholder = !audioData?.streamUrl || audioData.streamUrl.startsWith('#');
+      {portrait ? (
+        /* ── Portrait mode: single centred card ── */
+        <div
+          ref={containerRef}
+          className="relative overflow-y-scroll w-full h-full flex justify-center items-start"
+          style={{ scrollSnapType: 'y mandatory', scrollbarWidth: 'none' } as React.CSSProperties}
+        >
+          {items.map((m, i) => (
+            <PortraitCard
+              key={m.id}
+              m={m}
+              i={i}
+              current={current}
+              liked={liked}
+              saved={saved}
+              playing={playing}
+              muted={muted}
+              creatorMap={creatorMap}
+              audioRefs={audioRefs}
+              totalItems={items.length}
+              totalDots={totalDots}
+              dotOffset={dotOffset}
+              onLike={handleLike}
+              onSave={handleSave}
+              onShare={setShareTarget}
+              onDownload={handleDownload}
+              onToggleAudio={toggleAudio}
+            />
+          ))}
+        </div>
+      ) : (
+        /* ── Fullscreen mode ── */
+        <div ref={containerRef} className="w-full h-full">
+          {items.map((m, i) => (
+            <FullscreenCard
+              key={m.id}
+              m={m}
+              i={i}
+              current={current}
+              liked={liked}
+              saved={saved}
+              playing={playing}
+              muted={muted}
+              creatorMap={creatorMap}
+              audioRefs={audioRefs}
+              totalItems={items.length}
+              totalDots={totalDots}
+              dotOffset={dotOffset}
+              onLike={handleLike}
+              onSave={handleSave}
+              onShare={setShareTarget}
+              onDownload={handleDownload}
+              onToggleAudio={toggleAudio}
+              onScrollTo={scrollTo}
+            />
+          ))}
+        </div>
+      )}
+    </div>
 
+    {shareTarget && <ShareModal media={shareTarget} onClose={() => setShareTarget(null)} />}
+    </>
+  );
+}
+
+// ── Shared card props ─────────────────────────────────────────────────────────
+
+interface CardProps {
+  m: Media;
+  i: number;
+  current: number;
+  liked: Set<string>;
+  saved: Set<string>;
+  playing: string | null;
+  muted: boolean;
+  creatorMap: Record<string, Creator>;
+  audioRefs: React.MutableRefObject<Record<string, HTMLAudioElement | null>>;
+  totalItems: number;
+  totalDots: number;
+  dotOffset: number;
+  onLike: (id: string) => void;
+  onSave: (id: string) => void;
+  onShare: (m: Media) => void;
+  onDownload: (m: Media) => void;
+  onToggleAudio: (id: string) => void;
+  onScrollTo?: (idx: number) => void;
+}
+
+function ProgressDots({ totalDots, dotOffset, current }: { totalDots: number; dotOffset: number; current: number }) {
+  return (
+    <div className="absolute top-0 left-0 right-0 z-20 flex gap-[3px] px-3 pt-2" style={{ top: 'calc(var(--nav-height) + 8px)' }}>
+      {Array.from({ length: totalDots }).map((_, k) => {
+        const realIdx = k + dotOffset;
+        const isActive = realIdx === current;
         return (
           <div
-            key={m.id}
-            data-index={i}
-            className="relative w-full h-screen flex-shrink-0 overflow-hidden"
-            style={{ scrollSnapAlign: 'start' }}
-          >
-            {/* ── Background ── */}
-            <div className="absolute inset-0">
-              <img
-                src={bg}
-                alt=""
-                className={`w-full h-full transition-transform duration-700 ${
-                  isAudio
-                    ? 'object-cover scale-110 blur-[60px] opacity-20'
-                    : 'object-cover'
-                }`}
-                loading={i < 3 ? 'eager' : 'lazy'}
-              />
-            </div>
-
-            {/* ── Gradient overlays ── */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/85 pointer-events-none" />
-
-            {/* ── HEARING: album art + play ── */}
-            {isAudio && audioData && (
-              <>
-                {/* Hidden audio element */}
-                {!isPlaceholder && (
-                  <audio
-                    ref={el => { audioRefs.current[m.id] = el; }}
-                    src={audioData.streamUrl}
-                    preload="none"
-                    loop
-                  />
-                )}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="flex flex-col items-center gap-5 pointer-events-auto">
-                    {/* Album art */}
-                    <div
-                      className={`w-44 h-44 rounded-2xl overflow-hidden shadow-2xl border border-white/10 transition-all duration-500 ${
-                        isPlaying ? 'scale-105 shadow-[0_0_40px_rgba(143,174,192,0.2)]' : ''
-                      }`}
-                    >
-                      <img
-                        src={audioData.artworkUrl ?? m.thumbnail}
-                        alt={m.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-
-                    {/* Play / pause */}
-                    <button
-                      onClick={() => isPlaceholder ? undefined : toggleAudio(m.id)}
-                      disabled={isPlaceholder}
-                      aria-label={isPlaying ? 'Pause' : 'Play'}
-                      className={`w-14 h-14 rounded-full flex items-center justify-center border transition-all duration-200 ${
-                        isPlaceholder
-                          ? 'bg-white/5 border-white/10 text-white/30 cursor-not-allowed'
-                          : isPlaying
-                            ? 'bg-senses-hearing/30 border-senses-hearing/40 text-senses-hearing hover:bg-senses-hearing/40'
-                            : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-                      }`}
-                    >
-                      {isPlaying ? (
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                          <path d="M6 5h3v14H6zm9 0h3v14h-3z"/>
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 ml-0.5">
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
-                      )}
-                    </button>
-
-                    {isPlaceholder && (
-                      <p className="text-white/30 text-[10px] tracking-wider">Audio preview not available in V1</p>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* ── Item counter ── */}
-            {isActive && (
-              <div className="absolute right-4 text-white/30 text-[11px] font-mono tabular-nums" style={{ top: 'calc(var(--nav-height) + 16px)' }}>
-                {i + 1} / {media.length}
-              </div>
-            )}
-
-            {/* ── Up arrow (prev) ── */}
-            {i > 0 && isActive && (
-              <button
-                onClick={() => scrollTo(i - 1)}
-                aria-label="Previous"
-                className="absolute left-1/2 -translate-x-1/2 text-white/25 hover:text-white/60 transition-colors"
-                style={{ top: 'calc(var(--nav-height) + 20px)' }}
-              >
-                <ChevronUpIcon />
-              </button>
-            )}
-
-            {/* ── Down arrow (next) ── */}
-            {i < media.length - 1 && isActive && (
-              <button
-                onClick={() => scrollTo(i + 1)}
-                aria-label="Next"
-                className="absolute bottom-28 left-1/2 -translate-x-1/2 text-white/30 hover:text-white/60 transition-colors animate-bounce"
-              >
-                <ChevronDownIcon />
-              </button>
-            )}
-
-            {/* ── Side actions ── */}
-            <div className="absolute right-4 flex flex-col items-center gap-4" style={{ bottom: '120px' }}>
-              <ActionBtn
-                onClick={() => handleLike(m.id)}
-                active={isLiked}
-                activeClass="bg-red-500/25 border-red-500/30 text-red-400"
-                label={isLiked ? 'Unlike' : 'Like'}
-                count={formatCount(m.stats.likes + (isLiked ? 1 : 0))}
-              >
-                <HeartIcon filled={isLiked} />
-              </ActionBtn>
-
-              <ActionBtn
-                onClick={() => handleSave(m.id)}
-                active={isSaved}
-                activeClass="bg-senses-sight/20 border-senses-sight/30 text-senses-sight"
-                label={isSaved ? 'Unsave' : 'Save'}
-                count={formatCount(m.stats.saves + (isSaved ? 1 : 0))}
-              >
-                <BookmarkIcon filled={isSaved} />
-              </ActionBtn>
-
-              <ActionBtn
-                onClick={() => handleShare(m)}
-                label="Share"
-              >
-                <ShareIcon />
-              </ActionBtn>
-
-              <a
-                href={detailHref(m)}
-                aria-label="View full page"
-                className="flex flex-col items-center gap-1 group"
-              >
-                <div className="w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10 bg-black/30 text-white/70 hover:bg-black/50 hover:text-white transition-all">
-                  <ExternalLinkIcon />
-                </div>
-              </a>
-            </div>
-
-            {/* ── Bottom info ── */}
-            <div className="absolute bottom-0 left-0 right-16 p-5 pb-8">
-              {/* Division */}
-              <p className={`text-[10px] tracking-[0.25em] uppercase font-medium mb-1.5 ${
-                isAudio ? 'text-senses-hearing' : 'text-senses-sight'
-              }`}>
-                {isAudio ? 'HEARING' : 'SIGHT'} · {m.type}
-              </p>
-
-              {/* Title */}
-              <h2 className="text-white text-lg font-medium leading-snug mb-2 line-clamp-2">
-                {m.title}
-              </h2>
-
-              {/* Creator */}
-              {creator && (
-                <a
-                  href={`/creator/${creator.id}`}
-                  className="inline-flex items-center gap-2 mb-3 group"
-                >
-                  <img
-                    src={creator.avatar}
-                    alt={creator.displayName}
-                    className="w-6 h-6 rounded-full object-cover border border-white/20 flex-shrink-0"
-                  />
-                  <span className="text-white/60 text-sm group-hover:text-white/90 transition-colors">
-                    {creator.displayName}
-                  </span>
-                </a>
-              )}
-
-              {/* Tags */}
-              <div className="flex flex-wrap gap-1.5">
-                {m.tags.slice(0, 4).map(t => (
-                  <a
-                    key={t}
-                    href={`/tag/${t}`}
-                    className="px-2 py-0.5 rounded-full bg-white/8 backdrop-blur-sm border border-white/10 text-white/50 text-[10px] hover:text-white/80 hover:bg-white/15 transition-all"
-                    style={{ backdropFilter: 'blur(8px)' }}
-                  >
-                    #{t}
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* ── Mood overlay (subtle color tint for hearing) ── */}
-            {isAudio && (
-              <div
-                className="absolute inset-0 pointer-events-none opacity-10"
-                style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 50%, #8FAEC0, transparent)' }}
-              />
-            )}
-          </div>
+            key={k}
+            className="h-[2.5px] rounded-full flex-1 transition-all duration-300"
+            style={{
+              background: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.25)',
+              transform: isActive ? 'scaleY(1.5)' : 'scaleY(1)',
+            }}
+          />
         );
       })}
     </div>
+  );
+}
 
-    {/* Share modal */}
-    {shareTarget && <ShareModal media={shareTarget} onClose={() => setShareTarget(null)} />}
+function CardContent({ m, creator, isLiked, isSaved, isAudio, isPlaying, isPlaceholder, audioRefs, onLike, onSave, onShare, onDownload, onToggleAudio }: {
+  m: Media; creator?: Creator; isLiked: boolean; isSaved: boolean;
+  isAudio: boolean; isPlaying: boolean; isPlaceholder: boolean;
+  audioRefs: React.MutableRefObject<Record<string, HTMLAudioElement | null>>;
+  onLike: (id: string) => void; onSave: (id: string) => void;
+  onShare: (m: Media) => void; onDownload: (m: Media) => void;
+  onToggleAudio: (id: string) => void;
+}) {
+  const audioData = isAudio ? (m.data as AudioData) : null;
+
+  return (
+    <>
+      {/* Hidden audio */}
+      {isAudio && audioData && !isPlaceholder && (
+        <audio ref={el => { audioRefs.current[m.id] = el; }} src={audioData.streamUrl} preload="none" loop />
+      )}
+
+      {/* Hearing: album art centred */}
+      {isAudio && audioData && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col items-center gap-5 pointer-events-auto">
+            <div className={`w-44 h-44 rounded-2xl overflow-hidden shadow-2xl border border-white/10 transition-all duration-500 ${isPlaying ? 'scale-105 shadow-[0_0_40px_rgba(143,174,192,0.2)]' : ''}`}>
+              <img src={audioData.artworkUrl ?? m.thumbnail} alt={m.title} className="w-full h-full object-cover" />
+            </div>
+            <button
+              onClick={() => isPlaceholder ? undefined : onToggleAudio(m.id)}
+              disabled={isPlaceholder}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+              className={`w-14 h-14 rounded-full flex items-center justify-center border transition-all duration-200 ${isPlaceholder ? 'bg-white/5 border-white/10 text-white/30 cursor-not-allowed' : isPlaying ? 'bg-senses-hearing/30 border-senses-hearing/40 text-senses-hearing' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}
+            >
+              {isPlaying
+                ? <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M6 5h3v14H6zm9 0h3v14h-3z"/></svg>
+                : <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 ml-0.5"><path d="M8 5v14l11-7z"/></svg>
+              }
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Side action rail */}
+      <div className="absolute right-3 flex flex-col items-center gap-4" style={{ bottom: '110px', zIndex: 20 }}>
+        <ActionBtn
+          onClick={() => onLike(m.id)}
+          active={isLiked}
+          activeClass="bg-red-500/30 border-red-400/40 text-red-400 scale-105"
+          label={isLiked ? 'Unlike' : 'Like'}
+          count={formatCount(m.stats.likes + (isLiked ? 1 : 0))}
+        >
+          <HeartIcon filled={isLiked} />
+        </ActionBtn>
+
+        <ActionBtn
+          onClick={() => onSave(m.id)}
+          active={isSaved}
+          activeClass="bg-amber-400/20 border-amber-300/40 text-amber-300 scale-105"
+          label={isSaved ? 'Unsave' : 'Save'}
+          count={formatCount(m.stats.saves + (isSaved ? 1 : 0))}
+        >
+          <BookmarkIcon filled={isSaved} />
+        </ActionBtn>
+
+        <ActionBtn onClick={() => onShare(m)} label="Share">
+          <ShareIcon />
+        </ActionBtn>
+
+        <ActionBtn onClick={() => onDownload(m)} label="Download">
+          <DownloadIcon />
+        </ActionBtn>
+
+        <a href={detailHref(m)} aria-label="View full page" className="flex flex-col items-center gap-1">
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md border border-white/15 bg-black/35 text-white/80 hover:bg-black/55 hover:text-white hover:scale-105 transition-all duration-200"
+            style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.4)' }}
+          >
+            <ExternalLinkIcon />
+          </div>
+        </a>
+      </div>
+
+      {/* Bottom info */}
+      <div className="absolute bottom-0 left-0 right-16 p-4 pb-7" style={{ zIndex: 20 }}>
+        <p className={`text-[10px] tracking-[0.22em] uppercase font-semibold mb-1.5 ${isAudio ? 'text-senses-hearing' : 'text-senses-sight'}`}>
+          {isAudio ? 'HEARING' : 'SIGHT'} · {m.type}
+        </p>
+        <h2 className="text-white text-[17px] font-semibold leading-snug mb-2 line-clamp-2" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>
+          {m.title}
+        </h2>
+        {creator && (
+          <a href={`/creator/${creator.id}`} className="inline-flex items-center gap-2 mb-2.5 group">
+            <img src={creator.avatar} alt={creator.displayName} className="w-6 h-6 rounded-full object-cover border border-white/25 flex-shrink-0" />
+            <span className="text-white/65 text-sm group-hover:text-white/90 transition-colors font-medium">{creator.displayName}</span>
+          </a>
+        )}
+        <div className="flex flex-wrap gap-1.5">
+          {m.tags.slice(0, 3).map(t => (
+            <a key={t} href={`/tag/${t}`}
+              className="px-2 py-0.5 rounded-full border border-white/15 text-white/50 text-[10px] hover:text-white/80 hover:bg-white/10 transition-all"
+              style={{ backdropFilter: 'blur(8px)', background: 'rgba(255,255,255,0.06)' }}
+            >
+              #{t}
+            </a>
+          ))}
+        </div>
+      </div>
     </>
+  );
+}
+
+function FullscreenCard({ m, i, current, liked, saved, playing, muted, creatorMap, audioRefs, totalItems, totalDots, dotOffset, onLike, onSave, onShare, onDownload, onToggleAudio, onScrollTo }: CardProps) {
+  const isActive  = i === current;
+  const isLiked   = liked.has(m.id);
+  const isSaved   = saved.has(m.id);
+  const isAudio   = m.division === 'hearing';
+  const isPlaying = playing === m.id;
+  const audioData = isAudio ? (m.data as AudioData) : null;
+  const isPlaceholder = !audioData?.streamUrl || audioData.streamUrl.startsWith('#');
+  const bg = bgImage(m);
+
+  return (
+    <div
+      data-index={i}
+      className="relative w-full h-screen flex-shrink-0 overflow-hidden"
+      style={{ scrollSnapAlign: 'start' }}
+    >
+      <div className="absolute inset-0">
+        <img
+          src={bg}
+          alt=""
+          className={`w-full h-full transition-transform duration-700 ${isAudio ? 'object-cover scale-110 blur-[60px] opacity-20' : 'object-cover'}`}
+          loading={i < 3 ? 'eager' : 'lazy'}
+        />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/88 pointer-events-none" />
+
+      {/* Progress dots */}
+      {isActive && <ProgressDots totalDots={totalDots} dotOffset={dotOffset} current={current} />}
+
+      {/* Counter */}
+      {isActive && (
+        <div className="absolute text-white/35 text-[11px] font-mono tabular-nums" style={{ top: 'calc(var(--nav-height) + 16px)', right: '60px' }}>
+          {i + 1} / {totalItems}
+        </div>
+      )}
+
+      {/* Up / Down arrows */}
+      {i > 0 && isActive && (
+        <button onClick={() => onScrollTo?.(i - 1)} aria-label="Previous"
+          className="absolute left-1/2 -translate-x-1/2 text-white/25 hover:text-white/60 transition-colors z-10"
+          style={{ top: 'calc(var(--nav-height) + 20px)' }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+          </svg>
+        </button>
+      )}
+      {i < totalItems - 1 && isActive && (
+        <button onClick={() => onScrollTo?.(i + 1)} aria-label="Next"
+          className="absolute bottom-28 left-1/2 -translate-x-1/2 text-white/30 hover:text-white/60 transition-colors animate-bounce z-10"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          </svg>
+        </button>
+      )}
+
+      <CardContent
+        m={m} creator={creatorMap[m.creator]} isLiked={isLiked} isSaved={isSaved}
+        isAudio={isAudio} isPlaying={isPlaying} isPlaceholder={isPlaceholder}
+        audioRefs={audioRefs} onLike={onLike} onSave={onSave} onShare={onShare}
+        onDownload={onDownload} onToggleAudio={onToggleAudio}
+      />
+
+      {isAudio && <div className="absolute inset-0 pointer-events-none opacity-10" style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 50%, #8FAEC0, transparent)' }} />}
+    </div>
+  );
+}
+
+function PortraitCard({ m, i, current, liked, saved, playing, muted, creatorMap, audioRefs, totalItems, totalDots, dotOffset, onLike, onSave, onShare, onDownload, onToggleAudio }: CardProps) {
+  const isActive  = i === current;
+  const isLiked   = liked.has(m.id);
+  const isSaved   = saved.has(m.id);
+  const isAudio   = m.division === 'hearing';
+  const isPlaying = playing === m.id;
+  const audioData = isAudio ? (m.data as AudioData) : null;
+  const isPlaceholder = !audioData?.streamUrl || audioData.streamUrl.startsWith('#');
+  const bg = bgImage(m);
+
+  return (
+    <div
+      data-index={i}
+      className="relative flex-shrink-0 overflow-hidden rounded-2xl"
+      style={{
+        width: 'min(400px, calc(100vw - 32px))',
+        height: 'calc(100vh - 32px)',
+        scrollSnapAlign: 'start',
+        margin: '16px auto',
+        boxShadow: isActive ? '0 0 0 2px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.7)' : '0 8px 32px rgba(0,0,0,0.5)',
+      }}
+    >
+      <div className="absolute inset-0 rounded-2xl overflow-hidden">
+        <img
+          src={bg}
+          alt=""
+          className={`w-full h-full ${isAudio ? 'object-cover scale-110 blur-[60px] opacity-20' : 'object-cover'}`}
+          loading={i < 3 ? 'eager' : 'lazy'}
+        />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90 rounded-2xl pointer-events-none" />
+
+      {isActive && <ProgressDots totalDots={totalDots} dotOffset={dotOffset} current={current} />}
+
+      {isActive && (
+        <div className="absolute text-white/40 text-[11px] font-mono" style={{ top: 'calc(var(--nav-height) + 16px)', right: '50px' }}>
+          {i + 1}/{totalItems}
+        </div>
+      )}
+
+      <CardContent
+        m={m} creator={creatorMap[m.creator]} isLiked={isLiked} isSaved={isSaved}
+        isAudio={isAudio} isPlaying={isPlaying} isPlaceholder={isPlaceholder}
+        audioRefs={audioRefs} onLike={onLike} onSave={onSave} onShare={onShare}
+        onDownload={onDownload} onToggleAudio={onToggleAudio}
+      />
+
+      {isAudio && <div className="absolute inset-0 pointer-events-none opacity-10 rounded-2xl" style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 50%, #8FAEC0, transparent)' }} />}
+    </div>
   );
 }

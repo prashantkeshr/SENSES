@@ -89,7 +89,9 @@ export function GalleryWall({ media, creators }: Props) {
   }, [media]);
 
   useEffect(() => {
-    setItems(interleavedShuffle(media, dailySeed()));
+    // Random shuffle on every open (like Reels/Shorts), interleaved by category
+    const seed = Date.now() ^ (Math.random() * 0xffffffff);
+    setItems(interleavedShuffle(media, seed));
     setMounted(true);
   }, [media]);
 

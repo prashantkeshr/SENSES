@@ -5,6 +5,7 @@ import { formatCount } from '@lib/utils/formatters';
 import { SaveToCollectionModal }  from '@/components/collections/SaveToCollectionModal';
 import { ShareModal }             from '@/components/ui/ShareModal';
 import { toast }                  from '@/lib/utils/toast';
+import { downloadFile }           from '@/lib/utils/download';
 
 interface Props {
   media: Media;
@@ -34,10 +35,19 @@ export function MediaActions({ media }: Props) {
   }, [media.id]);
 
   const handleOpenFullSize = useCallback(() => {
-    const fullUrl = (media.data as { fullUrl?: string; previewUrl?: string }).fullUrl
+    const url = (media.data as { fullUrl?: string; previewUrl?: string }).fullUrl
       ?? (media.data as { previewUrl?: string }).previewUrl;
-    if (fullUrl) window.open(fullUrl, '_blank', 'noopener,noreferrer');
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
   }, [media.data]);
+
+  const handleDownload = useCallback(() => {
+    const url = (media.data as { fullUrl?: string; previewUrl?: string }).fullUrl
+      ?? (media.data as { previewUrl?: string }).previewUrl;
+    if (!url) { toast('No download available', 'error'); return; }
+    const ext = url.split('.').pop()?.split('?')[0] ?? 'jpg';
+    const filename = `senses-${media.slug}.${ext}`;
+    downloadFile(url, filename);
+  }, [media.data, media.slug]);
 
   return (
     <>
@@ -102,6 +112,17 @@ export function MediaActions({ media }: Props) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
           </svg>
           Open Full Size
+        </button>
+
+        {/* Download */}
+        <button
+          onClick={handleDownload}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium bg-senses-surface border border-senses-border text-senses-text-2 hover:border-senses-border-2 hover:text-senses-text transition-all duration-200"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+          </svg>
+          Download
         </button>
       </div>
 

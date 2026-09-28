@@ -2,10 +2,43 @@
 import BaseLayout    from '@/layouts/BaseLayout.astro';
 import { provider }  from '@/lib/providers';
 import { formatDate } from '@/lib/utils/formatters';
+import type { ImageData } from '@/types/index';
 
 const collections = await provider.getCollections();
 const featured    = collections.filter(c => c.featured);
 const rest        = collections.filter(c => !c.featured);
+
+// ── Tag-based mosaic groups (SSG, no JSON import) ─────────────────────────────
+const allMedia  = await provider.getMedia({});
+const sightOnly = allMedia.filter(m => m.division === 'sight');
+
+// Build tag → items map
+const tagMap = new Map<string, typeof sightOnly>();
+for (const item of sightOnly) {
+  for (const tag of (item.tags ?? [])) {
+    const key = tag.toLowerCase().trim();
+    if (!tagMap.has(key)) tagMap.set(key, []);
+    tagMap.get(key)!.push(item);
+  }
+}
+
+// Prefer single-word tags that are descriptive; skip generic fillers
+const SKIP_TAGS = new Set(['background', 'isolated', 'free', 'photo', 'image', 'digital', 'abstract art', 'hd', '4k', 'wallpaper', 'texture']);
+
+const tagGroups = Array.from(tagMap.entries())
+  .filter(([tag, items]) => items.length >= 4 && !SKIP_TAGS.has(tag))
+  .sort((a, b) => b[1].length - a[1].length)
+  .slice(0, 16)
+  .map(([tag, items]) => ({
+    tag,
+    slug: tag.replace(/\s+/g, '-'),
+    label: tag.charAt(0).toUpperCase() + tag.slice(1),
+    count: items.length,
+    thumbnails: items.slice(0, 4).map(m => {
+      const d = m.data as ImageData | undefined;
+      return d?.thumbnailUrl ?? m.thumbnail;
+    }),
+  }));
 ---
 
 <BaseLayout
@@ -114,6 +147,56 @@ const rest        = collections.filter(c => !c.featured);
                     {col.description}
                   </p>
                   <span class="text-senses-text-3 text-[10px]">Curated collection</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Browse by Topic: tag-based mosaic cards with real media thumbnails -->
+      {tagGroups.length > 0 && (
+        <section class="mb-12">
+          <div class="mb-6">
+            <h2 class="text-senses-text text-xl font-light mb-1">Browse by Topic</h2>
+            <p class="text-senses-text-3 text-sm">Explore our media library organised by subject — each card shows real photos from that category.</p>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {tagGroups.map(({ tag, slug, label, count, thumbnails }) => (
+              <a
+                href={`/tag/${slug}`}
+                class="group relative rounded-2xl overflow-hidden bg-senses-surface border border-senses-border hover:border-senses-border-2 transition-all aspect-[4/3]"
+              >
+                {/* 2×2 mosaic of real thumbnails */}
+                <div class="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-senses-border">
+                  {thumbnails.map((src, idx) => (
+                    <div class="overflow-hidden bg-senses-surface-2">
+                      <img
+                        src={src}
+                        alt=""
+                        loading="lazy"
+                        class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-[1.06] transition-all duration-500"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Gradient overlay */}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+                {/* Label + count */}
+                <div class="absolute bottom-0 left-0 right-0 p-3">
+                  <p class="text-white text-sm font-semibold leading-tight group-hover:text-senses-sight transition-colors">
+                    {label}
+                  </p>
+                  <p class="text-white/50 text-[10px] tabular-nums mt-0.5">{count} photos</p>
+                </div>
+
+                {/* Corner arrow */}
+                <div class="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5" class="w-3 h-3">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m3 13 10-10M5 3h8v8"/>
+                  </svg>
                 </div>
               </a>
             ))}

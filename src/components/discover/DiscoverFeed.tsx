@@ -287,7 +287,6 @@ export function DiscoverFeed({ media, creators }: Props) {
       className="fixed z-[65] flex items-center gap-2"
       style={{ top: 'calc(var(--nav-height) + 10px)', right: '16px' }}
     >
-      {/* Mute toggle */}
       <button
         onClick={() => setMuted(m => !m)}
         aria-label={muted ? 'Unmute' : 'Mute'}
@@ -296,8 +295,6 @@ export function DiscoverFeed({ media, creators }: Props) {
       >
         {muted ? <MuteIcon /> : <UnmuteIcon />}
       </button>
-
-      {/* Portrait / Fullscreen toggle */}
       <button
         onClick={() => setPortrait(p => !p)}
         aria-label={portrait ? 'Switch to fullscreen' : 'Switch to portrait'}
@@ -309,73 +306,42 @@ export function DiscoverFeed({ media, creators }: Props) {
       </button>
     </div>
 
-    {/* Scroll-snap container */}
+    {/* Single scroll-snap container for both modes */}
     <div
-      className={`fixed inset-0 overflow-y-scroll ${portrait ? 'bg-black flex items-center justify-center' : ''}`}
+      ref={containerRef}
+      className={`fixed inset-0 overflow-y-scroll ${portrait ? 'bg-black' : ''}`}
       style={{
-        scrollSnapType:  portrait ? 'none' : 'y mandatory',
+        scrollSnapType:  'y mandatory',
         scrollbarWidth:  'none',
         msOverflowStyle: 'none',
       } as React.CSSProperties}
     >
-      {portrait ? (
-        /* ── Portrait mode: single centred card ── */
-        <div
-          ref={containerRef}
-          className="relative overflow-y-scroll w-full h-full flex justify-center items-start"
-          style={{ scrollSnapType: 'y mandatory', scrollbarWidth: 'none' } as React.CSSProperties}
-        >
-          {items.map((m, i) => (
+      {portrait
+        ? items.map((m, i) => (
             <PortraitCard
               key={m.id}
-              m={m}
-              i={i}
-              current={current}
-              liked={liked}
-              saved={saved}
-              playing={playing}
-              muted={muted}
-              creatorMap={creatorMap}
-              audioRefs={audioRefs}
-              totalItems={items.length}
-              totalDots={totalDots}
-              dotOffset={dotOffset}
-              onLike={handleLike}
-              onSave={handleSave}
-              onShare={setShareTarget}
-              onDownload={handleDownload}
+              m={m} i={i} current={current} liked={liked} saved={saved}
+              playing={playing} muted={muted} creatorMap={creatorMap}
+              audioRefs={audioRefs} totalItems={items.length}
+              totalDots={totalDots} dotOffset={dotOffset}
+              onLike={handleLike} onSave={handleSave}
+              onShare={setShareTarget} onDownload={handleDownload}
               onToggleAudio={toggleAudio}
             />
-          ))}
-        </div>
-      ) : (
-        /* ── Fullscreen mode ── */
-        <div ref={containerRef} className="w-full h-full">
-          {items.map((m, i) => (
+          ))
+        : items.map((m, i) => (
             <FullscreenCard
               key={m.id}
-              m={m}
-              i={i}
-              current={current}
-              liked={liked}
-              saved={saved}
-              playing={playing}
-              muted={muted}
-              creatorMap={creatorMap}
-              audioRefs={audioRefs}
-              totalItems={items.length}
-              totalDots={totalDots}
-              dotOffset={dotOffset}
-              onLike={handleLike}
-              onSave={handleSave}
-              onShare={setShareTarget}
-              onDownload={handleDownload}
-              onToggleAudio={toggleAudio}
-              onScrollTo={scrollTo}
+              m={m} i={i} current={current} liked={liked} saved={saved}
+              playing={playing} muted={muted} creatorMap={creatorMap}
+              audioRefs={audioRefs} totalItems={items.length}
+              totalDots={totalDots} dotOffset={dotOffset}
+              onLike={handleLike} onSave={handleSave}
+              onShare={setShareTarget} onDownload={handleDownload}
+              onToggleAudio={toggleAudio} onScrollTo={scrollTo}
             />
-          ))}
-        </div>
-      )}
+          ))
+      }
     </div>
 
     {shareTarget && <ShareModal media={shareTarget} onClose={() => setShareTarget(null)} />}
@@ -608,43 +574,56 @@ function PortraitCard({ m, i, current, liked, saved, playing, muted, creatorMap,
   const bg = bgImage(m);
 
   return (
+    /* 100vh snap-wrapper — direct child of scroll container; inner card is centered */
     <div
       data-index={i}
-      className="relative flex-shrink-0 overflow-hidden rounded-2xl"
       style={{
-        width: 'min(400px, calc(100vw - 32px))',
-        height: 'calc(100vh - 32px)',
+        height: '100vh',
+        width: '100%',
         scrollSnapAlign: 'start',
-        margin: '16px auto',
-        boxShadow: isActive ? '0 0 0 2px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.7)' : '0 8px 32px rgba(0,0,0,0.5)',
-      }}
+        scrollSnapStop: 'always',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      } as React.CSSProperties}
     >
-      <div className="absolute inset-0 rounded-2xl overflow-hidden">
-        <img
-          src={bg}
-          alt=""
-          className={`w-full h-full ${isAudio ? 'object-cover scale-110 blur-[60px] opacity-20' : 'object-cover'}`}
-          loading={i < 3 ? 'eager' : 'lazy'}
-        />
-      </div>
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90 rounded-2xl pointer-events-none" />
-
-      {isActive && <ProgressDots totalDots={totalDots} dotOffset={dotOffset} current={current} />}
-
-      {isActive && (
-        <div className="absolute text-white/40 text-[11px] font-mono" style={{ top: 'calc(var(--nav-height) + 16px)', right: '50px' }}>
-          {i + 1}/{totalItems}
+      {/* Visible 9:16 card */}
+      <div
+        className="relative overflow-hidden rounded-2xl"
+        style={{
+          width: 'min(400px, calc(100vw - 32px))',
+          height: 'calc(min(400px, calc(100vw - 32px)) * 16 / 9)',
+          maxHeight: 'calc(100vh - 80px)',
+          boxShadow: isActive ? '0 0 0 2px rgba(255,255,255,0.1), 0 20px 60px rgba(0,0,0,0.7)' : '0 8px 32px rgba(0,0,0,0.5)',
+        }}
+      >
+        <div className="absolute inset-0 rounded-2xl overflow-hidden">
+          <img
+            src={bg}
+            alt=""
+            className={`w-full h-full ${isAudio ? 'object-cover scale-110 blur-[60px] opacity-20' : 'object-cover'}`}
+            loading={i < 3 ? 'eager' : 'lazy'}
+          />
         </div>
-      )}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90 rounded-2xl pointer-events-none" />
 
-      <CardContent
-        m={m} creator={creatorMap[m.creator]} isLiked={isLiked} isSaved={isSaved}
-        isAudio={isAudio} isPlaying={isPlaying} isPlaceholder={isPlaceholder}
-        audioRefs={audioRefs} onLike={onLike} onSave={onSave} onShare={onShare}
-        onDownload={onDownload} onToggleAudio={onToggleAudio}
-      />
+        {isActive && <ProgressDots totalDots={totalDots} dotOffset={dotOffset} current={current} />}
 
-      {isAudio && <div className="absolute inset-0 pointer-events-none opacity-10 rounded-2xl" style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 50%, #8FAEC0, transparent)' }} />}
+        {isActive && (
+          <div className="absolute text-white/40 text-[11px] font-mono" style={{ top: '12px', right: '12px' }}>
+            {i + 1}/{totalItems}
+          </div>
+        )}
+
+        <CardContent
+          m={m} creator={creatorMap[m.creator]} isLiked={isLiked} isSaved={isSaved}
+          isAudio={isAudio} isPlaying={isPlaying} isPlaceholder={isPlaceholder}
+          audioRefs={audioRefs} onLike={onLike} onSave={onSave} onShare={onShare}
+          onDownload={onDownload} onToggleAudio={onToggleAudio}
+        />
+
+        {isAudio && <div className="absolute inset-0 pointer-events-none opacity-10 rounded-2xl" style={{ background: 'radial-gradient(ellipse 60% 60% at 50% 50%, #8FAEC0, transparent)' }} />}
+      </div>
     </div>
   );
 }

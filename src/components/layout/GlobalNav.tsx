@@ -97,8 +97,8 @@ export default function GlobalNav() {
 
           {/* Animated Dancing Script brand */}
           <a href="/" className="brand-shimmer text-[2.4rem] flex-shrink-0 select-none flex items-center gap-2.5" style={{ lineHeight: 1 }}>
-            <img src="/icons/favicon-dark.png" alt="" width={22} height={22} className="rounded-full opacity-90 flex-shrink-0 dark:block hidden" />
-            <img src="/icons/favicon-light.png" alt="" width={22} height={22} className="rounded-full opacity-90 flex-shrink-0 dark:hidden block" />
+            <img src="/icons/favicon-dark.png" alt="" width={26} height={26} className="rounded-full opacity-90 flex-shrink-0 dark:block hidden" />
+            <img src="/icons/favicon-light.png" alt="" width={26} height={26} className="rounded-full opacity-90 flex-shrink-0 dark:hidden block" />
             Senses
           </a>
 

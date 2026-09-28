@@ -1,12 +1,22 @@
 User-agent: *
 Allow: /
+
+# ── Personal / session-only pages ────────────────────────────────
 Disallow: /my-senses
 Disallow: /settings
 Disallow: /search?
 
-# ── AI crawlers — explicitly welcome ──────────────────────────────
-# All content is CC0. AI training and indexing are permitted.
+# ── Coming-soon pages (thin content — save crawl budget) ─────────
+Disallow: /ambassadors
+Disallow: /contests
+Disallow: /live
+Disallow: /forum
+Disallow: /senses-radio
+Disallow: /api
+Disallow: /blog
+Disallow: /report
 
+# ── AI crawlers — explicitly welcome (all content is CC0) ────────
 User-agent: GPTBot
 Allow: /
 
@@ -37,5 +47,5 @@ Allow: /
 User-agent: YouBot
 Allow: /
 
-# ── Sitemaps ───────────────────────────────────────────────────────
+# ── Sitemaps ──────────────────────────────────────────────────────
 Sitemap: https://senses.dhurta.org/sitemap.xml

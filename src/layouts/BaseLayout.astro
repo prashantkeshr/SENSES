@@ -6,14 +6,16 @@ import { InstallPrompt }   from '@/components/pwa/InstallPrompt';
 import { ToastContainer }  from '@/components/ui/ToastContainer';
 
 interface Props {
-  title:        string;
-  description:  string;
-  canonical?:   string;
-  ogImage?:     string;
-  noIndex?:     boolean;
-  schema?:      object;
-  bodyClass?:   string;
-  noFooter?:    boolean;
+  title:           string;
+  description:     string;
+  canonical?:      string;
+  ogImage?:        string;
+  noIndex?:        boolean;
+  schema?:         object;
+  bodyClass?:      string;
+  noFooter?:       boolean;
+  bingVerify?:     string;
+  yandexVerify?:   string;
 }
 
 const {
@@ -25,6 +27,8 @@ const {
   schema,
   bodyClass = '',
   noFooter = false,
+  bingVerify,
+  yandexVerify,
 } = Astro.props;
 
 const siteUrl  = 'https://senses.dhurta.org';
@@ -76,6 +80,10 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
     : <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   }
   <link rel="canonical" href={fullUrl} />
+
+  <!-- Webmaster verification (add your codes to the page that needs them) -->
+  {bingVerify   && <meta name="msvalidate.01"        content={bingVerify} />}
+  {yandexVerify && <meta name="yandex-verification"  content={yandexVerify} />}
 
   <!-- Performance: preconnect to image CDN used by all media thumbnails -->
   <link rel="preconnect"  href="https://cdn.pixabay.com" crossorigin />
@@ -271,11 +279,11 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
           <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4 font-medium">Company</p>
           <ul class="space-y-2.5">
             {[
-              ['About Us', '/about'],
-              ['Blog', '/blog'],
-              ['FAQ', '/faq'],
+              ['About Us',  '/about'],
+              ['FAQ',       '/faq'],
+              ['Creators',  '/creators'],
               ['My Senses', '/my-senses'],
-              ['Settings', '/settings'],
+              ['Settings',  '/settings'],
             ].map(([l, h]) => (
               <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
             ))}
@@ -288,9 +296,8 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
           <ul class="space-y-2.5 mb-6">
             {[
               ['Terms of Service', '/terms'],
-              ['Privacy Policy', '/privacy'],
-              ['License Summary', '/license'],
-              ['Report Content', '/report'],
+              ['Privacy Policy',   '/privacy'],
+              ['Licensing',        '/licensing'],
             ].map(([l, h]) => (
               <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
             ))}
@@ -311,11 +318,11 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
       <div class="border-t border-senses-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
         <p class="text-senses-text-3 text-xs">© 2026 Senses · All media rights belong to their respective creators · CC0 images via Pixabay · <a href="mailto:Senses.dhurta@outlook.com" class="hover:text-senses-text transition-colors">Senses.dhurta@outlook.com</a></p>
         <div class="flex gap-4 items-center flex-wrap justify-center">
-          <a href="/gallery"  class="text-senses-text-3 hover:text-senses-accent text-xs transition-colors">Gallery</a>
-          <a href="/settings" class="text-senses-text-3 hover:text-senses-accent text-xs transition-colors">Settings</a>
-          <a href="/privacy"  class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Privacy</a>
-          <a href="/terms"    class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Terms</a>
-          <a href="/license"  class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">License</a>
+          <a href="/gallery"    class="text-senses-text-3 hover:text-senses-accent text-xs transition-colors">Gallery</a>
+          <a href="/settings"   class="text-senses-text-3 hover:text-senses-accent text-xs transition-colors">Settings</a>
+          <a href="/privacy"    class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Privacy</a>
+          <a href="/terms"      class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Terms</a>
+          <a href="/licensing"  class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">Licensing</a>
         </div>
       </div>
     </div>

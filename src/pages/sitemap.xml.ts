@@ -48,13 +48,15 @@ export const GET: APIRoute = async () => {
     url('/editorial',   { priority: '0.7', freq: 'weekly' }),
     url('/search',      { priority: '0.7', freq: 'weekly' }),
 
-    // ── Static info pages ─────────────────────────────────────────
+    // ── Static info pages (no noIndex pages here) ─────────────────
     url('/about',      { priority: '0.7', freq: 'monthly' }),
     url('/faq',        { priority: '0.7', freq: 'monthly' }),
     url('/creators',   { priority: '0.7', freq: 'weekly' }),
     url('/licensing',  { priority: '0.6', freq: 'monthly' }),
     url('/privacy',    { priority: '0.5', freq: 'monthly' }),
     url('/terms',      { priority: '0.5', freq: 'monthly' }),
+    // Note: /settings, /my-senses, /ambassadors, /contests, /live,
+    //       /forum, /senses-radio, /api are all noIndex — excluded.
 
     // ── Sight sections ────────────────────────────────────────────
     url('/sight/photos',        { priority: '0.7' }),

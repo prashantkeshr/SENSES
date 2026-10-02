@@ -45,19 +45,18 @@ export const compositeProvider: SensesDataProvider = {
   },
 
   async getMediaById(id) {
-    if (id.startsWith('px-')) {
-      if (isServer) return null;
-      return pixabayProvider.getMediaById!(id);
-    }
-    return jsonProvider.getMediaById(id);
+    // Always check curated store first — curated items also use px-* IDs.
+    const curated = await jsonProvider.getMediaById(id);
+    if (curated) return curated;
+    if (isServer) return null;
+    return pixabayProvider.getMediaById!(id);
   },
 
   async getMediaBySlug(slug) {
-    if (slug.startsWith('px-')) {
-      if (isServer) return null;
-      return pixabayProvider.getMediaBySlug!(slug);
-    }
-    return jsonProvider.getMediaBySlug(slug);
+    const curated = await jsonProvider.getMediaBySlug(slug);
+    if (curated) return curated;
+    if (isServer) return null;
+    return pixabayProvider.getMediaBySlug!(slug);
   },
 
   async getFeaturedMedia(limit = 12) {
@@ -108,16 +107,17 @@ export const compositeProvider: SensesDataProvider = {
   },
 
   async getRelatedMedia(mediaId, limit = 8) {
-    if (mediaId.startsWith('px-')) {
+    // Check curated store first — curated items use px-* IDs too.
+    const curatedSource = await jsonProvider.getMediaById(mediaId);
+    if (!curatedSource) {
+      // True Pixabay item
       if (isServer) return [];
       return pixabayProvider.getRelatedMedia!(mediaId, limit);
     }
     const curated = await jsonProvider.getRelatedMedia(mediaId, limit);
     if (curated.length >= limit) return curated;
     if (isServer) return curated;
-    const source = await jsonProvider.getMediaById(mediaId);
-    if (!source) return curated;
-    const pb = await pixabayProvider.searchMedia!(source.tags[0] ?? '', { limit: limit - curated.length });
+    const pb = await pixabayProvider.searchMedia!(curatedSource.tags[0] ?? '', { limit: limit - curated.length });
     return [...curated, ...pb.items].slice(0, limit);
   },
 
@@ -164,7 +164,8 @@ export const compositeProvider: SensesDataProvider = {
   // ── Cross-sensory (curated only, Pixabay has no audio) ───────────────────
 
   async getCrossSensory(mediaId) {
-    if (mediaId.startsWith('px-')) return { sight: [], hearing: [] };
+    const curatedSource = await jsonProvider.getMediaById(mediaId);
+    if (!curatedSource) return { sight: [], hearing: [] };
     return jsonProvider.getCrossSensory(mediaId);
   },
 };

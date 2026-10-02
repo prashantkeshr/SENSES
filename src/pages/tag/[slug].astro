@@ -3,38 +3,75 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import { MediaCard } from '@/components/media/MediaCard';
 import { provider }  from '@/lib/providers';
 import { slugToTitle } from '@/lib/utils/formatters';
+import topTagsRaw    from '@data/pb/top-tags.json';
+import { PixabayTagSection } from '@/components/media/PixabayTagSection';
 
+// Build paths for curated tags + top 2000 Pixabay tags
 export async function getStaticPaths() {
-  const allMedia = await provider.getMedia();
-  // Collect all unique tags across all media
-  const tagSet = new Set<string>();
-  allMedia.forEach(m => m.tags.forEach(t => tagSet.add(t)));
-  return [...tagSet].map(tag => ({
-    params: { slug: tag },
-    props:  { tag },
+  const allMedia  = await provider.getMedia();
+  const tagSet    = new Map<string, { tag: string; count: number }>();
+
+  // Curated tags (original slugs)
+  allMedia.forEach(m => m.tags.forEach(t => {
+    if (!tagSet.has(t)) tagSet.set(t, { tag: t, count: 0 });
+  }));
+
+  // Pixabay top 2000 tags
+  for (const { tag, slug, count } of topTagsRaw) {
+    if (!tagSet.has(slug)) tagSet.set(slug, { tag, count });
+  }
+
+  return [...tagSet.entries()].map(([slug, { tag, count }]) => ({
+    params: { slug },
+    props:  { tag, slug, pbCount: count },
   }));
 }
 
-interface Props { tag: string }
-const { tag } = Astro.props;
+interface Props { tag: string; slug: string; pbCount: number }
+const { tag, slug, pbCount } = Astro.props;
 
 const [allMedia, allCreators] = await Promise.all([
   provider.getMedia(),
   provider.getCreators(50),
 ]);
 
-const items = allMedia.filter(m => m.tags.includes(tag));
-const creatorMap = Object.fromEntries(allCreators.map(c => [c.id, c]));
+const curatedItems = allMedia.filter(m => m.tags.includes(tag) || m.tags.includes(slug));
+const creatorMap   = Object.fromEntries(allCreators.map(c => [c.id, c]));
+const sightItems   = curatedItems.filter(m => m.division === 'sight');
+const hearingItems = curatedItems.filter(m => m.division === 'hearing');
 
-const sightItems   = items.filter(m => m.division === 'sight');
-const hearingItems = items.filter(m => m.division === 'hearing');
+const tagTitle   = slugToTitle(tag || slug);
+const totalCount = pbCount + curatedItems.length;
+const displayTag = tag || slug;
 
-const tagTitle = slugToTitle(tag);
+// SEO-optimised title and description
+const seoTitle = `Free ${tagTitle} Photos & Images — Download Royalty-Free | Senses`;
+const seoDesc  = `Download ${totalCount > 0 ? totalCount.toLocaleString() + '+' : 'free'} royalty-free ${displayTag} images, photos, and illustrations. No attribution required — free for personal and commercial use.`;
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "name": seoTitle,
+      "description": seoDesc,
+      "url": `https://senses.dhurta.org/tag/${slug}`,
+    },
+    ...(pbCount > 0 ? [{
+      "@type": "ImageGallery",
+      "name": `Free ${tagTitle} Images`,
+      "description": `${totalCount.toLocaleString()}+ free royalty-free ${displayTag} photos and images`,
+      "url": `https://senses.dhurta.org/tag/${slug}`,
+      "numberOfItems": totalCount,
+    }] : []),
+  ],
+};
 ---
 
 <BaseLayout
-  title={`#${tagTitle} — Senses`}
-  description={`Browse ${items.length} items tagged "${tagTitle}" across visual and audio media on Senses.`}
+  title={seoTitle}
+  description={seoDesc}
+  schema={schema}
 >
   <div class="pt-[var(--nav-height)] pb-20">
 
@@ -43,48 +80,51 @@ const tagTitle = slugToTitle(tag);
       <nav class="flex items-center gap-1.5 text-xs text-senses-text-3 mb-4">
         <a href="/" class="hover:text-senses-text transition-colors">Senses</a>
         <span>/</span>
-        <a href={`/search?q=${encodeURIComponent(tag)}`} class="hover:text-senses-text transition-colors">Search</a>
+        <a href="/royalty-free-images" class="hover:text-senses-text transition-colors">Free Images</a>
         <span>/</span>
-        <span class="text-senses-text">#{tag}</span>
+        <span class="text-senses-text capitalize">{displayTag}</span>
       </nav>
+
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-2">Tag</p>
-          <h1 class="text-display-lg text-senses-text leading-none">#{tagTitle}</h1>
-          <p class="text-senses-text-3 text-sm mt-2">
-            {items.length} items tagged with "{tag}"
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-2">Free Images</p>
+          <h1 class="text-display-lg text-senses-text leading-none capitalize">{tagTitle}</h1>
+          <p class="text-senses-text-2 text-sm mt-2">
+            {totalCount > 0
+              ? <>{totalCount.toLocaleString()}+ free royalty-free <strong>{displayTag}</strong> photos and images</>
+              : <>Free <strong>{displayTag}</strong> images — no attribution required</>
+            }
           </p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            {['✓ Free download', '✓ Royalty-free', '✓ No attribution required', '✓ Commercial use'].map(b => (
+              <span class="text-xs text-senses-text-3 border border-senses-border/60 px-2 py-0.5 rounded-full">{b}</span>
+            ))}
+          </div>
         </div>
-        <div class="flex gap-4">
-          {sightItems.length > 0 && (
-            <div class="text-center">
-              <p class="text-senses-sight text-xl font-light">{sightItems.length}</p>
-              <p class="text-senses-text-3 text-[10px] uppercase tracking-wider">visual</p>
-            </div>
-          )}
-          {hearingItems.length > 0 && (
-            <div class="text-center">
-              <p class="text-senses-hearing text-xl font-light">{hearingItems.length}</p>
-              <p class="text-senses-text-3 text-[10px] uppercase tracking-wider">audio</p>
-            </div>
-          )}
-        </div>
+        {(sightItems.length > 0 || hearingItems.length > 0) && (
+          <div class="flex gap-4">
+            {sightItems.length > 0 && (
+              <div class="text-center">
+                <p class="text-senses-sight text-xl font-light">{sightItems.length}</p>
+                <p class="text-senses-text-3 text-[10px] uppercase tracking-wider">visual</p>
+              </div>
+            )}
+            {hearingItems.length > 0 && (
+              <div class="text-center">
+                <p class="text-senses-hearing text-xl font-light">{hearingItems.length}</p>
+                <p class="text-senses-text-3 text-[10px] uppercase tracking-wider">audio</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
 
     <div class="max-w-[1440px] mx-auto px-4 md:px-8">
 
-      {items.length === 0 && (
-        <div class="py-24 text-center">
-          <p class="text-senses-text-3 text-lg">No items tagged #{tag}</p>
-          <a href="/search" class="mt-4 inline-block text-senses-text-3 hover:text-senses-text text-sm transition-colors">
-            ← Back to search
-          </a>
-        </div>
-      )}
-
+      <!-- Curated sight items -->
       {sightItems.length > 0 && (
-        <section class="mb-12">
+        <section class="mb-10">
           {hearingItems.length > 0 && (
             <div class="flex items-center gap-2 mb-5">
               <div class="w-2 h-2 rounded-full bg-senses-sight" />
@@ -99,8 +139,9 @@ const tagTitle = slugToTitle(tag);
         </section>
       )}
 
+      <!-- Curated hearing items -->
       {hearingItems.length > 0 && (
-        <section class="mb-12">
+        <section class="mb-10">
           {sightItems.length > 0 && (
             <div class="flex items-center gap-2 mb-5">
               <div class="w-2 h-2 rounded-full bg-senses-hearing" />
@@ -115,6 +156,51 @@ const tagTitle = slugToTitle(tag);
         </section>
       )}
 
+      <!-- Pixabay tag images (client-side loaded) -->
+      {pbCount > 0 && (
+        <PixabayTagSection tagSlug={slug} tagLabel={tagTitle} client:visible />
+      )}
+
+      {curatedItems.length === 0 && pbCount === 0 && (
+        <div class="py-24 text-center">
+          <p class="text-senses-text-3 text-lg">No images found for "{displayTag}"</p>
+          <a href="/royalty-free-images" class="mt-4 inline-block text-senses-text-3 hover:text-senses-text text-sm transition-colors">
+            ← Browse all free images
+          </a>
+        </div>
+      )}
+
     </div>
+
+    <!-- SEO text (boosts long-tail ranking) -->
+    {pbCount > 0 && (
+      <div class="border-t border-senses-border mt-12">
+        <div class="max-w-[700px] mx-auto px-4 md:px-8 py-10">
+          <h2 class="text-senses-text text-base font-medium mb-3">
+            Free {tagTitle} Images — Royalty-Free Download
+          </h2>
+          <p class="text-senses-text-2 text-sm leading-relaxed mb-3">
+            Browse and download <strong>{totalCount.toLocaleString()}+</strong> free <strong>{displayTag}</strong> photos,
+            illustrations, and images. All content is licensed under the Pixabay License —
+            free for personal and commercial use, no attribution required.
+          </p>
+          <p class="text-senses-text-3 text-xs leading-relaxed">
+            Use free {displayTag} images in websites, blogs, social media, presentations, print materials,
+            and any other project. High-resolution downloads available.
+          </p>
+          <div class="flex flex-wrap gap-2 mt-4">
+            {[
+              { href: '/free-photos',         label: `Free ${tagTitle} Photos` },
+              { href: '/royalty-free-images', label: 'Royalty-Free Images' },
+              { href: '/free-illustrations',  label: 'Free Illustrations' },
+              { href: '/free-vectors',        label: 'Free Vectors' },
+            ].map(({ href, label }) => (
+              <a href={href} class="text-xs px-3 py-1 border border-senses-border rounded-full text-senses-text-3 hover:text-senses-text transition-colors">{label}</a>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+
   </div>
 </BaseLayout>

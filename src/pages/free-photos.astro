@@ -1,0 +1,164 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import featuredPhotos from '@data/pb/featured-photos.json';
+import topTagsRaw     from '@data/pb/top-tags.json';
+import type { Media } from '@/types/index';
+
+const photos = featuredPhotos as unknown as Media[];
+
+const photoTags = topTagsRaw
+  .filter(t => t.count > 500)
+  .slice(0, 40)
+  .map(t => ({ tag: t.tag, slug: t.slug, count: t.count }));
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "name": "Free Photos — Download Royalty-Free Images | Senses",
+      "description": "Browse and download over 60,000 free high-resolution photos. Royalty-free, no attribution required. Personal and commercial use.",
+      "url": "https://senses.dhurta.org/free-photos",
+    },
+    {
+      "@type": "ImageGallery",
+      "name": "Free Photos Gallery",
+      "description": "60,000+ free royalty-free photos available for download",
+      "url": "https://senses.dhurta.org/free-photos",
+      "numberOfItems": 60921,
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title="Free Photos — Download Royalty-Free Images | Senses"
+  description="Browse 60,000+ free high-resolution photos. Royalty-free, no attribution required. Download for personal or commercial use instantly."
+  schema={schema}
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+
+    <!-- Hero -->
+    <div class="border-b border-senses-border bg-gradient-to-br from-senses-sight/5 via-senses-bg to-senses-bg">
+      <div class="max-w-[1200px] mx-auto px-4 md:px-8 py-16 md:py-24">
+        <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Free Download</p>
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-light text-senses-text mb-6 leading-tight">
+          Free Photos<br />
+          <span class="text-senses-sight">Royalty-Free & Ready to Use</span>
+        </h1>
+        <p class="text-senses-text-2 text-lg max-w-2xl mb-8 leading-relaxed">
+          Download over <strong class="text-senses-text">60,000 high-resolution photos</strong> for free.
+          No attribution required. Use for personal projects, commercial work, websites, apps, and more.
+          All images are royalty-free under the Pixabay License.
+        </p>
+        <div class="flex flex-wrap gap-3 text-sm">
+          {['✓ Free download', '✓ No attribution required', '✓ Commercial use allowed', '✓ High resolution', '✓ No sign-up needed'].map(b => (
+            <span class="px-3 py-1.5 rounded-full bg-senses-surface border border-senses-border text-senses-text-2">{b}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="border-b border-senses-border bg-senses-surface/40">
+      <div class="max-w-[1200px] mx-auto px-4 md:px-8 py-4 flex flex-wrap gap-6 text-sm text-senses-text-3">
+        <span><strong class="text-senses-text">60,921</strong> free photos</span>
+        <span><strong class="text-senses-text">21,376</strong> free vectors</span>
+        <span><strong class="text-senses-text">3,822</strong> free illustrations</span>
+        <span><strong class="text-senses-text">58,000+</strong> searchable tags</span>
+      </div>
+    </div>
+
+    <!-- Browse by topic -->
+    <div class="max-w-[1200px] mx-auto px-4 md:px-8 py-10">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Browse by Topic</p>
+      <div class="flex flex-wrap gap-2">
+        {photoTags.map(({ tag, slug, count }) => (
+          <a
+            href={`/tag/${slug}`}
+            class="px-3 py-1.5 rounded-full bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-sight/60 hover:text-senses-text transition-colors capitalize"
+          >
+            {tag}
+            <span class="text-senses-text-3 text-xs ml-1">{count.toLocaleString()}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- Photo grid -->
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-10">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-1">Most Popular</p>
+          <h2 class="text-senses-text text-xl font-light">Top Free Photos</h2>
+        </div>
+        <a href="/explore?division=sight&type=photo" class="text-senses-sight text-sm hover:underline">Browse all →</a>
+      </div>
+      <div class="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 space-y-3">
+        {photos.map(m => (
+          <div class="break-inside-avoid">
+            <MediaCard media={m} layout="masonry" client:visible />
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <!-- SEO text block -->
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-12">
+      <h2 class="text-senses-text text-xl font-light mb-4">What Are Free Royalty-Free Photos?</h2>
+      <div class="space-y-4 text-senses-text-2 text-sm leading-relaxed">
+        <p>
+          Royalty-free photos are images you can download and use without paying ongoing fees or royalties.
+          On Senses, all photos from our collection are licensed under the <strong class="text-senses-text">Pixabay License</strong> —
+          which means they are free for personal and commercial use, and no attribution to the photographer is required
+          (though it's always appreciated).
+        </p>
+        <p>
+          You can use our free photos in websites, social media posts, blog articles, presentations, printed materials,
+          advertising campaigns, apps, and more. The only restriction: you cannot sell or redistribute the images
+          themselves as stock photos.
+        </p>
+        <p>
+          All images on Senses are curated for quality and appropriateness. Use the topic tags above to find
+          the exact free photo you need — from nature photography to architecture, portraits to food, and everything in between.
+        </p>
+      </div>
+
+      <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { title: 'Free Stock Photos', desc: 'Thousands of professional stock photos, free to download and use.' },
+          { title: 'PNG & JPG Images', desc: 'High-resolution JPG photos and transparent PNG files.' },
+          { title: 'No Attribution', desc: 'No need to credit the photographer — use freely in any project.' },
+        ].map(f => (
+          <div class="p-4 rounded-xl bg-senses-surface border border-senses-border">
+            <p class="text-senses-text text-sm font-medium mb-1">{f.title}</p>
+            <p class="text-senses-text-3 text-xs leading-relaxed">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Related pages -->
+    <div class="border-t border-senses-border" />
+    <div class="max-w-[1200px] mx-auto px-4 md:px-8 py-10">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">More Free Resources</p>
+      <div class="flex flex-wrap gap-3">
+        {[
+          { href: '/free-illustrations', label: 'Free Illustrations' },
+          { href: '/free-vectors',       label: 'Free Vectors & SVG' },
+          { href: '/royalty-free-images', label: 'Royalty-Free Images' },
+          { href: '/sight',              label: 'Browse All Visual Media' },
+          { href: '/explore',            label: 'Explore & Filter' },
+        ].map(({ href, label }) => (
+          <a href={href} class="px-4 py-2 rounded-full border border-senses-border text-senses-text-2 text-sm hover:border-senses-sight/60 hover:text-senses-text transition-colors">{label}</a>
+        ))}
+      </div>
+    </div>
+
+  </div>
+</BaseLayout>

@@ -1,0 +1,104 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import featuredIllus from '@data/pb/featured-illus.json';
+import type { Media } from '@/types/index';
+
+const illus = featuredIllus as unknown as Media[];
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "name": "Free Illustrations & Digital Art — Download Royalty-Free | Senses",
+      "description": "Browse 3,800+ free illustrations and digital artwork. Royalty-free, no attribution required. Download for any personal or commercial project.",
+      "url": "https://senses.dhurta.org/free-illustrations",
+    },
+    {
+      "@type": "ImageGallery",
+      "name": "Free Illustrations Gallery",
+      "description": "3,800+ free royalty-free illustrations available for download",
+      "url": "https://senses.dhurta.org/free-illustrations",
+      "numberOfItems": 3822,
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title="Free Illustrations & Digital Art — Royalty-Free Download | Senses"
+  description="Download 3,800+ free digital illustrations and artwork. Royalty-free, no attribution required. Perfect for websites, apps, and creative projects."
+  schema={schema}
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+
+    <div class="border-b border-senses-border bg-gradient-to-br from-purple-500/5 via-senses-bg to-senses-bg">
+      <div class="max-w-[1200px] mx-auto px-4 md:px-8 py-16 md:py-20">
+        <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Free Download</p>
+        <h1 class="text-4xl md:text-5xl font-light text-senses-text mb-5 leading-tight">
+          Free Illustrations<br />
+          <span class="text-purple-400">Digital Art, No Attribution</span>
+        </h1>
+        <p class="text-senses-text-2 text-base max-w-2xl mb-6 leading-relaxed">
+          Download <strong class="text-senses-text">3,800+ free digital illustrations</strong>.
+          Flat design, watercolor, cartoon, icon art, and more — all royalty-free.
+          Use in websites, apps, presentations, or any creative project.
+        </p>
+        <div class="flex flex-wrap gap-3 text-sm">
+          {['✓ Free download', '✓ Commercial use', '✓ No attribution', '✓ High resolution'].map(b => (
+            <span class="px-3 py-1.5 rounded-full bg-senses-surface border border-senses-border text-senses-text-2">{b}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-10">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-senses-text text-xl font-light">Top Free Illustrations</h2>
+        <a href="/explore?type=illustration" class="text-purple-400 text-sm hover:underline">Browse all →</a>
+      </div>
+      <div class="columns-2 sm:columns-3 md:columns-4 gap-3 space-y-3">
+        {illus.map(m => (
+          <div class="break-inside-avoid">
+            <MediaCard media={m} layout="masonry" client:visible />
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-12">
+      <h2 class="text-senses-text text-xl font-light mb-4">Free Illustration Downloads for Any Project</h2>
+      <div class="space-y-4 text-senses-text-2 text-sm leading-relaxed">
+        <p>
+          Our free illustration collection includes digital artwork in a variety of styles:
+          flat design, hand-drawn, watercolor, minimalist icon art, and more.
+          Every illustration is free to download and use under the Pixabay License —
+          no sign-up required, no attribution needed.
+        </p>
+        <p>
+          Use free illustrations in website hero sections, blog post headers, app UI design,
+          social media graphics, print materials, educational content, and more.
+        </p>
+      </div>
+    </div>
+
+    <div class="border-t border-senses-border" />
+    <div class="max-w-[1200px] mx-auto px-4 md:px-8 py-10">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">More Free Resources</p>
+      <div class="flex flex-wrap gap-3">
+        {[
+          { href: '/free-photos',         label: 'Free Photos' },
+          { href: '/free-vectors',         label: 'Free Vectors & SVG' },
+          { href: '/royalty-free-images',  label: 'Royalty-Free Images' },
+          { href: '/sight',                label: 'Browse All Visual Media' },
+        ].map(({ href, label }) => (
+          <a href={href} class="px-4 py-2 rounded-full border border-senses-border text-senses-text-2 text-sm hover:text-senses-text transition-colors">{label}</a>
+        ))}
+      </div>
+    </div>
+
+  </div>
+</BaseLayout>

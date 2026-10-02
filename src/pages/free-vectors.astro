@@ -1,0 +1,103 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import featuredVectors from '@data/pb/featured-vectors.json';
+import type { Media } from '@/types/index';
+
+const vectors = featuredVectors as unknown as Media[];
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "name": "Free Vectors & SVG Files — Royalty-Free Download | Senses",
+      "description": "Download 21,000+ free vector SVG files and graphics. Royalty-free, no attribution required. Logos, icons, backgrounds, and more.",
+      "url": "https://senses.dhurta.org/free-vectors",
+    },
+    {
+      "@type": "ImageGallery",
+      "name": "Free Vectors Gallery",
+      "description": "21,000+ free royalty-free vector files available for download",
+      "url": "https://senses.dhurta.org/free-vectors",
+      "numberOfItems": 21376,
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title="Free Vectors & SVG — Royalty-Free Graphics | Senses"
+  description="Download 21,000+ free vector graphics and SVG files. Royalty-free, no attribution needed. Logos, icons, backgrounds, patterns and more."
+  schema={schema}
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+
+    <div class="border-b border-senses-border bg-gradient-to-br from-blue-500/5 via-senses-bg to-senses-bg">
+      <div class="max-w-[1200px] mx-auto px-4 md:px-8 py-16 md:py-20">
+        <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Free Download</p>
+        <h1 class="text-4xl md:text-5xl font-light text-senses-text mb-5 leading-tight">
+          Free Vectors & SVG<br />
+          <span class="text-blue-400">Logos, Icons, Graphics — Free</span>
+        </h1>
+        <p class="text-senses-text-2 text-base max-w-2xl mb-6 leading-relaxed">
+          Download <strong class="text-senses-text">21,000+ free vector graphics</strong> and SVG files.
+          Scalable to any size, perfect for logos, icons, backgrounds, and UI design.
+          All royalty-free — no attribution, no license fee.
+        </p>
+        <div class="flex flex-wrap gap-3 text-sm">
+          {['✓ SVG & PNG formats', '✓ Scalable vector', '✓ Commercial use', '✓ No attribution', '✓ Free download'].map(b => (
+            <span class="px-3 py-1.5 rounded-full bg-senses-surface border border-senses-border text-senses-text-2">{b}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-10">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-senses-text text-xl font-light">Top Free Vectors</h2>
+        <a href="/explore?type=vector" class="text-blue-400 text-sm hover:underline">Browse all →</a>
+      </div>
+      <div class="columns-2 sm:columns-3 md:columns-4 gap-3 space-y-3">
+        {vectors.map(m => (
+          <div class="break-inside-avoid">
+            <MediaCard media={m} layout="masonry" client:visible />
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="border-t border-senses-border" />
+
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-12">
+      <h2 class="text-senses-text text-xl font-light mb-4">Free Vector Graphics for Any Use Case</h2>
+      <div class="space-y-4 text-senses-text-2 text-sm leading-relaxed">
+        <p>
+          Vector graphics scale perfectly to any size without losing quality — ideal for logos, icons, infographics,
+          and print materials. Our free vector collection includes abstract backgrounds, ornamental designs,
+          decorative elements, symbols, and more.
+        </p>
+        <p>
+          All vectors are licensed under the Pixabay License: free for personal and commercial use,
+          no attribution required. Download and use immediately in Figma, Illustrator, or any design tool.
+        </p>
+      </div>
+    </div>
+
+    <div class="border-t border-senses-border" />
+    <div class="max-w-[1200px] mx-auto px-4 md:px-8 py-10">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">More Free Resources</p>
+      <div class="flex flex-wrap gap-3">
+        {[
+          { href: '/free-photos',         label: 'Free Photos' },
+          { href: '/free-illustrations',   label: 'Free Illustrations' },
+          { href: '/royalty-free-images',  label: 'Royalty-Free Images' },
+          { href: '/explore',              label: 'Explore All Media' },
+        ].map(({ href, label }) => (
+          <a href={href} class="px-4 py-2 rounded-full border border-senses-border text-senses-text-2 text-sm hover:text-senses-text transition-colors">{label}</a>
+        ))}
+      </div>
+    </div>
+
+  </div>
+</BaseLayout>

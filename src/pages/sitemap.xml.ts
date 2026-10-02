@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { provider } from '@/lib/providers';
+import topTagsRaw from '@data/pb/top-tags.json';
 
 const SITE  = 'https://senses.dhurta.org';
 const TODAY = new Date().toISOString().split('T')[0];
@@ -49,12 +50,18 @@ export const GET: APIRoute = async () => {
     url('/search',      { priority: '0.7', freq: 'weekly' }),
 
     // ── Static info pages (no noIndex pages here) ─────────────────
-    url('/about',      { priority: '0.7', freq: 'monthly' }),
-    url('/faq',        { priority: '0.7', freq: 'monthly' }),
-    url('/creators',   { priority: '0.7', freq: 'weekly' }),
-    url('/licensing',  { priority: '0.6', freq: 'monthly' }),
-    url('/privacy',    { priority: '0.5', freq: 'monthly' }),
-    url('/terms',      { priority: '0.5', freq: 'monthly' }),
+    url('/about',               { priority: '0.7', freq: 'monthly' }),
+    url('/faq',                 { priority: '0.7', freq: 'monthly' }),
+    url('/creators',            { priority: '0.7', freq: 'weekly' }),
+    url('/licensing',           { priority: '0.6', freq: 'monthly' }),
+    url('/privacy',             { priority: '0.5', freq: 'monthly' }),
+    url('/terms',               { priority: '0.5', freq: 'monthly' }),
+
+    // ── Free image SEO landing pages ──────────────────────────────
+    url('/royalty-free-images', { priority: '0.9', freq: 'weekly' }),
+    url('/free-photos',         { priority: '0.9', freq: 'weekly' }),
+    url('/free-illustrations',  { priority: '0.9', freq: 'weekly' }),
+    url('/free-vectors',        { priority: '0.9', freq: 'weekly' }),
     // Note: /settings, /my-senses, /ambassadors, /contests, /live,
     //       /forum, /senses-radio, /api are all noIndex — excluded.
 
@@ -90,10 +97,15 @@ export const GET: APIRoute = async () => {
       url(`/collections/${c.slug}`, { priority: '0.6', freq: 'monthly' })
     ),
 
-    // ── Tag pages (top 150) ───────────────────────────────────────
-    ...allTags.slice(0, 150).map(t =>
-      url(`/tag/${encodeURIComponent(t)}`, { priority: '0.5', freq: 'weekly' })
-    ),
+    // ── Tag pages: curated + top 2000 Pixabay tags ───────────────
+    ...(() => {
+      const tagSlugs = new Set<string>();
+      allTags.forEach(t => tagSlugs.add(encodeURIComponent(t)));
+      topTagsRaw.forEach(({ slug }) => tagSlugs.add(slug));
+      return [...tagSlugs].map(s =>
+        url(`/tag/${s}`, { priority: '0.7', freq: 'weekly' })
+      );
+    })(),
 
     // ── Mood pages ────────────────────────────────────────────────
     ...allMoods.map(m =>

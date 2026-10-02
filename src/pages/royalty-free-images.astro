@@ -1,0 +1,166 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import featured      from '@data/pb/featured.json';
+import topTagsRaw    from '@data/pb/top-tags.json';
+import type { Media } from '@/types/index';
+
+const items = (featured as unknown as Media[]).slice(0, 24);
+const popularTags = topTagsRaw.slice(0, 60);
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "name": "Royalty-Free Images — Free to Download & Use | Senses",
+      "description": "86,000+ royalty-free images: photos, illustrations, and vectors. Free for personal and commercial use. No attribution required.",
+      "url": "https://senses.dhurta.org/royalty-free-images",
+    },
+    {
+      "@type": "ImageGallery",
+      "name": "Royalty-Free Images Gallery",
+      "description": "86,000+ free royalty-free images — photos, illustrations, and vectors",
+      "url": "https://senses.dhurta.org/royalty-free-images",
+      "numberOfItems": 86015,
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What does royalty-free mean?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Royalty-free means you pay no ongoing fees or royalties after downloading an image. On Senses, all images are also free to download — so you get royalty-free images at zero cost."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use these images for commercial projects?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. All images on Senses under the Pixabay License may be used in commercial projects including websites, advertisements, product packaging, and more."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need to credit the photographer?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Images under the Pixabay License do not require attribution. You are free to use them without crediting the original creator, though it is always appreciated."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What image formats are available?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Photos are available in high-resolution JPG. Illustrations and vectors are available as PNG and SVG files."
+          }
+        },
+      ]
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title="Royalty-Free Images — 86,000+ Free Photos, Vectors & Illustrations | Senses"
+  description="Download 86,000+ royalty-free images completely free. Photos, vectors, and illustrations for personal and commercial use. No attribution, no sign-up."
+  schema={schema}
+>
+  <div class="pt-[var(--nav-height)] pb-24">
+
+    <!-- Hero -->
+    <div class="border-b border-senses-border bg-gradient-to-br from-senses-accent/5 via-senses-bg to-senses-bg">
+      <div class="max-w-[1200px] mx-auto px-4 md:px-8 py-16 md:py-24">
+        <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Completely Free</p>
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-light text-senses-text mb-6 leading-tight">
+          Royalty-Free Images<br />
+          <span class="text-senses-accent">Free Forever. No Sign-Up.</span>
+        </h1>
+        <p class="text-senses-text-2 text-lg max-w-2xl mb-8 leading-relaxed">
+          <strong class="text-senses-text">86,000+ royalty-free images</strong> — photos, illustrations, and
+          vector graphics. Download for free and use in any project without paying fees, royalties, or credits.
+          The Pixabay License grants you full freedom.
+        </p>
+        <div class="flex flex-wrap gap-3">
+          <a href="/free-photos"        class="px-5 py-2.5 bg-senses-accent text-white text-sm rounded-full hover:bg-senses-accent/90 transition-colors">Browse Free Photos</a>
+          <a href="/free-illustrations" class="px-5 py-2.5 border border-senses-border text-senses-text-2 text-sm rounded-full hover:border-senses-accent/50 hover:text-senses-text transition-colors">Free Illustrations</a>
+          <a href="/free-vectors"       class="px-5 py-2.5 border border-senses-border text-senses-text-2 text-sm rounded-full hover:border-senses-accent/50 hover:text-senses-text transition-colors">Free Vectors</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Type cards -->
+    <div class="max-w-[1200px] mx-auto px-4 md:px-8 py-10">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { href: '/free-photos',         label: 'Free Photos',          count: '60,921', desc: 'High-resolution royalty-free photography', color: 'text-senses-sight',  icon: '📷' },
+          { href: '/free-vectors',        label: 'Free Vectors',         count: '21,376', desc: 'Scalable SVG vector graphics and icons',   color: 'text-blue-400',      icon: '✏️' },
+          { href: '/free-illustrations',  label: 'Free Illustrations',   count: '3,822',  desc: 'Digital art, flat design, and artwork',    color: 'text-purple-400',    icon: '🎨' },
+        ].map(({ href, label, count, desc, color, icon }) => (
+          <a href={href} class="group p-6 rounded-2xl bg-senses-surface border border-senses-border hover:border-senses-border-2 transition-all">
+            <p class="text-2xl mb-3">{icon}</p>
+            <p class={`text-2xl font-light ${color} mb-1`}>{count}</p>
+            <p class="text-senses-text text-sm font-medium mb-1">{label}</p>
+            <p class="text-senses-text-3 text-xs leading-relaxed">{desc}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- Browse by topic -->
+    <div class="border-t border-senses-border" />
+    <div class="max-w-[1200px] mx-auto px-4 md:px-8 py-10">
+      <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4">Browse by Topic</p>
+      <div class="flex flex-wrap gap-2">
+        {popularTags.map(({ tag, slug, count }) => (
+          <a
+            href={`/tag/${slug}`}
+            class="px-3 py-1.5 rounded-full bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-accent/40 hover:text-senses-text transition-colors capitalize"
+          >
+            {tag}
+            <span class="text-senses-text-3 text-xs ml-1">{count.toLocaleString()}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- Featured grid -->
+    <div class="border-t border-senses-border" />
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-10">
+      <h2 class="text-senses-text text-xl font-light mb-6">Most Popular Free Images</h2>
+      <div class="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 space-y-3">
+        {items.map(m => (
+          <div class="break-inside-avoid">
+            <MediaCard media={m} layout="masonry" client:visible />
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- FAQ section -->
+    <div class="border-t border-senses-border" />
+    <div class="max-w-[800px] mx-auto px-4 md:px-8 py-12">
+      <h2 class="text-senses-text text-xl font-light mb-8">Frequently Asked Questions</h2>
+      <div class="space-y-6">
+        {[
+          { q: 'What does royalty-free mean?', a: 'Royalty-free means you pay no ongoing fees or royalties after downloading. On Senses, all images are also free to download — zero cost, forever.' },
+          { q: 'Can I use these images for commercial projects?', a: 'Yes. The Pixabay License allows use in commercial projects: websites, advertising, product packaging, apps, social media, and more.' },
+          { q: 'Do I need to credit the photographer?', a: 'No attribution required. You are free to use images without crediting the creator. Of course, crediting is always appreciated if it\'s easy to do so.' },
+          { q: 'Are these images free for websites and blogs?', a: 'Absolutely. You can embed or download any image for use on websites, blogs, e-commerce stores, and any digital platform.' },
+          { q: 'What formats are available — PNG, SVG, JPG?', a: 'Photos are available as high-resolution JPG files. Illustrations are available as PNG, and vector graphics are available as SVG and PNG.' },
+          { q: 'Can I modify the images?', a: 'Yes. The Pixabay License allows modification, cropping, resizing, color adjustment, and any other edits for your personal or commercial use.' },
+        ].map(({ q, a }) => (
+          <div class="border-b border-senses-border pb-5">
+            <p class="text-senses-text text-sm font-medium mb-2">{q}</p>
+            <p class="text-senses-text-2 text-sm leading-relaxed">{a}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+  </div>
+</BaseLayout>

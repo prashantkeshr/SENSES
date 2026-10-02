@@ -1,283 +1,287 @@
 /**
  * transform-pixabay.mjs
- * Reads C:\Users\prash\OneDrive\Projects\Claude project\sight\general.json
- * Filters, maps to SENSES Media format, and merges with existing data.
- * Run from senses/ directory: node scripts/transform-pixabay.mjs
+ * Converts general.jsonl (86k Pixabay records) into chunked static JSON files
+ * and build-time import data for Astro SSG pages.
+ *
+ * Run: node scripts/transform-pixabay.mjs
+ * Outputs:
+ *   public/data/pb/meta.json          — total, chunkCount, types
+ *   public/data/pb/chunks/{n}.json    — 200 items each, sorted by views desc
+ *   public/data/pb/tags/{slug}.json   — top 2000 tags, up to 100 items each
+ *   src/data/pb/featured.json         — top 48 items (for SSG landing pages)
+ *   src/data/pb/featured-photos.json  — top 24 photos
+ *   src/data/pb/featured-illus.json   — top 12 illustrations
+ *   src/data/pb/featured-vectors.json — top 12 vectors
+ *   src/data/pb/top-tags.json         — [{tag, slug, count}] top 2000 tags
  */
 
-import { readFileSync, writeFileSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { createReadStream, mkdirSync, writeFileSync, rmSync } from 'fs';
+import { createInterface }  from 'readline';
+import { fileURLToPath }    from 'url';
+import { dirname, join }    from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT      = resolve(__dirname, '..');
-const SRC       = resolve(ROOT, 'src/data');
-const INPUT     = resolve(ROOT, '../sight/general.json');
+const __dir     = dirname(fileURLToPath(import.meta.url));
+const ROOT      = join(__dir, '..');
+const INPUT     = join(ROOT, 'general.jsonl');
+const CHUNK_DIR = join(ROOT, 'public', 'data', 'pb', 'chunks');
+const TAGS_DIR  = join(ROOT, 'public', 'data', 'pb', 'tags');
+const META_DIR  = join(ROOT, 'public', 'data', 'pb');
+const SRC_PB    = join(ROOT, 'src', 'data', 'pb');
+const CHUNK_SIZE    = 200;
+const MAX_CHUNKS    = 50;   // commit top 10,000 items (by views) — ~18MB total
+const TOP_TAGS      = 2000; // tag pages built for SEO (getStaticPaths)
+const TAG_FILE_TAGS = 500;  // tag files served at /data/pb/tags/ — top 500 only
+const TAG_ITEMS     = 50;   // items per tag file (fewer = smaller files)
 
-// ─── Mood / style / category keyword maps ────────────────────────────────────
+// Clear output dirs so stale files from previous runs don't remain
+rmSync(CHUNK_DIR, { recursive: true, force: true });
+rmSync(TAGS_DIR,  { recursive: true, force: true });
 
-const MOOD_KEYWORDS = {
-  peaceful:      ['peace', 'calm', 'quiet', 'serene', 'tranquil', 'still', 'gentle', 'soft'],
-  meditative:    ['meditat', 'zen', 'mindful', 'yoga', 'spiritual', 'sacred'],
-  'awe-inspiring': ['epic', 'majestic', 'grand', 'vast', 'incredible', 'stunning', 'breathtaking'],
-  romantic:      ['romantic', 'love', 'couple', 'wedding', 'heart', 'rose', 'blossom', 'bloom'],
-  joyful:        ['joy', 'happy', 'fun', 'bright', 'cheerful', 'smile', 'laugh', 'celebration'],
-  dramatic:      ['drama', 'storm', 'thunder', 'lightning', 'dark', 'moody', 'contrast', 'shadow'],
-  cinematic:     ['cinematic', 'film', 'movie', 'widescreen', 'bokeh', 'dramatic light'],
-  energetic:     ['energy', 'action', 'sport', 'run', 'jump', 'dance', 'motion', 'speed'],
-  mysterious:    ['mystery', 'fog', 'mist', 'shadow', 'forest', 'dark', 'depth', 'hidden'],
-  nostalgic:     ['vintage', 'retro', 'old', 'classic', 'memory', 'past', 'antique', 'aged'],
-  grounding:     ['earth', 'soil', 'rock', 'mountain', 'ground', 'stone', 'roots', 'terrain'],
-  adventurous:   ['adventure', 'explore', 'travel', 'journey', 'road', 'trail', 'hike', 'wild'],
-  wanderlust:    ['travel', 'wanderlust', 'destination', 'landscape', 'world', 'global', 'trip'],
-  inspiring:     ['inspire', 'motivation', 'success', 'goal', 'dream', 'vision', 'achieve'],
-  intimate:      ['portrait', 'close', 'face', 'eye', 'expression', 'emotion', 'personal'],
-  emotional:     ['emotion', 'feel', 'sentimental', 'tender', 'touching', 'moving'],
-  playful:       ['play', 'fun', 'cute', 'kitten', 'puppy', 'child', 'kid', 'toy', 'baby'],
-  warm:          ['warm', 'golden', 'sunset', 'autumn', 'cozy', 'fire', 'orange', 'amber'],
-  focused:       ['work', 'study', 'desk', 'focus', 'minimal', 'clean', 'simple', 'office'],
-  creative:      ['art', 'creative', 'design', 'craft', 'paint', 'draw', 'digital', 'color'],
-  sensory:       ['food', 'texture', 'macro', 'close-up', 'detail', 'surface', 'pattern'],
-  curious:       ['macro', 'detail', 'close-up', 'insect', 'micro', 'tiny', 'small'],
-  serene:        ['lake', 'reflection', 'water', 'still', 'glass', 'mirror', 'pond'],
-};
+mkdirSync(CHUNK_DIR, { recursive: true });
+mkdirSync(TAGS_DIR,  { recursive: true });
+mkdirSync(SRC_PB,    { recursive: true });
 
-const STYLE_KEYWORDS = {
-  'landscape-photography': ['landscape', 'mountain', 'valley', 'canyon', 'panorama', 'vista'],
-  'macro-photography':     ['macro', 'close-up', 'detail', 'insect', 'dew', 'drop', 'petal'],
-  'portrait-photography':  ['portrait', 'face', 'expression', 'model', 'headshot', 'close'],
-  'street-photography':    ['street', 'city', 'urban', 'people', 'crowd', 'sidewalk'],
-  'wildlife-photography':  ['animal', 'bird', 'wildlife', 'lion', 'tiger', 'elephant', 'wolf'],
-  'botanical-art':         ['flower', 'plant', 'bloom', 'blossom', 'leaf', 'garden', 'botanical'],
-  'aerial-photography':    ['aerial', 'drone', 'above', 'bird eye', 'top view', 'overhead'],
-  'black-and-white':       ['black white', 'monochrome', 'grayscale', 'noir', 'contrast'],
-  'long-exposure':         ['long exposure', 'light trail', 'silk water', 'star trail', 'motion blur'],
-  'golden-hour':           ['golden hour', 'sunset', 'sunrise', 'dusk', 'dawn', 'warm light'],
-  'minimalist':            ['minimal', 'simple', 'clean', 'negative space', 'white', 'sparse'],
-  'abstract-photography':  ['abstract', 'pattern', 'texture', 'geometric', 'art', 'color', 'shape'],
-  'architectural':         ['architecture', 'building', 'structure', 'facade', 'interior', 'staircase'],
-  'underwater-photography':['underwater', 'ocean', 'sea', 'coral', 'fish', 'dive', 'reef'],
-  'food-photography':      ['food', 'dish', 'meal', 'cooking', 'kitchen', 'ingredient', 'recipe'],
-  'travel-photography':    ['travel', 'destination', 'landmark', 'culture', 'monument', 'temple'],
-  'fine-art':              ['art', 'illustration', 'digital art', 'painting', 'artistic', 'creative'],
-  'documentary':           ['people', 'candid', 'lifestyle', 'real', 'authentic', 'moment'],
-};
+// ── Category inference ────────────────────────────────────────────────────────
+const CAT_RULES = [
+  { cat: 'flowers',      words: ['flower','flowers','blossom','bloom','petal','rose','tulip','daisy','orchid','sunflower','lavender','cherry blossom'] },
+  { cat: 'wildlife',     words: ['wildlife','bird','animal','dog','cat','bear','lion','tiger','wolf','deer','fox','horse','eagle','butterfly','insect','bee'] },
+  { cat: 'food',         words: ['food','fruit','vegetable','meal','cake','bread','coffee','pizza','salad','cook','kitchen','eat','drink'] },
+  { cat: 'sky',          words: ['sky','clouds','cloud','sunset','sunrise','sunrise','moon','stars','star','aurora','lightning','storm','rainbow'] },
+  { cat: 'people',       words: ['people','person','man','woman','girl','boy','child','baby','portrait','face','hands','family','crowd'] },
+  { cat: 'travel',       words: ['travel','vacation','holiday','landmark','tourism','beach','sea','ocean','coast','island','bridge','castle','ruins'] },
+  { cat: 'macro',        words: ['macro','close-up','closeup','detail','dew','drop','texture','surface'] },
+  { cat: 'nature',       words: ['nature','forest','tree','trees','mountain','mountains','lake','river','waterfall','grass','meadow','landscape','park','garden','leaf','leaves','plant','wood','fog','mist'] },
+  { cat: 'urban',        words: ['city','building','buildings','architecture','urban','street','road','bridge','skyscraper','night','downtown','traffic','construction'] },
+  { cat: 'abstract',     words: ['abstract','pattern','texture','background','wallpaper','gradient','fractal','geometry','colorful','art'] },
+  { cat: 'minimal',      words: ['minimal','minimalism','minimalist','clean','simple','white','black','negative space'] },
+  { cat: 'cinematic',    words: ['cinematic','film','movie','dramatic','moody','dark','noir'] },
+  { cat: 'illustration', words: ['illustration','cartoon','drawing','sketch','comic','icon','logo','symbol','clipart','graphic'] },
+];
 
-const CATEGORY_KEYWORDS = {
-  nature:       ['nature', 'forest', 'mountain', 'ocean', 'sea', 'lake', 'river', 'beach', 'tree', 'waterfall'],
-  urban:        ['city', 'urban', 'building', 'street', 'architecture', 'town', 'skyscraper', 'road'],
-  minimal:      ['minimal', 'simple', 'clean', 'white', 'negative space', 'geometric'],
-  abstract:     ['abstract', 'pattern', 'texture', 'fractal', 'art', 'digital'],
-  cinematic:    ['cinematic', 'dramatic', 'film', 'moody', 'atmospheric', 'noir'],
-  illustration: ['illustration', 'digital art', 'painting', 'artwork', 'drawing', 'sketch'],
-  flowers:      ['flower', 'bloom', 'blossom', 'petal', 'rose', 'tulip', 'daisy', 'botanical', 'floral'],
-  wildlife:     ['animal', 'bird', 'wildlife', 'lion', 'tiger', 'elephant', 'dog', 'cat', 'horse', 'fish', 'butterfly', 'insect'],
-  food:         ['food', 'meal', 'dish', 'fruit', 'vegetable', 'cooking', 'kitchen', 'breakfast', 'dessert'],
-  sky:          ['sky', 'sunset', 'sunrise', 'cloud', 'star', 'moon', 'galaxy', 'milky way', 'aurora'],
-  people:       ['people', 'person', 'portrait', 'face', 'woman', 'man', 'girl', 'boy', 'model', 'child'],
-  travel:       ['travel', 'destination', 'landmark', 'temple', 'monument', 'mosque', 'bridge', 'castle'],
-  macro:        ['macro', 'close-up', 'dew', 'drop', 'detail', 'micro', 'tiny'],
-};
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function tagMatch(tags, keywords) {
-  const t = tags.toLowerCase();
-  return keywords.some(k => t.includes(k));
-}
-
-function mapMoods(tags) {
-  const moods = [];
-  for (const [mood, kws] of Object.entries(MOOD_KEYWORDS)) {
-    if (tagMatch(tags, kws)) moods.push(mood);
-  }
-  return moods.length ? moods.slice(0, 5) : ['peaceful'];
-}
-
-function mapStyles(type, tags) {
-  const styles = [];
-  for (const [style, kws] of Object.entries(STYLE_KEYWORDS)) {
-    if (tagMatch(tags, kws)) styles.push(style);
-  }
-  if (type === 'illustration' && !styles.includes('fine-art')) styles.unshift('fine-art');
-  return styles.length ? styles.slice(0, 4) : ['landscape-photography'];
-}
-
-function mapCategory(tags) {
-  // Priority order matters — more specific categories first
-  const priority = ['macro', 'flowers', 'wildlife', 'food', 'people', 'travel', 'sky', 'urban', 'minimal', 'abstract', 'cinematic', 'illustration', 'nature'];
-  for (const cat of priority) {
-    if (tagMatch(tags, CATEGORY_KEYWORDS[cat])) return cat;
+function inferCategory(type, tagArr) {
+  if (type === 'illustration' || type === 'vector/svg') return 'illustration';
+  const tagSet = new Set(tagArr.map(t => t.toLowerCase()));
+  for (const { cat, words } of CAT_RULES) {
+    if (words.some(w => tagSet.has(w) || [...tagSet].some(t => t.includes(w)))) return cat;
   }
   return 'nature';
 }
 
-function slugify(str) {
-  return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+// ── Map type ─────────────────────────────────────────────────────────────────
+function mapType(t) {
+  if (t === 'photo')        return 'photo';
+  if (t === 'illustration') return 'illustration';
+  return 'vector'; // vector/svg
 }
 
-function aspectRatio(w, h) {
-  if (!w || !h) return 1.5;
-  const r = w / h;
-  return Math.round(r * 100) / 100;
+// ── SEO title (≤ 60 chars) ───────────────────────────────────────────────────
+function buildTitle(name, type) {
+  const base = (name || '').replace(/,\s*/g, ' ').trim();
+  const words = base.split(' ').slice(0, 5).join(' ');
+  const label = type === 'photo' ? 'Free Photo' : type === 'illustration' ? 'Free Illustration' : 'Free Vector';
+  const title = `${cap(words)} — ${label}`;
+  return title.length > 60 ? title.slice(0, 57) + '...' : title;
 }
 
-function orientation(w, h) {
-  if (!w || !h) return 'landscape';
-  const r = w / h;
-  if (r > 1.1) return 'landscape';
-  if (r < 0.9) return 'portrait';
+// ── SEO description (≤ 160 chars) ────────────────────────────────────────────
+function buildDesc(tags, type) {
+  const subject = tags.slice(0, 4).join(', ');
+  if (type === 'photo') {
+    return `Free high-resolution photo of ${subject}. Download royalty-free for personal and commercial use — no attribution required.`;
+  }
+  if (type === 'illustration') {
+    return `Free illustration of ${subject}. Royalty-free digital artwork — download for personal or commercial use, no attribution needed.`;
+  }
+  return `Free vector/SVG of ${subject}. Download royalty-free for any project — personal or commercial, no attribution required.`;
+}
+
+function cap(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function computeOrientation(w, h) {
+  if (w > h * 1.1) return 'landscape';
+  if (h > w * 1.1) return 'portrait';
   return 'square';
 }
 
-// Build CDN URL — prefer _640 from previewURL (reliable CDN path)
-function buildUrls(item) {
-  const base640  = item.previewURL.replace('_150.jpg', '_640.jpg');
-  const base1280 = item.previewURL.replace('_150.jpg', '_1280.jpg');
-  return {
-    thumbnailUrl: item.previewURL,   // 150px  — always works
-    previewUrl:   base640,           // 640px
-    fullUrl:      base1280,          // 1280px
-    altText:      item.tags ? item.tags.split(',')[0].trim() : 'Photo by ' + item.user,
-  };
+function slugifyTag(t) {
+  return t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ── Read + transform ──────────────────────────────────────────────────────────
+console.log('Reading general.jsonl …');
+const t0 = Date.now();
 
-console.log('Reading Pixabay source data…');
-const raw = JSON.parse(readFileSync(INPUT, 'utf8'));
-console.log(`  Total records: ${raw.length}`);
+const records = [];
+const tagFreq = {}; // tag → count
 
-// Filter
-const filtered = raw.filter(item =>
-  !item.isLowQuality &&
-  item.isGRated !== false &&
-  !item.isAiGenerated
-);
-console.log(`  After filter (no low-quality, no AI): ${filtered.length}`);
+const rl = createInterface({ input: createReadStream(INPUT, { encoding: 'utf-8' }) });
 
-// Sort by views desc, take top 1000
-const top1000 = filtered
-  .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
-  .slice(0, 1000);
-console.log(`  Taking top 1000 by views`);
+for await (const line of rl) {
+  if (!line.trim()) continue;
+  const r = JSON.parse(line);
 
-// Build creator map from Pixabay data
-const creatorMap = new Map();
-for (const item of top1000) {
-  if (!creatorMap.has(item.user_id)) {
-    creatorMap.set(item.user_id, {
-      id:          `cu-${item.user_id}`,
-      username:    slugify(item.user),
-      displayName: item.user,
-      avatar:      item.userImageURL || `https://picsum.photos/seed/${slugify(item.user)}/100/100`,
-      bio:         `Photographer on Pixabay`,
-      specialties: ['photography'],
-      stats: {
-        mediaCount:  0,
-        totalViews:  0,
-        followers:   0,
-      },
-      featured:  false,
-      verified:  false,
-      joinedAt:  '2020-01-01T00:00:00Z',
-    });
+  // Exclude adult content and AI-generated
+  if (!r.isGRated || r.isAiGenerated) continue;
+  // isLowQuality is KEPT per user request
+
+  const rawTags = (r.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+  const type    = mapType(r.type);
+  const cat     = inferCategory(r.type, rawTags);
+
+  // Count tag frequencies
+  for (const t of rawTags) {
+    const s = t.toLowerCase();
+    tagFreq[s] = (tagFreq[s] || 0) + 1;
   }
-  const c = creatorMap.get(item.user_id);
-  c.stats.mediaCount++;
-  c.stats.totalViews += (item.views ?? 0);
-}
 
-// Map to SENSES Media format
-const now = new Date().toISOString();
-const pixabayMedia = top1000.map(item => {
-  const tags     = item.tags || '';
-  const category = mapCategory(tags);
-  const urls     = buildUrls(item);
-  const title    = tags.split(',')[0].trim() || `Photo by ${item.user}`;
-  const slug     = `${slugify(title)}-px${item.id}`;
+  const imageW = r.webformatWidth  || r.previewWidth  || 640;
+  const imageH = r.webformatHeight || r.previewHeight || 480;
+  const aspect = imageW && imageH ? `${imageW}:${imageH}` : '4:3';
+  const tags   = rawTags.map(t => t.toLowerCase());
 
-  return {
-    id:          `px-${item.id}`,
-    type:        item.type === 'illustration' ? 'illustration' : 'photo',
-    division:    'sight',
+  const title = buildTitle(r.name, type);
+  records.push({
+    id:           `px-${r.id}`,
+    type,
+    division:     'sight',
+    slug:         `px-${r.id}`,
     title,
-    slug,
-    description: tags.split(',').slice(0, 6).map(t => t.trim()).join(', '),
-    creator:     `cu-${item.user_id}`,
-    thumbnail:   urls.thumbnailUrl,
-    category,
-    tags:        tags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 12),
-    moods:       mapMoods(tags),
-    styles:      mapStyles(item.type, tags),
-    colors:      [],
-    orientation: orientation(item.imageWidth, item.imageHeight),
-    license:     'cc0',
-    source:      'pixabay',
-    attribution: `${item.user} on Pixabay`,
+    description:  buildDesc(rawTags, type),
+    creator:      `px-user-${r.user_id}`,
+    creatorName:  r.user || 'Unknown',
+    creatorAvatar: r.userImageURL || '',
+    thumbnail:    r.previewURL,
+    category:     cat,
+    tags,
+    moods:        [],
+    styles:       [],
+    colors:       [],
+    orientation:  computeOrientation(imageW, imageH),
+    license:      'pixabay',
+    attribution:  r.user || '',
+    source:       'pixabay',
+    featured:     false,
+    trending:     (r.views || 0) > 50000,
+    editorsPick:  (r.views || 0) > 100000,
     stats: {
-      views:     item.views     ?? 0,
-      likes:     item.likes     ?? 0,
-      saves:     item.collections ?? 0,
-      downloads: item.downloads ?? 0,
+      views:     r.views     || 0,
+      downloads: r.downloads || 0,
+      likes:     r.likes     || 0,
+      saves:     0,
     },
-    featured:      (item.views ?? 0) > 500000,
-    trending:      (item.views ?? 0) > 300000,
-    editorsPick:   (item.views ?? 0) > 1000000,
-    createdAt:     now,
-    updatedAt:     now,
+    createdAt:    '',
+    updatedAt:    '',
     seo: {
-      title:       `${title} — Free CC0 Photo | Senses`,
-      description: `Free CC0 photo: ${tags.split(',').slice(0, 4).join(', ')}. Download and use freely.`,
-      keywords:    tags.split(',').map(t => t.trim()).filter(Boolean).slice(0, 10),
+      title,
+      description: buildDesc(rawTags, type),
+      keywords:    [...tags.slice(0, 8), 'free image', 'royalty free', 'no attribution'],
     },
     data: {
-      width:        item.imageWidth  ?? 0,
-      height:       item.imageHeight ?? 0,
-      aspectRatio:  aspectRatio(item.imageWidth, item.imageHeight),
+      width:        r.imageWidth  || imageW,
+      height:       r.imageHeight || imageH,
+      aspectRatio:  aspect,
       format:       'jpg',
-      thumbnailUrl: urls.thumbnailUrl,
-      previewUrl:   urls.previewUrl,
-      fullUrl:      urls.fullUrl,
-      altText:      urls.altText,
+      thumbnailUrl: r.previewURL,
+      previewUrl:   r.webformatURL,
+      fullUrl:      r.largeImageURL,
+      altText:      `${title} — free royalty-free download`,
+      colors:       [],
     },
-  };
+  });
+}
+
+console.log(`Parsed ${records.length.toLocaleString()} usable records in ${((Date.now()-t0)/1000).toFixed(1)}s`);
+
+// Sort by views DESC (popular first in chunks)
+records.sort((a, b) => b.stats.views - a.stats.views);
+
+// ── Write chunks (top MAX_CHUNKS only for git budget) ────────────────────────
+console.log(`Writing top ${MAX_CHUNKS} chunks (${MAX_CHUNKS * CHUNK_SIZE} most-viewed items) …`);
+const totalChunks = Math.ceil(records.length / CHUNK_SIZE);
+const chunksToWrite = Math.min(MAX_CHUNKS, totalChunks);
+for (let i = 0; i < chunksToWrite; i++) {
+  const slice = records.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+  writeFileSync(join(CHUNK_DIR, `${i}.json`), JSON.stringify(slice));
+}
+console.log(`  → ${chunksToWrite} chunks written (${totalChunks} total, rest excluded from git)`);
+
+// ── Write meta ────────────────────────────────────────────────────────────────
+const byType = records.reduce((acc, r) => { acc[r.type] = (acc[r.type]||0)+1; return acc; }, {});
+writeFileSync(join(META_DIR, 'meta.json'), JSON.stringify({
+  total:        records.length,
+  chunkCount:   chunksToWrite, // only committed chunks
+  totalChunks,                 // all generated chunks
+  chunkSize:    CHUNK_SIZE,
+  byType,
+  generatedAt:  new Date().toISOString(),
+}));
+console.log('  → meta.json');
+
+// ── Top tags ─────────────────────────────────────────────────────────────────
+console.log('Building tag index …');
+const sortedTags = Object.entries(tagFreq)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, TOP_TAGS);
+
+const topTagsList = sortedTags.map(([tag, count]) => ({
+  tag,
+  slug: slugifyTag(tag),
+  count,
+}));
+writeFileSync(join(SRC_PB, 'top-tags.json'), JSON.stringify(topTagsList));
+console.log(`  → top-tags.json (${topTagsList.length} tags)`);
+
+// ── Per-tag files ─────────────────────────────────────────────────────────────
+const tagMap = new Map(); // tagSlug → [record, ...]
+for (const r of records) {
+  for (const t of r.tags) {
+    const s = slugifyTag(t);
+    if (!tagMap.has(s)) tagMap.set(s, []);
+    tagMap.get(s).push(r);
+  }
+}
+
+let tagFilesWritten = 0;
+for (const { tag, slug } of topTagsList.slice(0, TAG_FILE_TAGS)) {
+  const items = (tagMap.get(slug) || tagMap.get(slugifyTag(tag)) || [])
+    .slice(0, TAG_ITEMS)
+    .map(r => ({
+      id: r.id, slug: r.slug, type: r.type, title: r.title,
+      thumbnail: r.thumbnail, thumbnailWidth: r.data?.width,
+      thumbnailHeight: r.data?.height, orientation: r.orientation,
+      tags: r.tags.slice(0, 6), views: r.stats.views,
+      previewUrl: r.data?.previewUrl,
+    }));
+  writeFileSync(join(TAGS_DIR, `${slug}.json`), JSON.stringify({ tag, total: (tagMap.get(slug)||[]).length, items }));
+  tagFilesWritten++;
+}
+console.log(`  → ${tagFilesWritten} tag files`);
+
+// ── Featured snapshots for SSG pages ─────────────────────────────────────────
+console.log('Writing SSG featured snapshots …');
+
+const thin = (r) => ({
+  id: r.id, slug: r.slug, type: r.type, title: r.title, description: r.description,
+  thumbnail: r.thumbnail, orientation: r.orientation, tags: r.tags.slice(0,6),
+  category: r.category, license: r.license, stats: r.stats,
+  data: { thumbnailUrl: r.data.thumbnailUrl, previewUrl: r.data.previewUrl, fullUrl: r.data.fullUrl, altText: r.data.altText, width: r.data.width, height: r.data.height, aspectRatio: r.data.aspectRatio, format: r.data.format, colors: [] },
+  seo: r.seo, creator: r.creator, creatorName: r.creatorName, creatorAvatar: r.creatorAvatar,
+  division: r.division, moods: [], styles: [], colors: [], featured: r.featured,
+  trending: r.trending, editorsPick: r.editorsPick, source: r.source, quality: r.quality,
+  createdAt: r.createdAt, updatedAt: r.updatedAt,
 });
 
-// ─── Merge with existing data ─────────────────────────────────────────────────
+const photos  = records.filter(r => r.type === 'photo');
+const illus   = records.filter(r => r.type === 'illustration');
+const vectors = records.filter(r => r.type === 'vector');
 
-console.log('\nReading existing data…');
-const existingMedia    = JSON.parse(readFileSync(resolve(SRC, 'media.json'), 'utf8'));
-const existingCreators = JSON.parse(readFileSync(resolve(SRC, 'creators.json'), 'utf8'));
+writeFileSync(join(SRC_PB, 'featured.json'),         JSON.stringify(records.slice(0, 48).map(thin)));
+writeFileSync(join(SRC_PB, 'featured-photos.json'),  JSON.stringify(photos.slice(0, 24).map(thin)));
+writeFileSync(join(SRC_PB, 'featured-illus.json'),   JSON.stringify(illus.slice(0, 12).map(thin)));
+writeFileSync(join(SRC_PB, 'featured-vectors.json'), JSON.stringify(vectors.slice(0, 12).map(thin)));
+console.log('  → featured.json, featured-photos.json, featured-illus.json, featured-vectors.json');
 
-// Keep only hearing items from existing media (12 audio items)
-const hearingMedia = existingMedia.filter(m => m.division === 'hearing');
-console.log(`  Kept ${hearingMedia.length} existing hearing items`);
-
-// Merge media: hearing items first, then Pixabay sight
-const mergedMedia = [...hearingMedia, ...pixabayMedia];
-console.log(`  Total merged media: ${mergedMedia.length}`);
-
-// Merge creators: keep existing 10, add new Pixabay creators
-const pixabayCreators = Array.from(creatorMap.values());
-const mergedCreators  = [...existingCreators, ...pixabayCreators];
-console.log(`  Total merged creators: ${mergedCreators.length}`);
-
-// ─── Write output ─────────────────────────────────────────────────────────────
-
-console.log('\nWriting output…');
-writeFileSync(resolve(SRC, 'media.json'),    JSON.stringify(mergedMedia,    null, 2));
-writeFileSync(resolve(SRC, 'creators.json'), JSON.stringify(mergedCreators, null, 2));
-
-console.log(`\n✓ media.json    → ${mergedMedia.length} items`);
-console.log(`✓ creators.json → ${mergedCreators.length} creators`);
-
-// Summary stats
-const cats = {};
-for (const m of pixabayMedia) {
-  cats[m.category] = (cats[m.category] ?? 0) + 1;
-}
-console.log('\nCategory breakdown:');
-for (const [c, n] of Object.entries(cats).sort((a, b) => b[1] - a[1])) {
-  console.log(`  ${c.padEnd(20)} ${n}`);
-}
+const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+console.log(`\nDone in ${elapsed}s — ${records.length.toLocaleString()} records, ${chunksToWrite} chunks committed, ${tagFilesWritten} tag files.`);

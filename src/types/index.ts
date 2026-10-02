@@ -21,7 +21,8 @@ export type LicenseType =
   | 'editorial'
   | 'commercial'
   | 'senses-original'
-  | 'placeholder';
+  | 'placeholder'
+  | 'pixabay';
 
 export type Orientation = 'landscape' | 'portrait' | 'square';
 

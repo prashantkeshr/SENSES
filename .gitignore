@@ -6,3 +6,6 @@ node_modules/
 .DS_Store
 *.log
 .astro/
+
+# Source data for Pixabay transform — too large for git (94MB)
+general.jsonl

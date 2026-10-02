@@ -7,6 +7,18 @@ const creators = await provider.getCreators(6);
 <BaseLayout
   title="About — Senses"
   description="Senses is a premium media discovery platform built for people who believe in the power of visual and audio art."
+  schema={{
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "About Senses",
+    "description": "Senses is a premium media discovery platform built for people who believe in the power of visual and audio art.",
+    "url": "https://senses.dhurta.org/about",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Senses",
+      "url": "https://senses.dhurta.org",
+    },
+  }}
 >
   <div class="pt-[var(--nav-height)] pb-24">
 

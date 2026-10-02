@@ -236,17 +236,17 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
           <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4 font-medium">Discover</p>
           <ul class="space-y-2.5">
             {[
-              ['Gallery Wall', '/gallery'],
-              ['Reels', '/discover'],
-              ['Explore', '/explore'],
-              ['Trending', '/trending'],
-              ['Editorial', '/editorial'],
-              ['Senses Radio', '/senses-radio'],
-            ].map(([l, h]) => (
+              ['Gallery Wall', '/gallery',    false],
+              ['Reels',        '/discover',   false],
+              ['Explore',      '/explore',    false],
+              ['Trending',     '/trending',   false],
+              ['Editorial',    '/editorial',  false],
+              ['Senses Radio', '/senses-radio', true],
+            ].map(([l, h, soon]) => (
               <li>
-                <a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors inline-flex items-center gap-1.5">
+                <a href={h} rel={soon ? 'nofollow' : undefined} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors inline-flex items-center gap-1.5">
                   {l}
-                  {(l === 'Senses Radio') && <span class="text-[9px] text-senses-text-3 border border-senses-border rounded px-1 py-0.5">Soon</span>}
+                  {soon && <span class="text-[9px] text-senses-text-3 border border-senses-border rounded px-1 py-0.5">Soon</span>}
                 </a>
               </li>
             ))}
@@ -258,16 +258,16 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
           <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4 font-medium">Community</p>
           <ul class="space-y-2.5">
             {[
-              ['Contests', '/contests'],
-              ['Live', '/live'],
-              ['Ambassadors', '/ambassadors'],
-              ['Forum', '/forum'],
-              ['Creators', '/creators'],
-            ].map(([l, h]) => (
+              ['Contests',    '/contests',    true],
+              ['Live',        '/live',        true],
+              ['Ambassadors', '/ambassadors', true],
+              ['Forum',       '/forum',       true],
+              ['Creators',    '/creators',    false],
+            ].map(([l, h, soon]) => (
               <li>
-                <a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors inline-flex items-center gap-1.5">
+                <a href={h} rel={soon ? 'nofollow' : undefined} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors inline-flex items-center gap-1.5">
                   {l}
-                  <span class="text-[9px] text-senses-text-3 border border-senses-border rounded px-1 py-0.5">Soon</span>
+                  {soon && <span class="text-[9px] text-senses-text-3 border border-senses-border rounded px-1 py-0.5">Soon</span>}
                 </a>
               </li>
             ))}
@@ -279,13 +279,13 @@ const fullTitle = title.includes('Senses') ? title : `${title} — Senses`;
           <p class="text-senses-text-3 text-xs tracking-widest uppercase mb-4 font-medium">Company</p>
           <ul class="space-y-2.5">
             {[
-              ['About Us',  '/about'],
-              ['FAQ',       '/faq'],
-              ['Creators',  '/creators'],
-              ['My Senses', '/my-senses'],
-              ['Settings',  '/settings'],
-            ].map(([l, h]) => (
-              <li><a href={h} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
+              ['About Us',  '/about',      false],
+              ['FAQ',       '/faq',        false],
+              ['Creators',  '/creators',   false],
+              ['My Senses', '/my-senses',  true],
+              ['Settings',  '/settings',   true],
+            ].map(([l, h, nofollow]) => (
+              <li><a href={h} rel={nofollow ? 'nofollow' : undefined} class="text-senses-text-3 hover:text-senses-text text-sm transition-colors">{l}</a></li>
             ))}
           </ul>
         </div>

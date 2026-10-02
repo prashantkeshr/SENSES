@@ -97,6 +97,15 @@ const faqs = [
 <BaseLayout
   title="FAQ — Senses"
   description="Frequently asked questions about Senses — using the platform, downloading media, creator submissions, and more."
+  schema={{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.flatMap(g => g.items.map(item => ({
+      "@type": "Question",
+      "name": item.q,
+      "acceptedAnswer": { "@type": "Answer", "text": item.a },
+    }))),
+  }}
 >
   <div class="pt-[var(--nav-height)] pb-24">
 

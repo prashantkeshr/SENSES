@@ -8,6 +8,19 @@ const featuredCreators = featured.filter(c => c.featured);
 <BaseLayout
   title="Creators — Senses"
   description="Join the Senses creator program. Share your photography, music, illustration, and sound design with a global audience."
+  schema={{
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Creators — Senses",
+    "description": "Join the Senses creator program. Share your photography, music, illustration, and sound design with a global audience.",
+    "url": "https://senses.dhurta.org/creators",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "Senses Creator Program",
+      "description": "Senses features original work from photographers, videographers, musicians, illustrators, and sound designers.",
+      "email": "creators@senses.dhurta.org",
+    },
+  }}
 >
   <div class="pt-[var(--nav-height)] pb-24">
 

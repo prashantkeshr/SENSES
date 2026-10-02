@@ -1,0 +1,219 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { MediaCard } from '@/components/media/MediaCard';
+import { PixabayTagSection } from '@/components/media/PixabayTagSection';
+import { provider } from '@/lib/providers';
+import categoriesData from '@/data/categories.json';
+import pbStats from '@data/pb/stats.json';
+import topTagsRaw from '@data/pb/top-tags.json';
+
+export async function getStaticPaths() {
+  const sightCats = (categoriesData as any[]).filter(c => c.division === 'sight');
+  return sightCats.map(cat => ({
+    params: { slug: cat.slug },
+    props:  { cat },
+  }));
+}
+
+interface CatDef {
+  id: string; slug: string; label: string; description: string;
+  division: string; icon: string; mediaCount: number;
+  featured: boolean; coverImage: string; moods: string[];
+}
+interface Props { cat: CatDef }
+const { cat } = Astro.props;
+
+const [allMedia, allCreators] = await Promise.all([
+  provider.getMedia({ division: 'sight' }),
+  provider.getCreators(30),
+]);
+
+const curatedItems = allMedia.filter(m =>
+  (m as any).category === cat.slug || m.tags.some(t => t === cat.slug)
+);
+const creatorMap = Object.fromEntries(allCreators.map(c => [c.id, c]));
+
+// Real count from Pixabay dataset
+const pbCategoryMap = pbStats.byCategory as Record<string, number>;
+const pbCatCount    = pbCategoryMap[cat.slug] ?? 0;
+const pbTagEntry  = topTagsRaw.find(t => t.slug === cat.slug);
+const displayCount = pbCatCount > 0 ? pbCatCount : (pbTagEntry?.count ?? 0);
+const totalCount   = displayCount + curatedItems.length;
+
+const seoTitle = `Free ${cat.label} Photos & Images — Download Royalty-Free | Senses`;
+const seoDesc  = `Browse ${totalCount > 0 ? totalCount.toLocaleString() + '+' : 'free'} royalty-free ${cat.label.toLowerCase()} photos and images. No attribution required — free for personal and commercial use.`;
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "name": seoTitle,
+      "description": seoDesc,
+      "url": `https://senses.dhurta.org/category/${cat.slug}`,
+    },
+    ...(totalCount > 0 ? [{
+      "@type": "ImageGallery",
+      "name": `Free ${cat.label} Images`,
+      "description": seoDesc,
+      "url": `https://senses.dhurta.org/category/${cat.slug}`,
+      "numberOfItems": totalCount,
+    }] : []),
+  ],
+};
+
+// Related category slugs (same moods or complementary)
+const relatedCats = (categoriesData as CatDef[])
+  .filter(c => c.division === 'sight' && c.slug !== cat.slug && c.moods.some(m => cat.moods.includes(m)))
+  .slice(0, 4);
+---
+
+<BaseLayout title={seoTitle} description={seoDesc} schema={schema}>
+  <div class="pt-[var(--nav-height)] pb-20">
+
+    <!-- Hero banner -->
+    <div class="relative overflow-hidden border-b border-senses-border mb-10">
+      {cat.coverImage && (
+        <img
+          src={cat.coverImage}
+          alt={cat.label}
+          class="absolute inset-0 w-full h-full object-cover opacity-20"
+        />
+      )}
+      <div class="absolute inset-0 bg-gradient-to-b from-senses-bg/60 via-senses-bg/80 to-senses-bg pointer-events-none" />
+
+      <div class="relative max-w-[1440px] mx-auto px-4 md:px-8 py-12">
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-1.5 text-xs text-senses-text-3 mb-6">
+          <a href="/" class="hover:text-senses-text transition-colors">Senses</a>
+          <span>/</span>
+          <a href="/sight" class="text-senses-sight hover:text-senses-text transition-colors">SIGHT</a>
+          <span>/</span>
+          <span class="text-senses-text capitalize">{cat.label}</span>
+        </nav>
+
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div>
+            <p class="text-senses-sight text-xs tracking-[0.35em] uppercase mb-3 font-medium">
+              Free {cat.label} Images
+            </p>
+            <h1 class="text-display-2xl text-senses-text leading-none tracking-tight capitalize">
+              {cat.label}
+            </h1>
+            <p class="text-senses-text-2 text-base mt-4 max-w-xl leading-relaxed">
+              {cat.description}
+            </p>
+            <div class="flex flex-wrap gap-2 mt-4">
+              {['✓ Free download', '✓ Royalty-free', '✓ No attribution', '✓ Commercial use'].map(b => (
+                <span class="text-xs text-senses-text-3 border border-senses-border/60 px-2 py-0.5 rounded-full">{b}</span>
+              ))}
+            </div>
+          </div>
+
+          <!-- Big number stat -->
+          {totalCount > 0 && (
+            <div class="flex-shrink-0 text-right">
+              <p class="text-senses-sight text-5xl md:text-6xl font-light leading-none tabular-nums">
+                {totalCount.toLocaleString()}
+              </p>
+              <p class="text-senses-text-3 text-sm mt-1.5 uppercase tracking-widest">
+                free images
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-[1440px] mx-auto px-4 md:px-8">
+
+      <!-- Curated items -->
+      {curatedItems.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center gap-2 mb-5">
+            <div class="w-2 h-2 rounded-full bg-senses-sight" />
+            <h2 class="text-senses-sight text-xs tracking-widest uppercase font-medium">
+              Featured
+            </h2>
+          </div>
+          <div class="masonry-grid">
+            {curatedItems.map(item => (
+              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Pixabay images for this category (client-side) -->
+      <PixabayTagSection tagSlug={cat.slug} tagLabel={cat.label} client:visible />
+
+    </div>
+
+    <!-- Related categories -->
+    {relatedCats.length > 0 && (
+      <div class="border-t border-senses-border mt-12">
+        <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-10">
+          <h2 class="text-senses-text text-sm font-medium mb-5 uppercase tracking-widest">
+            Related Categories
+          </h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {relatedCats.map(rc => {
+              const rcCount = pbCategoryMap[rc.slug] ?? 0;
+              return (
+                <a
+                  href={`/category/${rc.slug}`}
+                  class="relative group rounded-xl overflow-hidden aspect-[4/3] bg-senses-surface border border-senses-border hover:border-senses-sight/40 transition-all"
+                >
+                  <img
+                    src={rc.coverImage}
+                    alt={rc.label}
+                    class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity"
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                  <div class="absolute bottom-0 left-0 p-3">
+                    <p class="text-senses-text font-medium capitalize">{rc.label}</p>
+                    {rcCount > 0 && (
+                      <p class="text-senses-text-3 text-xs mt-0.5">
+                        {rcCount.toLocaleString()}+ images
+                      </p>
+                    )}
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    )}
+
+    <!-- SEO text -->
+    <div class="border-t border-senses-border">
+      <div class="max-w-[700px] mx-auto px-4 md:px-8 py-10">
+        <h2 class="text-senses-text text-base font-medium mb-3">
+          Free {cat.label} Photos — Royalty-Free Download
+        </h2>
+        <p class="text-senses-text-2 text-sm leading-relaxed mb-3">
+          Browse <strong>{totalCount > 0 ? totalCount.toLocaleString() + '+' : ''}</strong> free
+          <strong> {cat.label.toLowerCase()}</strong> photos and images.
+          All content is available under a royalty-free license — free for personal and commercial use,
+          no attribution required.
+        </p>
+        <p class="text-senses-text-3 text-xs leading-relaxed">
+          Use free {cat.label.toLowerCase()} images in websites, blogs, social media, presentations,
+          print materials, and any project. High-resolution downloads available.
+        </p>
+        <div class="flex flex-wrap gap-2 mt-4">
+          {[
+            { href: '/free-photos',         label: 'Free Photos' },
+            { href: '/royalty-free-images', label: 'Royalty-Free Images' },
+            { href: '/free-illustrations',  label: 'Free Illustrations' },
+            { href: '/sight',               label: 'SIGHT Division' },
+          ].map(({ href, label }) => (
+            <a href={href} class="text-xs px-3 py-1 border border-senses-border rounded-full text-senses-text-3 hover:text-senses-text transition-colors">{label}</a>
+          ))}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</BaseLayout>

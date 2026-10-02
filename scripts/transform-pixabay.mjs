@@ -283,5 +283,18 @@ writeFileSync(join(SRC_PB, 'featured-illus.json'),   JSON.stringify(illus.slice(
 writeFileSync(join(SRC_PB, 'featured-vectors.json'), JSON.stringify(vectors.slice(0, 12).map(thin)));
 console.log('  → featured.json, featured-photos.json, featured-illus.json, featured-vectors.json');
 
+// ── Stats snapshot for SSG pages (build-time import) ─────────────────────────
+const categoryFreq = {};
+for (const r of records) {
+  categoryFreq[r.category] = (categoryFreq[r.category] || 0) + 1;
+}
+writeFileSync(join(SRC_PB, 'stats.json'), JSON.stringify({
+  total:        records.length,
+  byType:       byType,
+  byCategory:   categoryFreq,
+  generatedAt:  new Date().toISOString(),
+}));
+console.log('  → stats.json');
+
 const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
 console.log(`\nDone in ${elapsed}s — ${records.length.toLocaleString()} records, ${chunksToWrite} chunks committed, ${tagFilesWritten} tag files.`);

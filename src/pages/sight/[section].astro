@@ -2,6 +2,7 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { MediaCard } from '@/components/media/MediaCard';
 import { provider }  from '@/lib/providers';
+import pbStats from '@data/pb/stats.json';
 import type { MediaType, MediaFilters } from '@/types/index';
 
 type SectionDef = {
@@ -9,14 +10,16 @@ type SectionDef = {
   description: string;
   types:       MediaType[];
   filters?:    Partial<MediaFilters>;
+  pbCount?:    number; // big authentic number to display
 };
 
 export async function getStaticPaths() {
+  const s = pbStats as { byType: Record<string,number>; total: number };
   const defs: Record<string, SectionDef> = {
-    photos:        { title: 'Photos',        description: 'High-resolution photography across landscapes, urban scenes, minimal compositions, and more.',           types: ['photo'] },
+    photos:        { title: 'Photos',        description: 'High-resolution photography across landscapes, urban scenes, minimal compositions, and more.',           types: ['photo'],                         pbCount: s.byType.photo },
     videos:        { title: 'Videos',        description: 'Cinematic video content — slow motion, time-lapse, and atmospheric visual storytelling.',                types: ['video'] },
-    illustrations: { title: 'Illustrations', description: 'Digital art, hand-drawn styles, and creative visual interpretations.',                                  types: ['illustration', 'vector'] },
-    wallpapers:    { title: 'Wallpapers',    description: 'Landscape-oriented photos perfect for desktop wallpapers and wide-format displays.',                    types: ['photo'], filters: { orientation: 'landscape' } },
+    illustrations: { title: 'Illustrations', description: 'Digital art, hand-drawn styles, and creative visual interpretations.',                                  types: ['illustration', 'vector'],        pbCount: s.byType.illustration + s.byType.vector },
+    wallpapers:    { title: 'Wallpapers',    description: 'Landscape-oriented photos perfect for desktop wallpapers and wide-format displays.',                    types: ['photo'], filters: { orientation: 'landscape' }, pbCount: s.byType.photo },
   };
   return Object.entries(defs).map(([section, def]) => ({
     params: { section },
@@ -66,7 +69,21 @@ const items = byType.flat();
           <h1 class="text-display-lg text-senses-text">{def.title}</h1>
           <p class="text-senses-text-3 text-sm mt-2 max-w-lg">{def.description}</p>
         </div>
-        <p class="text-senses-text-3 text-sm flex-shrink-0">{items.length} items</p>
+        {def.pbCount ? (
+          <div class="flex-shrink-0 text-right">
+            <p class="text-senses-sight text-5xl font-light leading-none tabular-nums">
+              {def.pbCount.toLocaleString()}
+            </p>
+            <p class="text-senses-text-3 text-xs uppercase tracking-widest mt-1">items</p>
+          </div>
+        ) : items.length > 0 && (
+          <div class="flex-shrink-0 text-right">
+            <p class="text-senses-sight text-5xl font-light leading-none tabular-nums">
+              {items.length}
+            </p>
+            <p class="text-senses-text-3 text-xs uppercase tracking-widest mt-1">items</p>
+          </div>
+        )}
       </div>
     </div>
 

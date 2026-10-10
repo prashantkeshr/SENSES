@@ -108,14 +108,14 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
     ? `/hearing/${media.type}/${media.slug}`
     : `/sight/${media.type}/${media.slug}`;
 
-  // Resolve thumbnail — covers all data shapes across image / video / music / 3d chunks
+  // Resolve thumbnail — CDN thumbnails first (always public), restricted download URLs last
   const d = media.data as Record<string, unknown>;
   const thumbSrc: string =
-    (d.previewUrl   as string) ||
-    (d.thumbnailUrl as string) ||
-    (d.thumbnail    as string) ||
-    media.thumbnail             ||
-    (d.artworkUrl   as string) ||
+    media.thumbnail             ||   // root-level CDN thumbnail (always reliable)
+    (d.thumbnailUrl as string) ||   // photo CDN 150px
+    (d.artworkUrl   as string) ||   // music CDN artwork
+    (d.thumbnail    as string) ||   // video/3D CDN thumbnail
+    (d.previewUrl   as string) ||   // may require referer — try last
     '';
 
   const streamUrl = (d.streamUrl as string) || '';
@@ -124,6 +124,9 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
   const aspectNum =
     typeof imgData.aspectRatio === 'number' ? imgData.aspectRatio :
     (imgData.width && imgData.height ? +(imgData.width / imgData.height).toFixed(3) : undefined);
+
+  // Hide card entirely if image fails or no thumbnail exists
+  if (imgError || (!thumbSrc && !isAudio)) return null;
 
   return (
     <a
@@ -140,15 +143,7 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
       <div className="relative overflow-hidden" style={aspectNum ? { aspectRatio: String(aspectNum) } : {}}>
 
         {/* Poster / still image */}
-        {imgError ? (
-          <div className={`w-full bg-senses-surface-2 flex flex-col items-center justify-center gap-2 ${isAudio ? 'aspect-square' : 'aspect-video'}`}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} className="w-8 h-8 text-senses-text-3 opacity-25">
-              <rect x="3" y="3" width="18" height="18" rx="3"/>
-              <path strokeLinecap="round" d="m9 9 6 6M15 9l-6 6"/>
-            </svg>
-            <span className="text-senses-text-3 text-[10px] opacity-35 uppercase tracking-wider">Unavailable</span>
-          </div>
-        ) : thumbSrc ? (
+        {thumbSrc ? (
           <img
             src={thumbSrc}
             alt={(d.altText as string) ?? media.title}

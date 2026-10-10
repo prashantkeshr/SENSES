@@ -6,6 +6,7 @@ const sightLinks = [
   { label: 'Videos',        href: '/sight/videos' },
   { label: 'Illustrations', href: '/sight/illustrations' },
   { label: 'Wallpapers',    href: '/sight/wallpapers' },
+  { label: '3D Models',     href: '/sight/3d-models' },
 ];
 
 const hearingLinks = [

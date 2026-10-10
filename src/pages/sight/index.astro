@@ -4,8 +4,12 @@ import { MediaCard } from '@/components/media/MediaCard';
 import { TypeBadge } from '@/components/ui/Badge';
 import { provider }  from '@/lib/providers';
 import { formatCount } from '@/lib/utils/formatters';
-import pbStats from '@data/pb/stats.json';
-import type { Creator } from '@/types/index';
+import pbStats       from '@data/pb/stats.json';
+import videoStats    from '@data/pb/video-stats.json';
+import featuredVidsRaw from '@data/pb/featured-videos.json';
+import type { Creator, Media } from '@/types/index';
+
+const featuredVids = (featuredVidsRaw as unknown as Media[]).slice(0, 3);
 
 const [allSight, allCreators, sightCategories] = await Promise.all([
   provider.getMedia({ division: 'sight' }),
@@ -18,8 +22,9 @@ const pbCategoryMap = pbStats.byCategory as Record<string, number>;
 const featured     = allSight.filter(m => m.featured).slice(0, 6);
 const trending     = allSight.filter(m => m.trending).slice(0, 4);
 const editorsPicks = allSight.filter(m => m.editorsPick).slice(0, 4);
-const videos       = allSight.filter(m => m.type === 'video').slice(0, 3);
 const photos       = allSight.filter(m => m.type === 'photo').slice(0, 8);
+// videos come from pre-built featured-videos.json (video provider is client-side only)
+const videos       = featuredVids;
 
 const types = [
   { slug: 'photos',        label: 'Photos',        href: '/sight/photos' },

@@ -2,7 +2,8 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { MediaCard } from '@/components/media/MediaCard';
 import { provider }  from '@/lib/providers';
-import pbStats from '@data/pb/stats.json';
+import pbStats     from '@data/pb/stats.json';
+import videoStats  from '@data/pb/video-stats.json';
 import type { MediaType, MediaFilters } from '@/types/index';
 
 type SectionDef = {
@@ -17,7 +18,7 @@ export async function getStaticPaths() {
   const s = pbStats as { byType: Record<string,number>; total: number };
   const defs: Record<string, SectionDef> = {
     photos:        { title: 'Photos',        description: 'High-resolution photography across landscapes, urban scenes, minimal compositions, and more.',           types: ['photo'],                         pbCount: s.byType.photo },
-    videos:        { title: 'Videos',        description: 'Cinematic video content — slow motion, time-lapse, and atmospheric visual storytelling.',                types: ['video'] },
+    videos:        { title: 'Videos',        description: 'Cinematic video content — slow motion, time-lapse, and atmospheric visual storytelling.',                types: ['video'],                          pbCount: (videoStats as any).total },
     illustrations: { title: 'Illustrations', description: 'Digital art, hand-drawn styles, and creative visual interpretations.',                                  types: ['illustration', 'vector'],        pbCount: s.byType.illustration + s.byType.vector },
     wallpapers:    { title: 'Wallpapers',    description: 'Landscape-oriented photos perfect for desktop wallpapers and wide-format displays.',                    types: ['photo'], filters: { orientation: 'landscape' }, pbCount: s.byType.photo },
   };

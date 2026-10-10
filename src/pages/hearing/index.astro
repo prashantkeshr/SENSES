@@ -1,35 +1,39 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import { MediaCard } from '@/components/media/MediaCard';
-import { provider }  from '@/lib/providers';
+import BaseLayout       from '@/layouts/BaseLayout.astro';
+import { MediaCard }    from '@/components/media/MediaCard';
+import { formatCount }  from '@/lib/utils/formatters';
+import musicStats from '@data/pb/music-stats.json';
+import featuredMusicRaw from '@data/pb/featured-music.json';
+import type { Media } from '@/types/index';
 
-const [allHearing, allCreators, hearingCategories] = await Promise.all([
-  provider.getMedia({ division: 'hearing' }),
-  provider.getCreators(30),
-  provider.getCategories('hearing'),
-]);
+const featuredMusic = featuredMusicRaw as unknown as Media[];
 
-const creatorMap   = Object.fromEntries(allCreators.map(c => [c.id, c]));
-const featured     = allHearing.filter(m => m.featured).slice(0, 6);
-const music        = allHearing.filter(m => m.type === 'music').slice(0, 4);
-const ambient      = allHearing.filter(m => m.type === 'ambient').slice(0, 4);
-const editorsPicks = allHearing.filter(m => m.editorsPick).slice(0, 4);
+// Genre strips shown on the page
+const genres = [
+  { label: 'Electronic',  slug: 'electronic',  count: musicStats.byGenre.electronic },
+  { label: 'Classical',   slug: 'classical',   count: musicStats.byGenre.classical },
+  { label: 'Rock',        slug: 'rock',        count: musicStats.byGenre.rock },
+  { label: 'Ambient',     slug: 'ambient',     count: musicStats.byGenre.ambient },
+  { label: 'Pop',         slug: 'pop',         count: musicStats.byGenre.pop },
+  { label: 'Jazz',        slug: 'jazz',        count: musicStats.byGenre.jazz },
+  { label: 'Cinematic',   slug: 'cinematic',   count: musicStats.byGenre.cinematic },
+  { label: 'Folk',        slug: 'folk',        count: musicStats.byGenre.folk },
+  { label: 'Hip-Hop',     slug: 'hip-hop',     count: musicStats.byGenre['hip-hop'] },
+  { label: 'World',       slug: 'world',       count: musicStats.byGenre.world },
+].sort((a, b) => b.count - a.count);
 
-const types = [
-  { label: 'Music',   href: '/hearing/music' },
-  { label: 'Ambient', href: '/hearing/ambient' },
-  { label: 'Sounds',  href: '/hearing/sounds' },
-  { label: 'Lo-Fi',   href: '/hearing/lo-fi' },
-];
+// Split featured into sections
+const topPicks     = featuredMusic.slice(0, 6);
+const moreTracks   = featuredMusic.slice(6, 14);
 ---
 
 <BaseLayout
   title="HEARING — Audio Discovery · Senses"
-  description="Discover premium music, ambient soundscapes, and field recordings. Cinematic scores, nature sounds, lo-fi beats — the sonic world in one place."
+  description={`Discover ${formatCount(musicStats.total)}+ royalty-free music tracks — electronic, classical, cinematic, ambient, folk and more. Free to use, no attribution required.`}
 >
   <div class="pt-[var(--nav-height)] pb-20">
 
-    <!-- Hero -->
+    <!-- Hero banner -->
     <div class="relative overflow-hidden border-b border-senses-border mb-10">
       <div class="absolute inset-0 bg-gradient-to-br from-[#8FAEC0]/8 via-transparent to-transparent pointer-events-none" />
       <div class="max-w-[1440px] mx-auto px-4 md:px-8 py-14">
@@ -38,30 +42,36 @@ const types = [
             <p class="text-senses-hearing text-xs tracking-[0.35em] uppercase mb-3 font-medium">Audio Division</p>
             <h1 class="text-display-2xl text-senses-text leading-none tracking-tight">HEARING</h1>
             <p class="text-senses-text-2 text-base mt-4 max-w-lg leading-relaxed">
-              Music, ambient soundscapes, field recordings — every sonic medium
-              curated for depth, mood, and moment.
+              Royalty-free music, cinematic scores, ambient soundscapes — every genre curated
+              for depth, mood, and moment. Free forever, no attribution required.
             </p>
             <div class="flex flex-wrap gap-3 mt-6">
               <a href="/explore?division=hearing" class="px-5 py-2.5 rounded-xl bg-senses-hearing text-senses-bg text-sm font-medium hover:bg-senses-hearing/90 transition-colors">
                 Explore HEARING
               </a>
-              <a href="/hearing/ambient" class="px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 hover:text-senses-text transition-all">
-                Browse Ambient
+              <a href="/search?q=music" class="px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-border-2 hover:text-senses-text transition-all">
+                Search Tracks
               </a>
             </div>
           </div>
-          <!-- Stats -->
-          <div class="flex gap-6 flex-shrink-0">
-            {[
-              [allHearing.length.toString(), 'items'],
-              [allHearing.filter(m => m.type === 'music').length.toString(), 'music'],
-              [allHearing.filter(m => m.type === 'ambient').length.toString(), 'ambient'],
-            ].map(([n, l]) => (
-              <div class="text-center">
-                <p class="text-senses-hearing text-2xl font-light">{n}</p>
-                <p class="text-senses-text-3 text-xs uppercase tracking-widest">{l}</p>
-              </div>
-            ))}
+          <!-- Big numbers from real dataset -->
+          <div class="flex gap-8 flex-shrink-0">
+            <div class="text-center">
+              <p class="text-senses-hearing text-4xl md:text-5xl font-light leading-none tabular-nums">
+                {musicStats.total.toLocaleString()}
+              </p>
+              <p class="text-senses-text-3 text-xs uppercase tracking-widest mt-1.5">Tracks</p>
+            </div>
+            <div class="text-center">
+              <p class="text-senses-hearing text-4xl md:text-5xl font-light leading-none tabular-nums">
+                {genres.length}
+              </p>
+              <p class="text-senses-text-3 text-xs uppercase tracking-widest mt-1.5">Genres</p>
+            </div>
+            <div class="text-center">
+              <p class="text-senses-hearing text-4xl md:text-5xl font-light leading-none tabular-nums">∞</p>
+              <p class="text-senses-text-3 text-xs uppercase tracking-widest mt-1.5">Free</p>
+            </div>
           </div>
         </div>
       </div>
@@ -69,110 +79,84 @@ const types = [
 
     <div class="max-w-[1440px] mx-auto px-4 md:px-8">
 
-      <!-- Type strip -->
+      <!-- Genre strip -->
       <div class="flex gap-2 overflow-x-auto pb-2 mb-10 scrollbar-none">
-        {types.map(t => (
+        {genres.map(g => (
           <a
-            href={t.href}
-            class="flex-shrink-0 px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 text-sm hover:border-senses-hearing/40 hover:text-senses-hearing transition-all"
+            href={`/search?q=${g.slug}&division=hearing`}
+            class="flex-shrink-0 px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-sm hover:border-senses-hearing/40 hover:text-senses-hearing transition-all"
           >
-            {t.label}
-          </a>
-        ))}
-        {hearingCategories.map(cat => (
-          <a
-            href={`/explore?category=${cat.slug}`}
-            class="flex-shrink-0 px-5 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-3 text-sm hover:text-senses-text transition-all"
-          >
-            {cat.label}
+            <span class="text-senses-text-2">{g.label}</span>
+            <span class="text-senses-text-3 text-xs ml-1.5">{formatCount(g.count)}</span>
           </a>
         ))}
       </div>
 
-      <!-- Featured -->
-      {featured.length > 0 && (
-        <section class="mb-12">
-          <div class="flex items-center justify-between mb-5">
-            <h2 class="text-senses-text text-base font-medium">
-              Featured <span class="text-senses-hearing">Sounds</span>
-            </h2>
-            <a href="/explore?division=hearing" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">See all →</a>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {featured.map(item => (
-              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <!-- Music section -->
-      {music.length > 0 && (
-        <section class="mb-12">
-          <div class="flex items-center justify-between mb-5">
-            <h2 class="text-senses-text text-base font-medium">Music</h2>
-            <a href="/hearing/music" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">View all →</a>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {music.map(item => (
-              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <!-- Ambient section -->
-      {ambient.length > 0 && (
-        <section class="mb-12">
-          <div class="flex items-center justify-between mb-5">
-            <h2 class="text-senses-text text-base font-medium">Ambient</h2>
-            <a href="/hearing/ambient" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">View all →</a>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {ambient.map(item => (
-              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <!-- Editor's picks -->
-      {editorsPicks.length > 0 && (
-        <section class="mb-12">
-          <h2 class="text-senses-text text-base font-medium mb-5">
-            Editor's <span class="text-senses-hearing">Picks</span>
-          </h2>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {editorsPicks.map(item => (
-              <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <!-- Category cards -->
+      <!-- Featured Tracks -->
       <section class="mb-12">
-        <h2 class="text-senses-text text-base font-medium mb-5">Browse by Category</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {hearingCategories.map(cat => (
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-senses-text text-base font-medium">
+            Top <span class="text-senses-hearing">Tracks</span>
+          </h2>
+          <a href="/explore?division=hearing" class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">
+            Browse all {musicStats.total.toLocaleString()} tracks →
+          </a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {topPicks.map(item => (
+            <MediaCard client:visible media={item} layout="grid" />
+          ))}
+        </div>
+      </section>
+
+      <!-- Genre stats cards -->
+      <section class="mb-12">
+        <h2 class="text-senses-text text-base font-medium mb-5">Browse by Genre</h2>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {genres.slice(0, 10).map((g, i) => (
             <a
-              href={`/explore?category=${cat.slug}`}
-              class="relative group rounded-xl overflow-hidden aspect-square bg-senses-surface border border-senses-border hover:border-senses-hearing/40 transition-all"
+              href={`/search?q=${g.slug}&division=hearing`}
+              class="group relative rounded-xl bg-senses-surface border border-senses-border p-4 hover:border-senses-hearing/40 transition-all overflow-hidden"
             >
-              <img
-                src={cat.coverImage}
-                alt={cat.label}
-                class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-              <div class="absolute bottom-0 left-0 p-3">
-                <p class="text-senses-hearing text-[10px] tracking-widest uppercase mb-0.5 font-medium">hearing</p>
-                <p class="text-senses-text text-sm font-medium">{cat.label}</p>
-              </div>
+              <div class="absolute inset-0 bg-gradient-to-br from-senses-hearing/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <p class="text-senses-hearing text-2xl font-light tabular-nums mb-1">{formatCount(g.count)}</p>
+              <p class="text-senses-text-2 text-sm font-medium">{g.label}</p>
+              <p class="text-senses-text-3 text-[10px] uppercase tracking-widest mt-0.5">tracks</p>
             </a>
           ))}
         </div>
       </section>
+
+      <!-- More tracks -->
+      {moreTracks.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-senses-text text-base font-medium">
+              More <span class="text-senses-hearing">Music</span>
+            </h2>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {moreTracks.map(item => (
+              <MediaCard client:visible media={item} layout="grid" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Source note -->
+      <div class="rounded-xl bg-senses-surface border border-senses-border p-5 flex items-start gap-4">
+        <svg viewBox="0 0 48 48" class="w-8 h-8 flex-shrink-0 mt-0.5" aria-label="Pixabay">
+          <circle cx="24" cy="24" r="24" fill="#1DA462"/>
+          <path d="M18.5 14h4.2l2.3 6.2 2.3-6.2h4.2l-4.5 10.1 4.8 9.9h-4.2l-2.6-6.7-2.6 6.7h-4.2l4.8-9.9z" fill="#fff"/>
+        </svg>
+        <div>
+          <p class="text-senses-text text-sm font-medium mb-1">Pixabay License</p>
+          <p class="text-senses-text-3 text-xs leading-relaxed max-w-xl">
+            All {musicStats.total.toLocaleString()} tracks are sourced under the Pixabay License —
+            free for personal and commercial use. No attribution required.
+          </p>
+        </div>
+      </div>
 
     </div>
   </div>

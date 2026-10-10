@@ -6,12 +6,12 @@
     "description": "Visual and sonic rain — street reflections, window patter, and storm thunder assembled into a single cross-sensory mood.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-cinematic-rain/800/500",
-    "mediaIds": ["m-003", "a-003", "a-010"],
+    "mediaIds": ["px-11107", "px-2384", "px-15738", "px-15712"],
     "tags": ["rain", "cinematic", "urban", "storm", "atmospheric"],
     "featured": true,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-09-10",
-    "updatedAt": "2026-09-10"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-002",
@@ -20,12 +20,12 @@
     "description": "The hour before sunset — mountain valleys, alpine light, and music composed for that precise quality of fading gold.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-golden-hour/800/500",
-    "mediaIds": ["m-001", "m-004", "m-011", "a-004"],
+    "mediaIds": ["px-11098", "px-11188", "px-11582", "px-2918"],
     "tags": ["golden-hour", "sunset", "warm", "landscape", "mountain"],
     "featured": true,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-08-20",
-    "updatedAt": "2026-08-20"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-003",
@@ -34,12 +34,12 @@
     "description": "Forest mornings, lake reflections, birdsong, and gentle wind. For when you need to remember that the natural world is still there.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-peaceful-nature/800/500",
-    "mediaIds": ["m-002", "m-006", "m-008", "a-002", "a-006", "a-009"],
+    "mediaIds": ["px-1", "px-11574", "px-9960", "px-16044"],
     "tags": ["nature", "peaceful", "forest", "lake", "birds", "ambient"],
     "featured": true,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-07-14",
-    "updatedAt": "2026-07-14"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-004",
@@ -48,12 +48,12 @@
     "description": "Urban spaces at night — neon reflections, aerial patterns, fog over harbours, and café ambience.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-city-after-dark/800/500",
-    "mediaIds": ["m-003", "m-007", "m-017", "a-007"],
+    "mediaIds": ["px-4378", "px-2715", "px-14480", "px-11087"],
     "tags": ["city", "night", "urban", "dark", "atmospheric", "ambient"],
     "featured": true,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-06-25",
-    "updatedAt": "2026-06-25"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-005",
@@ -62,12 +62,12 @@
     "description": "Summit photographs, slow-motion cloud footage, alpine meadow wind, and orchestral music written for these exact landscapes.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-mountain-symphony/800/500",
-    "mediaIds": ["m-001", "m-005", "m-008", "m-016", "a-001", "a-008"],
+    "mediaIds": ["px-11009", "px-11188", "px-11098", "px-413"],
     "tags": ["mountain", "orchestral", "epic", "alpine", "cinematic"],
     "featured": false,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-08-02",
-    "updatedAt": "2026-08-02"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-006",
@@ -76,12 +76,12 @@
     "description": "Minimal visuals and sound designed not to interrupt. White deserts, birch forests, lo-fi beats, and long-form ambient for unbroken concentration.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-focus-deep-work/800/500",
-    "mediaIds": ["m-012", "m-018", "a-011", "a-012", "a-007"],
+    "mediaIds": ["px-15738", "px-16736", "px-15584", "px-15802"],
     "tags": ["focus", "minimal", "productivity", "lo-fi", "ambient", "deep-work"],
     "featured": false,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-09-01",
-    "updatedAt": "2026-09-01"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-007",
@@ -90,12 +90,12 @@
     "description": "Dew-covered leaves at dawn, misty forest canopies, birdsong in the early hours. A slow breath of the natural world before the day begins.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-forest-whispers/800/500",
-    "mediaIds": ["m-002", "m-006", "a-002", "a-009"],
+    "mediaIds": ["px-1", "px-11574", "px-2384", "px-9960"],
     "tags": ["nature", "forest", "morning", "birds", "green", "peaceful"],
     "featured": true,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-09-15",
-    "updatedAt": "2026-09-15"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-008",
@@ -104,12 +104,12 @@
     "description": "Nebulas, star trails, distant galaxies, and the vast silence of deep space. For those who look up and feel small in the best possible way.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-cosmos/800/500",
-    "mediaIds": ["m-005", "m-016", "a-001", "a-008"],
+    "mediaIds": ["px-11015", "px-11107", "px-11009", "px-11080"],
     "tags": ["space", "cosmos", "stars", "galaxy", "nebula", "night"],
     "featured": true,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-09-12",
-    "updatedAt": "2026-09-12"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-009",
@@ -118,12 +118,12 @@
     "description": "Diwali lanterns floating over rivers, Holi powder exploding in colour, street celebrations electric with life. Culture as pure sensory joy.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-festival-light/800/500",
-    "mediaIds": ["m-007", "m-017", "a-004", "a-007"],
+    "mediaIds": ["px-1758", "px-8196", "px-2063", "px-11014"],
     "tags": ["festival", "culture", "light", "celebration", "diwali", "holi", "vibrant"],
     "featured": false,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-09-08",
-    "updatedAt": "2026-09-08"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-010",
@@ -132,12 +132,12 @@
     "description": "Sand dunes sculpted by wind, salt flats stretching to every horizon, and minimal drone scores composed for places where silence has texture.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-desert/800/500",
-    "mediaIds": ["m-004", "m-011", "a-005", "a-008"],
+    "mediaIds": ["px-203", "px-4040", "px-4092", "px-15584"],
     "tags": ["desert", "landscape", "minimal", "sand", "silence", "drone"],
     "featured": false,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-09-05",
-    "updatedAt": "2026-09-05"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-011",
@@ -146,12 +146,12 @@
     "description": "Brutalist corridors, spiral staircases, glass facades catching the afternoon light. Architecture as a study in line, form, and quiet repetition.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-geometry/800/500",
-    "mediaIds": ["m-003", "m-009", "m-017", "a-010"],
+    "mediaIds": ["px-4378", "px-2715", "px-11087", "px-14480"],
     "tags": ["architecture", "geometric", "brutalist", "urban", "minimal", "structure"],
     "featured": false,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-09-03",
-    "updatedAt": "2026-09-03"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-012",
@@ -160,12 +160,12 @@
     "description": "Coral reefs alive with colour, bioluminescent waves breaking in the dark, and the low-frequency hum of the ocean in open water.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-ocean/800/500",
-    "mediaIds": ["m-008", "m-014", "a-006", "a-009"],
+    "mediaIds": ["px-2277", "px-2528", "px-11008", "px-2384"],
     "tags": ["ocean", "underwater", "blue", "waves", "coral", "marine"],
     "featured": true,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-09-02",
-    "updatedAt": "2026-09-02"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-013",
@@ -174,12 +174,12 @@
     "description": "Wildlife close-ups that capture texture and stillness — feathers, fur, scales. The natural world seen at the distance where you can feel its breath.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-wildlife/800/500",
-    "mediaIds": ["m-006", "m-010", "m-015", "a-002"],
+    "mediaIds": ["px-2384", "px-15712", "px-2918", "px-16736"],
     "tags": ["animals", "wildlife", "portrait", "nature", "macro", "texture"],
     "featured": false,
     "crossSensory": false,
     "createdAt": "2026-08-28",
-    "updatedAt": "2026-08-28"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-014",
@@ -188,12 +188,12 @@
     "description": "Empty highways at dusk, cobblestone alleys in fog, train windows and passing landscapes. The feeling of moving without knowing where.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-travel/800/500",
-    "mediaIds": ["m-003", "m-013", "a-003", "a-007"],
+    "mediaIds": ["px-11015", "px-11111", "px-11080", "px-11012"],
     "tags": ["travel", "road", "journey", "train", "urban", "wandering"],
     "featured": false,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-08-25",
-    "updatedAt": "2026-08-25"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-015",
@@ -202,12 +202,12 @@
     "description": "Water droplets holding entire reflections, insect eyes like mirrors, pollen like architecture. The universe inside a centimetre.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-macro/800/500",
-    "mediaIds": ["m-002", "m-009", "m-015", "a-006"],
+    "mediaIds": ["px-8196", "px-17057", "px-17167", "px-4509"],
     "tags": ["macro", "close-up", "detail", "nature", "science", "texture"],
     "featured": false,
     "crossSensory": false,
     "createdAt": "2026-08-22",
-    "updatedAt": "2026-08-22"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-016",
@@ -216,12 +216,12 @@
     "description": "Flowing pigments, ink clouds expanding in water, light refracting through glass. Pure colour as an experience without subject or narrative.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-abstract/800/500",
-    "mediaIds": ["m-001", "m-010", "a-004", "a-011"],
+    "mediaIds": ["px-11015", "px-11009", "px-2354", "px-11111"],
     "tags": ["abstract", "color", "art", "paint", "fluid", "minimal"],
     "featured": false,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-08-18",
-    "updatedAt": "2026-08-18"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-017",
@@ -230,12 +230,12 @@
     "description": "Top-down coastlines where land meets sea in fractured lines, patchwork farm fields, river deltas spreading like roots. Earth seen from above.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-aerial/800/500",
-    "mediaIds": ["m-005", "m-011", "m-016", "a-001"],
+    "mediaIds": ["px-11107", "px-11098", "px-11009", "px-11188"],
     "tags": ["aerial", "top-down", "geography", "landscape", "drone", "earth"],
     "featured": false,
     "crossSensory": false,
     "createdAt": "2026-08-15",
-    "updatedAt": "2026-08-15"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-018",
@@ -244,12 +244,12 @@
     "description": "One subject. Vast white space. A silence that lets the eye rest. Minimalism not as style but as a way of paying complete attention.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-minimal/800/500",
-    "mediaIds": ["m-012", "m-018", "a-011", "a-012"],
+    "mediaIds": ["px-15738", "px-16736", "px-15584", "px-15802"],
     "tags": ["minimalism", "simple", "white", "quiet", "zen", "clean"],
     "featured": false,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-08-10",
-    "updatedAt": "2026-08-10"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-019",
@@ -258,12 +258,12 @@
     "description": "Film photography aesthetic with warm light leaks, nostalgic grain, and the faint smell of an era that happened before you were born.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-vintage/800/500",
-    "mediaIds": ["m-004", "m-013", "a-004", "a-010"],
+    "mediaIds": ["px-1758", "px-8837", "px-1", "px-8196"],
     "tags": ["vintage", "film", "nostalgic", "grain", "warm", "retro"],
     "featured": false,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-08-05",
-    "updatedAt": "2026-08-05"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-020",
@@ -272,12 +272,12 @@
     "description": "Rush hour blurs, street vendors, rooftop views, graffiti walls, the cafés where strangers sit close. Cities as living, breathing organisms.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-city-life/800/500",
-    "mediaIds": ["m-003", "m-007", "m-017", "a-007"],
+    "mediaIds": ["px-2354", "px-11014", "px-16736", "px-2473"],
     "tags": ["city", "urban", "street", "people", "life", "energy"],
     "featured": false,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-07-28",
-    "updatedAt": "2026-07-28"
+    "updatedAt": "2026-10-10"
   },
   {
     "id": "col-021",
@@ -286,11 +286,11 @@
     "description": "Snowfall that muffles every sound. Frozen lakes with cracks like calligraphy. Bare branches holding more white than seems possible.",
     "curatedBy": "senses",
     "coverImage": "https://picsum.photos/seed/collection-winter/800/500",
-    "mediaIds": ["m-008", "m-016", "a-002", "a-012"],
+    "mediaIds": ["px-11047", "px-17854", "px-18604", "px-2716"],
     "tags": ["winter", "snow", "cold", "silence", "minimal", "white"],
     "featured": false,
-    "crossSensory": true,
+    "crossSensory": false,
     "createdAt": "2026-07-20",
-    "updatedAt": "2026-07-20"
+    "updatedAt": "2026-10-10"
   }
 ]

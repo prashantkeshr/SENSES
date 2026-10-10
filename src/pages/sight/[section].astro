@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { MediaCard } from '@/components/media/MediaCard';
+import { MediaCard }    from '@/components/media/MediaCard';
+import { LoadMoreGrid } from '@/components/media/LoadMoreGrid';
 import { provider }  from '@/lib/providers';
 import pbStats     from '@data/pb/stats.json';
 import videoStats  from '@data/pb/video-stats.json';
@@ -9,16 +10,17 @@ import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 type SectionDef = {
-  title:       string;
-  description: string;
-  types:       MediaType[];
-  filters?:    Partial<MediaFilters>;
-  pbCount?:    number; // big authentic number to display
+  title:         string;
+  description:   string;
+  types:         MediaType[];
+  filters?:      Partial<MediaFilters>;
+  pbCount?:      number;
+  chunkPath?:    string; // public path for Load More chunks
+  useLoadMore?:  boolean;
 };
 
 export async function getStaticPaths() {
   const s = pbStats as { byType: Record<string,number>; total: number };
-  // Count 3D models from the all.json file
   let modelsCount = 0;
   try {
     const { readFileSync: rfs } = await import('fs');
@@ -28,11 +30,11 @@ export async function getStaticPaths() {
   } catch { /* file missing */ }
 
   const defs: Record<string, SectionDef> = {
-    photos:        { title: 'Photos',        description: 'High-resolution photography across landscapes, urban scenes, minimal compositions, and more.',           types: ['photo'],                         pbCount: s.byType.photo },
-    videos:        { title: 'Videos',        description: 'Cinematic video content — slow motion, time-lapse, and atmospheric visual storytelling.',                types: ['video'],                          pbCount: (videoStats as any).total },
-    illustrations: { title: 'Illustrations', description: 'Digital art, hand-drawn styles, and creative visual interpretations.',                                  types: ['illustration', 'vector'],        pbCount: s.byType.illustration + s.byType.vector },
-    wallpapers:    { title: 'Wallpapers',    description: 'Landscape-oriented photos perfect for desktop wallpapers and wide-format displays.',                    types: ['photo'], filters: { orientation: 'landscape' }, pbCount: s.byType.photo },
-    '3d-models':   { title: '3D Models',     description: 'Interactive 3D objects — explore, orbit, zoom. Free GLB models for personal and commercial projects.', types: ['3d' as MediaType],               pbCount: modelsCount || undefined },
+    photos:        { title: 'Photos',        description: 'High-resolution photography across landscapes, urban scenes, minimal compositions, and more.',           types: ['photo'],                  pbCount: s.byType.photo,                               chunkPath: '/data/pb/chunks/',         useLoadMore: true  },
+    videos:        { title: 'Videos',        description: 'Cinematic video content — slow motion, time-lapse, and atmospheric visual storytelling.',                types: ['video'],                  pbCount: (videoStats as any).total,                    chunkPath: '/data/pb/videos/chunks/',  useLoadMore: true  },
+    illustrations: { title: 'Illustrations', description: 'Digital art, hand-drawn styles, and creative visual interpretations.',                                  types: ['illustration', 'vector'], pbCount: s.byType.illustration + s.byType.vector,      chunkPath: '/data/pb/chunks/',         useLoadMore: true  },
+    wallpapers:    { title: 'Wallpapers',    description: 'Landscape-oriented photos perfect for desktop wallpapers and wide-format displays.',                    types: ['photo'],                  pbCount: s.byType.photo,                               chunkPath: '/data/pb/chunks/',         useLoadMore: true  },
+    '3d-models':   { title: '3D Models',     description: 'Interactive 3D objects — explore, orbit, zoom. Free GLB models for personal and commercial projects.', types: ['3d' as MediaType],        pbCount: modelsCount || undefined,                                                    useLoadMore: false },
   };
   return Object.entries(defs).map(([section, def]) => ({
     params: { section },
@@ -45,38 +47,54 @@ const { section, def } = Astro.props;
 
 if (!def) return Astro.redirect('/sight');
 
-const allCreators = await provider.getCreators(30);
-const creatorMap  = Object.fromEntries(allCreators.map(c => [c.id, c]));
+const root = process.cwd();
+let initialItems: Media[] = [];
+let startChunk = 1;
 
-// For videos/3d-models, read JSON at build time (providers are client-side only)
-let items: Media[] = [];
 if (section === 'videos') {
   try {
-    const root = process.cwd();
     const chunksDir = join(root, 'public', 'data', 'pb', 'videos', 'chunks');
-    const all: any[] = [];
-    for (const file of readdirSync(chunksDir)) {
-      if (!file.endsWith('.json')) continue;
-      all.push(...JSON.parse(readFileSync(join(chunksDir, file), 'utf-8')));
-    }
-    all.sort((a: any, b: any) => (b.stats?.views ?? 0) - (a.stats?.views ?? 0));
-    items = all.slice(0, 48) as Media[];
+    const chunk0: any[] = JSON.parse(readFileSync(join(chunksDir, '0.json'), 'utf-8'));
+    chunk0.sort((a: any, b: any) => (b.stats?.views ?? 0) - (a.stats?.views ?? 0));
+    initialItems = chunk0 as Media[];
+    startChunk = 1;
   } catch { /* chunks absent */ }
 } else if (section === '3d-models') {
   try {
-    const root = process.cwd();
     const allRaw: any[] = JSON.parse(readFileSync(join(root, 'public', 'data', 'pb', '3d', 'all.json'), 'utf-8'));
     allRaw.sort((a: any, b: any) => (b.stats?.likes ?? 0) - (a.stats?.likes ?? 0));
-    items = allRaw.slice(0, 48) as Media[];
+    initialItems = allRaw as Media[]; // show all since it's a single file
   } catch { /* file absent */ }
+} else if (section === 'photos' || section === 'illustrations' || section === 'wallpapers') {
+  try {
+    const chunksDir = join(root, 'public', 'data', 'pb', 'chunks');
+    const chunk0: any[] = JSON.parse(readFileSync(join(chunksDir, '0.json'), 'utf-8'));
+    // Filter by type if needed
+    const filtered = section === 'illustrations'
+      ? chunk0.filter((m: any) => m.type === 'illustration' || m.type === 'vector')
+      : section === 'wallpapers'
+      ? chunk0.filter((m: any) => m.orientation === 'landscape')
+      : chunk0;
+    initialItems = filtered as Media[];
+    startChunk = 1;
+  } catch { /* chunks absent */ }
+  if (initialItems.length === 0) {
+    // Fallback to provider for curated items
+    const allCreators = await provider.getCreators(30);
+    const byType = await Promise.all(
+      def.types.map(type => provider.getMedia({ division: 'sight', type, ...def.filters }))
+    );
+    initialItems = byType.flat();
+  }
 } else {
   const byType = await Promise.all(
-    def.types.map(type =>
-      provider.getMedia({ division: 'sight', type, ...def.filters })
-    )
+    def.types.map(type => provider.getMedia({ division: 'sight', type, ...def.filters }))
   );
-  items = byType.flat();
+  initialItems = byType.flat();
 }
+
+const isGridSection = section === 'videos' || section === '3d-models';
+const gridLayout: 'grid' | 'masonry' = isGridSection ? 'grid' : 'masonry';
 ---
 
 <BaseLayout
@@ -111,10 +129,10 @@ if (section === 'videos') {
             </p>
             <p class="text-senses-text-3 text-xs uppercase tracking-widest mt-1">items</p>
           </div>
-        ) : items.length > 0 && (
+        ) : initialItems.length > 0 && (
           <div class="flex-shrink-0 text-right">
             <p class="text-senses-sight text-5xl font-light leading-none tabular-nums">
-              {items.length}
+              {initialItems.length}
             </p>
             <p class="text-senses-text-3 text-xs uppercase tracking-widest mt-1">items</p>
           </div>
@@ -124,15 +142,25 @@ if (section === 'videos') {
 
     <!-- Grid -->
     <div class="max-w-[1440px] mx-auto px-4 md:px-8">
-      {items.length === 0 ? (
+      {initialItems.length === 0 ? (
         <div class="py-24 text-center">
           <p class="text-senses-text-3 text-lg mb-1">No {def.title.toLowerCase()} yet</p>
           <p class="text-senses-text-3 text-sm">Check back soon — more media is on the way.</p>
         </div>
+      ) : def.useLoadMore && def.chunkPath ? (
+        <LoadMoreGrid
+          client:load
+          initialItems={initialItems}
+          chunkBasePath={def.chunkPath}
+          startChunk={startChunk}
+          totalCount={def.pbCount}
+          division="sight"
+          layout={gridLayout}
+        />
       ) : (
-        <div class={(section === 'videos' || section === '3d-models') ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4' : 'masonry-grid'}>
-          {items.map(item => (
-            <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout={(section === 'videos' || section === '3d-models') ? 'grid' : undefined} />
+        <div class={isGridSection ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4' : 'masonry-grid'}>
+          {initialItems.map(item => (
+            <MediaCard client:visible media={item} layout={gridLayout} />
           ))}
         </div>
       )}

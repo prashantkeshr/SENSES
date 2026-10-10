@@ -1,7 +1,7 @@
 ---
 import BaseLayout      from '@/layouts/BaseLayout.astro';
-import { MediaCard }   from '@/components/media/MediaCard';
-import { formatCount } from '@/lib/utils/formatters';
+import { LoadMoreGrid } from '@/components/media/LoadMoreGrid';
+import { formatCount }  from '@/lib/utils/formatters';
 import musicStats from '@data/pb/music-stats.json';
 import type { Media } from '@/types/index';
 import { readFileSync, readdirSync } from 'fs';
@@ -37,9 +37,9 @@ if (!meta) return Astro.redirect('/hearing');
 
 const genres = SECTION_GENRES[section] ?? [];
 
-// Read music chunks at build time, filter by genre
+// Read music chunks at build time — produce initial 48 items for SSG
 const root = process.cwd();
-let items: Media[] = [];
+let initialItems: Media[] = [];
 try {
   const chunksDir = join(root, 'public', 'data', 'pb', 'music', 'chunks');
   const allItems: any[] = [];
@@ -48,16 +48,14 @@ try {
     const chunk: any[] = JSON.parse(readFileSync(join(chunksDir, file), 'utf-8'));
     allItems.push(...chunk);
   }
-  // For 'music' section show everything; for others filter by genre
   const filtered = section === 'music'
     ? allItems
     : allItems.filter((m: any) => genres.includes(m.category));
-  // Sort by likes desc, take top 48
   filtered.sort((a: any, b: any) => (b.stats?.likes ?? 0) - (a.stats?.likes ?? 0));
-  items = filtered.slice(0, 48) as Media[];
+  // Serve first chunk file worth so Load More starts from chunk 1
+  initialItems = filtered.slice(0, 100) as Media[];
 } catch { /* chunks not yet generated */ }
 
-// Section count label
 const sectionCount = section === 'music'
   ? musicStats.total
   : genres.reduce((t, g) => t + ((musicStats.byGenre as any)[g] ?? 0), 0);
@@ -95,27 +93,23 @@ const sectionCount = section === 'music'
       </div>
     </div>
 
-    <!-- Grid -->
+    <!-- Grid with Load More -->
     <div class="max-w-[1440px] mx-auto px-4 md:px-8">
-      {items.length === 0 ? (
+      {initialItems.length === 0 ? (
         <div class="py-24 text-center">
-          <p class="text-senses-text-3 text-lg mb-2">Loading tracks…</p>
+          <p class="text-senses-text-3 text-lg mb-2">No tracks found</p>
           <p class="text-senses-text-3 text-sm">Run <code class="bg-senses-surface px-1.5 py-0.5 rounded text-xs">npm run transform:music</code> to generate music data.</p>
         </div>
       ) : (
-        <>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8">
-            {items.map((item: Media) => (
-              <MediaCard client:visible media={item} layout="grid" />
-            ))}
-          </div>
-          {sectionCount > items.length && (
-            <p class="text-center text-senses-text-3 text-sm py-6">
-              Showing top {items.length.toLocaleString()} of {sectionCount.toLocaleString()} {meta.title.toLowerCase()} tracks.
-              Use <a href={`/search?q=${section}&division=hearing`} class="text-senses-hearing hover:underline">Search</a> to find more.
-            </p>
-          )}
-        </>
+        <LoadMoreGrid
+          client:load
+          initialItems={initialItems}
+          chunkBasePath="/data/pb/music/chunks/"
+          startChunk={1}
+          totalCount={sectionCount}
+          division="hearing"
+          layout="grid"
+        />
       )}
     </div>
 

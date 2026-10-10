@@ -6,6 +6,7 @@ import { MediaCard }    from '@/components/media/MediaCard';
 import { TypeBadge }    from '@/components/ui/Badge';
 import { CommentsSection } from '@/components/social/CommentsSection';
 import { PixabayTagSection } from '@/components/media/PixabayTagSection';
+import { RelatedMedia }  from '@/components/media/RelatedMedia';
 import { provider }     from '@/lib/providers';
 import { formatCount, formatDate, formatDuration } from '@/lib/utils/formatters';
 import { readFileSync, readdirSync } from 'fs';
@@ -628,6 +629,19 @@ const licenseLabels: Record<string, string> = {
           <h2 class="text-senses-text text-sm font-medium mb-5">More free <span class="text-senses-sight capitalize">{primaryTag}</span> images</h2>
           <PixabayTagSection tagSlug={primaryTag} tagLabel={primaryTag} client:visible />
         </section>
+      )}
+
+      <!-- Related from Pixabay chunks -->
+      {isPb && mediaKind !== 'model' && (
+        <RelatedMedia
+          client:visible
+          currentId={media.id}
+          division="sight"
+          category={media.category}
+          chunkPath={mediaKind === 'video' ? '/data/pb/videos/chunks/' : '/data/pb/chunks/'}
+          chunkCount={50}
+          label={mediaKind === 'video' ? 'More Videos' : 'More Photos'}
+        />
       )}
 
       <!-- Comments -->

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { Media, Creator } from '@/types/index';
 import { TypeBadge } from '@components/ui/Badge';
 import { formatCount, formatDuration } from '@lib/utils/formatters';
@@ -30,7 +30,7 @@ function BookmarkIcon({ filled }: { filled: boolean }) {
 
 function PlayIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
       <path d="M8 5v14l11-7z"/>
     </svg>
   );
@@ -55,71 +55,121 @@ function EyeIcon() {
 
 export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps) {
   const state = getLocalState();
-  const [liked, setLiked] = useState(state.likedMediaIds.includes(media.id));
-  const [saved, setSaved] = useState(state.savedMediaIds.includes(media.id));
+  const [liked, setLiked]       = useState(state.likedMediaIds.includes(media.id));
+  const [saved, setSaved]       = useState(state.savedMediaIds.includes(media.id));
   const [imgError, setImgError] = useState(false);
+  const [videoActive, setVideoActive] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleLike = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     setLiked(toggleLike(media.id));
   }, [media.id]);
 
   const handleSave = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     setSaved(toggleSave(media.id));
   }, [media.id]);
 
-  const isAudio  = media.division === 'hearing';
-  const isVideo  = media.type === 'video';
+  const handleMouseEnter = useCallback(() => {
+    if (isVideo && videoRef.current) {
+      setVideoActive(true);
+      videoRef.current.play().catch(() => {});
+    }
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (isVideo && videoRef.current) {
+      setVideoActive(false);
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, []);
+
+  const isAudio = media.division === 'hearing';
+  const isVideo = media.type === 'video';
   const href = isAudio
     ? `/hearing/${media.type}/${media.slug}`
     : `/sight/${media.type}/${media.slug}`;
 
-  const imgData = media.data as { thumbnailUrl?: string; artworkUrl?: string; previewUrl?: string; aspectRatio?: number; width?: number; height?: number };
-  const thumbSrc = imgData.previewUrl ?? imgData.thumbnailUrl ?? imgData.artworkUrl ?? 'https://picsum.photos/seed/fallback/600/400';
-  const aspectRatio = imgData.aspectRatio ?? (imgData.width && imgData.height ? +(imgData.width / imgData.height).toFixed(3) : undefined);
+  // Resolve thumbnail — covers all data shapes across image / video / music / 3d chunks
+  const d = media.data as Record<string, unknown>;
+  const thumbSrc: string =
+    (d.previewUrl   as string) ||
+    (d.thumbnailUrl as string) ||
+    (d.thumbnail    as string) ||
+    media.thumbnail             ||
+    (d.artworkUrl   as string) ||
+    '';
+
+  const streamUrl = (d.streamUrl as string) || '';
+
+  const imgData = media.data as { aspectRatio?: number | string; width?: number; height?: number };
+  const aspectNum =
+    typeof imgData.aspectRatio === 'number' ? imgData.aspectRatio :
+    (imgData.width && imgData.height ? +(imgData.width / imgData.height).toFixed(3) : undefined);
 
   return (
     <a
       href={href}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className="group block relative rounded-xl overflow-hidden bg-senses-surface
                  hover:shadow-[0_8px_32px_rgba(0,0,0,0.55)] transition-shadow duration-[var(--duration-slow)]"
     >
-      {/* Full-bleed image */}
-      <div className="relative overflow-hidden" style={aspectRatio ? { aspectRatio: String(aspectRatio) } : {}}>
+      {/* Media container */}
+      <div className="relative overflow-hidden" style={aspectNum ? { aspectRatio: String(aspectNum) } : {}}>
+
+        {/* Poster / still image */}
         {imgError ? (
           <div className="w-full aspect-video bg-senses-surface-2 flex items-center justify-center text-senses-text-3 text-sm">
-            Media unavailable
+            Preview unavailable
           </div>
-        ) : (
+        ) : thumbSrc ? (
           <img
             src={thumbSrc}
-            alt={(media.data as {altText?: string}).altText ?? media.title}
+            alt={(d.altText as string) ?? media.title}
             loading="lazy"
             decoding="async"
             onError={() => setImgError(true)}
-            className={`w-full object-cover transition-transform duration-[600ms] ease-[var(--ease-senses)] group-hover:scale-[1.04]
+            className={`w-full object-cover transition-transform duration-[600ms] ease-[var(--ease-senses)]
+              ${!videoActive ? 'group-hover:scale-[1.04]' : ''}
               ${isAudio ? 'aspect-square' : ''}
             `}
           />
+        ) : (
+          <div className={`w-full bg-senses-surface-2 ${isAudio ? 'aspect-square' : 'aspect-video'}`} />
         )}
 
-        {/* Type badge — always visible */}
+        {/* Video preview — loads on first hover, plays muted */}
+        {isVideo && streamUrl && (
+          <video
+            ref={videoRef}
+            src={streamUrl}
+            poster={thumbSrc}
+            muted
+            loop
+            playsInline
+            preload="none"
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300
+              ${videoActive ? 'opacity-100' : 'opacity-0'}`}
+          />
+        )}
+
+        {/* Type badge */}
         <div className="absolute top-2 left-2 z-10">
           <TypeBadge type={media.type} division={media.division} />
         </div>
 
-        {/* Duration badge for video/audio */}
+        {/* Duration badge */}
         {(isVideo || isAudio) && (
           <div className="absolute top-2 right-2 z-10 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm text-white text-[10px] font-mono">
-            {formatDuration((media.data as {duration?: number}).duration ?? 0)}
+            {formatDuration((d.duration as number) ?? 0)}
           </div>
         )}
 
-        {/* Play indicator */}
-        {(isVideo || isAudio) && (
+        {/* Play/wave overlay on hover */}
+        {(isVideo || isAudio) && !videoActive && (
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
             <div className="p-3 rounded-full bg-black/50 backdrop-blur-sm text-white">
               {isAudio ? <WaveIcon /> : <PlayIcon />}
@@ -127,7 +177,7 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
           </div>
         )}
 
-        {/* Top-right action buttons — appear on hover */}
+        {/* Like / save buttons (non-video/audio) */}
         <div className="absolute top-2 right-2 z-10 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           {!(isVideo || isAudio) && (
             <>
@@ -151,19 +201,16 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
           )}
         </div>
 
-        {/* Slide-up overlay with title + creator + stats */}
+        {/* Slide-up info overlay */}
         <div
           className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0
                      transition-transform duration-300 ease-[var(--ease-senses)]
                      bg-gradient-to-t from-black/90 via-black/70 to-transparent
                      pt-8 pb-3 px-3"
         >
-          {/* Title */}
           <p className="text-white text-[13px] font-medium leading-tight line-clamp-2 mb-1.5">
             {media.title}
           </p>
-
-          {/* Creator row */}
           {creator && (
             <div className="flex items-center gap-1.5 mb-1.5">
               <img
@@ -174,8 +221,6 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
               <span className="text-white/60 text-[11px] truncate">{creator.displayName}</span>
             </div>
           )}
-
-          {/* Stats row */}
           <div className="flex items-center gap-3">
             <span className={`flex items-center gap-1 text-[11px] ${liked ? 'text-red-400' : 'text-white/50'}`}>
               <HeartIcon filled={liked} />

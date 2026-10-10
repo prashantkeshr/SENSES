@@ -5,6 +5,7 @@ import { MediaActions } from '@/components/media/MediaActions';
 import { MediaCard }    from '@/components/media/MediaCard';
 import { TypeBadge }    from '@/components/ui/Badge';
 import { CommentsSection } from '@/components/social/CommentsSection';
+import { RelatedMedia }  from '@/components/media/RelatedMedia';
 import { provider }     from '@/lib/providers';
 import { formatCount, formatDate, formatDuration } from '@/lib/utils/formatters';
 import { readFileSync, readdirSync } from 'fs';
@@ -485,6 +486,19 @@ const licenseLabels: Record<string, string> = {
             ))}
           </div>
         </section>
+      )}
+
+      <!-- Related from Pixabay music chunks -->
+      {isPb && (
+        <RelatedMedia
+          client:visible
+          currentId={media.id}
+          division="hearing"
+          category={media.category}
+          chunkPath="/data/pb/music/chunks/"
+          chunkCount={50}
+          label="More Music"
+        />
       )}
 
       <!-- Comments -->

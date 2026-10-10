@@ -8,7 +8,11 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "transform": "node scripts/transform-pixabay.mjs"
+    "transform": "node scripts/transform-pixabay.mjs",
+    "transform:videos": "node scripts/transform-videos.mjs",
+    "transform:music": "node scripts/transform-music.mjs",
+    "transform:3d": "node scripts/transform-3d.mjs",
+    "transform:all": "node scripts/transform-pixabay.mjs && node scripts/transform-videos.mjs && node scripts/transform-music.mjs && node scripts/transform-3d.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^3.6.2",

@@ -10,8 +10,10 @@
  */
 
 import type { SensesDataProvider, Media, MediaFilters, SearchResult } from '@/types/index';
-import { jsonProvider }     from './jsonProvider';
-import { pixabayProvider }  from './pixabayProvider';
+import { jsonProvider }          from './jsonProvider';
+import { pixabayProvider }       from './pixabayProvider';
+import { pixabayVideoProvider }  from './pixabayVideoProvider';
+import { pixabayMusicProvider }  from './pixabayMusicProvider';
 
 const isServer = typeof window === 'undefined';
 
@@ -30,16 +32,22 @@ export const compositeProvider: SensesDataProvider = {
     const curated = await jsonProvider.getMedia(filters);
     if (isServer) return curated;
 
-    // Only fetch Pixabay items for sight division (or when no division filter)
-    if (filters?.division === 'hearing') return curated;
+    const remaining = Math.max((filters?.limit ?? 24) - curated.length, 0);
+    if (remaining === 0) return curated;
 
+    // Hearing division — supplement with Pixabay music
+    if (filters?.division === 'hearing') {
+      const pbMusic = await pixabayMusicProvider.getMedia({ ...filters, limit: remaining });
+      return [...curated, ...pbMusic];
+    }
+
+    // Sight division (or no division filter) — supplement with Pixabay images
     const pbFilters: MediaFilters = {
       ...filters,
       division: 'sight',
-      limit: Math.max((filters?.limit ?? 24) - curated.length, 0),
+      limit: remaining,
       offset: Math.max((filters?.offset ?? 0) - curated.length, 0),
     };
-    if (pbFilters.limit === 0) return curated;
     const pb = await getPbMedia(pbFilters);
     return [...curated, ...pb];
   },
@@ -49,6 +57,9 @@ export const compositeProvider: SensesDataProvider = {
     const curated = await jsonProvider.getMediaById(id);
     if (curated) return curated;
     if (isServer) return null;
+    // Route to the correct provider by ID prefix
+    if (id.startsWith('pvid-')) return pixabayVideoProvider.getMediaById(id);
+    if (id.startsWith('pmus-')) return pixabayMusicProvider.getMediaById(id);
     return pixabayProvider.getMediaById!(id);
   },
 
@@ -56,6 +67,8 @@ export const compositeProvider: SensesDataProvider = {
     const curated = await jsonProvider.getMediaBySlug(slug);
     if (curated) return curated;
     if (isServer) return null;
+    if (slug.startsWith('pvid-')) return pixabayVideoProvider.getMediaBySlug(slug);
+    if (slug.startsWith('pmus-')) return pixabayMusicProvider.getMediaBySlug(slug);
     return pixabayProvider.getMediaBySlug!(slug);
   },
 

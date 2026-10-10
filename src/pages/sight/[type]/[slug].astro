@@ -7,86 +7,101 @@ import { TypeBadge }    from '@/components/ui/Badge';
 import { CommentsSection } from '@/components/social/CommentsSection';
 import { PixabayTagSection } from '@/components/media/PixabayTagSection';
 import { provider }     from '@/lib/providers';
-import { formatCount, formatDate, mediaTypeLabel } from '@/lib/utils/formatters';
+import { formatCount, formatDate, formatDuration } from '@/lib/utils/formatters';
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import type { ImageData, Creator, Media } from '@/types/index';
 
-// ── Convert stored item → full Media shape ────────────────────────────────────
-function pbToMedia(item: any): Media {
-  const tags   = Array.isArray(item.tags) ? item.tags : [];
-  const views  = item.stats?.views ?? item.views ?? 0;
-  const title  = item.title || `Free ${item.type ?? 'photo'}`;
-  const desc   = item.description
-    || `Free high-resolution ${item.type ?? 'photo'} of ${tags.slice(0, 3).join(', ')}. Download royalty-free — no attribution required.`;
-  const previewUrl  = item.data?.previewUrl ?? item.previewUrl ?? item.thumbnail;
-  const fullUrl     = item.data?.fullUrl    ?? previewUrl;
-  const w = item.data?.width  ?? item.thumbnailWidth  ?? 640;
-  const h = item.data?.height ?? item.thumbnailHeight ?? 480;
+// ── Converters ────────────────────────────────────────────────────────────────
 
+function pbToMedia(item: any): Media {
+  const tags  = Array.isArray(item.tags) ? item.tags : [];
+  const views = item.stats?.views ?? item.views ?? 0;
+  const title = item.title || `Free ${item.type ?? 'photo'}`;
+  const desc  = item.description || `Free high-resolution ${item.type ?? 'photo'} of ${tags.slice(0, 3).join(', ')}. Download royalty-free — no attribution required.`;
+  const previewUrl = item.data?.previewUrl ?? item.thumbnail;
+  const fullUrl    = item.data?.fullUrl    ?? previewUrl;
+  const w = item.data?.width  ?? 640;
+  const h = item.data?.height ?? 480;
   return {
-    id:           item.id,
-    type:         item.type as any,
-    division:     'sight',
-    slug:         item.slug,
-    title,
-    description:  desc,
-    creator:      item.creator ?? `px-user-${item.user_id ?? '0'}`,
-    creatorName:  item.creatorName ?? item.user ?? 'Unknown',
+    id: item.id, type: item.type as any, division: 'sight', slug: item.slug,
+    title, description: desc,
+    creator: item.creator ?? `px-user-${item.user_id ?? '0'}`,
+    creatorName: item.creatorName ?? 'Unknown',
     creatorAvatar: item.creatorAvatar ?? '',
-    thumbnail:    item.thumbnail,
-    category:     item.category ?? 'nature',
-    tags,
-    moods:        [],
-    styles:       [],
-    colors:       [],
-    orientation:  item.orientation ?? (w > h ? 'landscape' : 'portrait'),
-    license:      'pixabay' as any,
-    attribution:  item.creatorName ?? item.user ?? '',
-    source:       'pixabay',
-    featured:     false,
-    trending:     views > 50000,
-    editorsPick:  views > 100000,
-    stats: {
-      views,
-      downloads: item.stats?.downloads ?? item.downloads ?? 0,
-      likes:     item.stats?.likes     ?? item.likes     ?? 0,
-      saves:     0,
-    },
-    createdAt:    '',
-    updatedAt:    '',
-    seo: {
-      title:       item.seo?.title       ?? title,
-      description: item.seo?.description ?? desc,
-      keywords:    [...tags.slice(0, 8), 'free image', 'royalty free', 'no attribution'],
-    },
-    data: {
-      width:        w,
-      height:       h,
-      aspectRatio:  item.data?.aspectRatio ?? `${w}:${h}`,
-      format:       'jpg',
-      thumbnailUrl: item.thumbnail,
-      previewUrl,
-      fullUrl,
-      altText:      item.data?.altText ?? `${title} — free royalty-free download`,
-      colors:       [],
-    },
+    thumbnail: item.thumbnail, category: item.category ?? 'nature',
+    tags, moods: [], styles: [], colors: [],
+    orientation: item.orientation ?? (w > h ? 'landscape' : 'portrait'),
+    license: 'pixabay' as any, attribution: item.creatorName ?? '',
+    source: 'pixabay', featured: false, trending: views > 50000, editorsPick: views > 100000,
+    stats: { views, downloads: item.stats?.downloads ?? 0, likes: item.stats?.likes ?? 0, saves: 0 },
+    createdAt: '', updatedAt: '',
+    seo: { title: item.seo?.title ?? title, description: item.seo?.description ?? desc, keywords: [...tags.slice(0, 8), 'free image', 'royalty free'] },
+    data: { width: w, height: h, aspectRatio: item.data?.aspectRatio ?? `${w}:${h}`, format: 'jpg', thumbnailUrl: item.thumbnail, previewUrl, fullUrl, altText: `${title} — free royalty-free download`, colors: [] },
+  } as unknown as Media;
+}
+
+function pbVidToMedia(item: any): Media {
+  const tags  = Array.isArray(item.tags) ? item.tags : [];
+  const title = item.title || `Free Video`;
+  const desc  = item.description || `Free ${item.data?.durationFmt ?? ''} ${item.videoType ?? 'video'} — "${title}". Royalty-free, no attribution needed.`;
+  return {
+    id: item.id, type: 'video' as any, division: 'sight', slug: item.slug,
+    title, description: desc,
+    creator: item.creator ?? `pvid-user-unknown`,
+    creatorName: item.creatorName ?? 'Unknown',
+    creatorAvatar: item.creatorAvatar ?? '',
+    thumbnail: item.thumbnail ?? item.data?.thumbnail,
+    category: item.category ?? 'video', tags,
+    moods: [], styles: [], colors: [],
+    orientation: item.orientation ?? 'landscape',
+    license: 'pixabay' as any, attribution: item.creatorName ?? '',
+    source: 'pixabay', featured: false,
+    trending: item.trending ?? false, editorsPick: item.editorsPick ?? false,
+    stats: { views: item.stats?.views ?? 0, downloads: item.stats?.downloads ?? 0, likes: item.stats?.likes ?? 0, saves: 0 },
+    createdAt: '', updatedAt: '',
+    seo: { title: item.seo?.title ?? title, description: item.seo?.description ?? desc, keywords: [...tags.slice(0, 8), 'free video', 'royalty free'] },
+    data: item.data ?? {},
+  } as unknown as Media;
+}
+
+function pb3dToMedia(item: any): Media {
+  const tags  = Array.isArray(item.tags) ? item.tags : [];
+  const name  = item.modelName || item.title || `3D Model`;
+  const title = item.title || `${name} — Free 3D Model`;
+  const desc  = item.description || `Free downloadable 3D model: ${name}. GLB format, ready for AR/VR/3D printing — no attribution required.`;
+  return {
+    id: item.id, type: 'model' as any, division: 'sight', slug: item.slug,
+    title, description: desc,
+    creator: item.creator ?? `p3d-user-unknown`,
+    creatorName: item.creatorName ?? (item.data?.author ?? 'Unknown'),
+    creatorAvatar: item.creatorAvatar ?? '',
+    thumbnail: item.thumbnail ?? item.data?.previewUrl,
+    category: item.category ?? 'objects', tags,
+    moods: [], styles: [], colors: [],
+    orientation: 'square',
+    license: 'pixabay' as any, attribution: item.creatorName ?? '',
+    source: 'pixabay', featured: false,
+    trending: item.trending ?? false, editorsPick: item.editorsPick ?? false,
+    stats: { views: item.stats?.views ?? 0, downloads: item.stats?.downloads ?? 0, likes: item.stats?.likes ?? 0, saves: 0 },
+    createdAt: item.datePublished ?? '', updatedAt: '',
+    seo: { title: item.seo?.title ?? title, description: item.seo?.description ?? desc, keywords: [...tags.slice(0, 8), '3d model', 'glb', 'free download'] },
+    data: item.data ?? {},
   } as unknown as Media;
 }
 
 export async function getStaticPaths() {
-  // Curated items via provider
+  // Curated items
   const curatedMedia = await provider.getMedia({ division: 'sight' });
   const curatedPaths = curatedMedia.map((m: any) => ({
     params: { type: m.type, slug: m.slug },
     props:  { mediaId: m.id, pbItem: null as any },
   }));
 
-  // Pixabay items — read all committed static files at build time
-  // (inline helper so it runs in the correct Astro getStaticPaths scope)
   const pbMap = new Map<string, any>();
-  const root = process.cwd();
+  const root  = process.cwd();
 
+  // Pixabay images (chunks + tags)
   try {
     const chunksDir = join(root, 'public', 'data', 'pb', 'chunks');
     for (const file of readdirSync(chunksDir)) {
@@ -96,8 +111,7 @@ export async function getStaticPaths() {
         if (item.slug && !pbMap.has(item.slug)) pbMap.set(item.slug, item);
       }
     }
-  } catch { /* chunks dir absent */ }
-
+  } catch { /* absent */ }
   try {
     const tagsDir = join(root, 'public', 'data', 'pb', 'tags');
     for (const file of readdirSync(tagsDir)) {
@@ -107,7 +121,27 @@ export async function getStaticPaths() {
         if (item.slug && !pbMap.has(item.slug)) pbMap.set(item.slug, item);
       }
     }
-  } catch { /* tags dir absent */ }
+  } catch { /* absent */ }
+
+  // Pixabay videos (chunks)
+  try {
+    const vidChunksDir = join(root, 'public', 'data', 'pb', 'videos', 'chunks');
+    for (const file of readdirSync(vidChunksDir)) {
+      if (!file.endsWith('.json')) continue;
+      const items: any[] = JSON.parse(readFileSync(join(vidChunksDir, file), 'utf-8'));
+      for (const item of items) {
+        if (item.slug && !pbMap.has(item.slug)) pbMap.set(item.slug, item);
+      }
+    }
+  } catch { /* absent */ }
+
+  // Pixabay 3D models (single all.json)
+  try {
+    const models: any[] = JSON.parse(readFileSync(join(root, 'public', 'data', 'pb', '3d', 'all.json'), 'utf-8'));
+    for (const item of models) {
+      if (item.slug && !pbMap.has(item.slug)) pbMap.set(item.slug, item);
+    }
+  } catch { /* absent */ }
 
   const pbPaths = [...pbMap.values()].map((item: any) => ({
     params: { type: item.type as string, slug: item.slug as string },
@@ -121,8 +155,11 @@ interface Props { mediaId: string; pbItem: any | null }
 const { mediaId, pbItem } = Astro.props;
 
 const isPb = pbItem !== null;
+const mediaKind: 'image' | 'video' | 'model' =
+  pbItem?.id?.startsWith('pvid-') ? 'video'
+  : pbItem?.id?.startsWith('p3d-') ? 'model'
+  : 'image';
 
-// Build media object
 let media: Media | null = null;
 let creator: Creator | undefined;
 let related: Media[] = [];
@@ -130,65 +167,58 @@ let crossSensory: { hearing: Media[]; sight: Media[] } = { hearing: [], sight: [
 let moreByCreator: Media[] = [];
 
 if (isPb) {
-  // Pixabay item — build directly from embedded prop, no provider call needed
-  media = pbToMedia(pbItem);
+  if (mediaKind === 'video') media = pbVidToMedia(pbItem);
+  else if (mediaKind === 'model') media = pb3dToMedia(pbItem);
+  else media = pbToMedia(pbItem);
 } else {
-  // Curated item — use provider
   const creators = await provider.getCreators(30);
   const creatorMap = Object.fromEntries(creators.map(c => [c.id, c]));
-
   const [fetchedMedia, fetchedRelated, fetchedCross] = await Promise.all([
     provider.getMediaById(mediaId),
     provider.getRelatedMedia(mediaId, 24),
     provider.getCrossSensory(mediaId),
   ]);
-
   if (!fetchedMedia) return Astro.redirect('/404');
-
   media = fetchedMedia;
   creator = creatorMap[media.creator] as Creator | undefined;
   related = fetchedRelated;
   crossSensory = fetchedCross;
-
   const creatorMore = await provider.getCreatorMedia(media.creator, { limit: 5 });
   moreByCreator = creatorMore.filter(m => m.id !== media!.id).slice(0, 4);
 }
 
 if (!media) return Astro.redirect('/404');
 
-const imgData  = media.data as ImageData;
-const ogImage  = imgData.previewUrl ?? imgData.thumbnailUrl ?? media.thumbnail;
+const imgData   = mediaKind === 'image' ? (media.data as ImageData) : null;
+const videoData = mediaKind === 'video' ? (media.data as any)       : null;
+const modelData = mediaKind === 'model' ? (media.data as any)       : null;
+const ogImage   = media.thumbnail ?? imgData?.previewUrl ?? imgData?.thumbnailUrl;
+const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
 
 const licenseLabels: Record<string, string> = {
-  cc0:               'CC0 Public Domain',
-  'cc-by':           'Creative Commons BY',
-  'cc-by-sa':        'Creative Commons BY-SA',
-  editorial:         'Editorial Use Only',
-  commercial:        'Commercial License',
-  'senses-original': 'Senses Original',
-  placeholder:       'Placeholder (V1)',
-  pixabay:           'Pixabay License',
+  cc0: 'CC0 Public Domain', 'cc-by': 'Creative Commons BY', 'cc-by-sa': 'Creative Commons BY-SA',
+  editorial: 'Editorial Use Only', commercial: 'Commercial License',
+  'senses-original': 'Senses Original', placeholder: 'Placeholder (V1)', pixabay: 'Pixabay License',
 };
-
-// Primary tag slug for Pixabay related section
-const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
 ---
+
+{mediaKind === 'model' && (
+  <script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js" is:inline></script>
+)}
 
 <script is:inline>
   (function() {
-    var _ambientStyle = null;
-    function applyAmbient(color, enabled) {
-      if (_ambientStyle) { _ambientStyle.remove(); _ambientStyle = null; }
-      if (!enabled || !color) return;
-      var s = document.createElement('style');
-      s.id = 'senses-ambient-body';
-      s.textContent = 'body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 45% at 50% 0%,' + color + '18 0%,transparent 70%);transition:opacity 1s ease}';
-      document.head.appendChild(s);
-      _ambientStyle = s;
+    var _s = null;
+    function applyAmbient(c, e) {
+      if (_s) { _s.remove(); _s = null; }
+      if (!e || !c) return;
+      var el = document.createElement('style');
+      el.id = 'senses-ambient-body';
+      el.textContent = 'body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 45% at 50% 0%,' + c + '18 0%,transparent 70%);transition:opacity 1s ease}';
+      document.head.appendChild(el);
+      _s = el;
     }
-    window.addEventListener('senses:ambient', function(e) {
-      applyAmbient(e.detail.color, e.detail.enabled);
-    });
+    window.addEventListener('senses:ambient', function(e) { applyAmbient(e.detail.color, e.detail.enabled); });
   })();
 </script>
 
@@ -199,22 +229,32 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
   schema={{
     "@context": "https://schema.org",
     "@graph": [
-      {
+      mediaKind === 'model' ? {
+        "@type": "3DModel",
+        "name": media.title,
+        "description": media.description,
+        "thumbnailUrl": ogImage,
+        "creator": isPb && media.creatorName ? { "@type": "Person", "name": media.creatorName } : undefined,
+      } : mediaKind === 'video' ? {
+        "@type": "VideoObject",
+        "name": media.title,
+        "description": media.description,
+        "thumbnailUrl": ogImage,
+        "duration": videoData?.duration ? `PT${Math.floor(videoData.duration)}S` : undefined,
+        "creator": isPb && media.creatorName ? { "@type": "Person", "name": media.creatorName } : undefined,
+      } : {
         "@type": "ImageObject",
         "name": media.title,
         "description": media.description,
         "contentUrl": ogImage,
-        "creator": isPb && media.creatorName
-          ? { "@type": "Person", "name": media.creatorName }
-          : creator ? { "@type": "Person", "name": creator.displayName } : undefined,
+        "creator": isPb && media.creatorName ? { "@type": "Person", "name": media.creatorName } : creator ? { "@type": "Person", "name": creator.displayName } : undefined,
         "license": "https://pixabay.com/service/license-summary/",
-        "acquireLicensePage": "https://senses.dhurta.org/licensing",
       },
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Senses",  "item": "https://senses.dhurta.org" },
-          { "@type": "ListItem", "position": 2, "name": "SIGHT",   "item": "https://senses.dhurta.org/sight" },
+          { "@type": "ListItem", "position": 1, "name": "Senses", "item": "https://senses.dhurta.org" },
+          { "@type": "ListItem", "position": 2, "name": "SIGHT",  "item": "https://senses.dhurta.org/sight" },
           { "@type": "ListItem", "position": 3, "name": media.type.charAt(0).toUpperCase() + media.type.slice(1), "item": `https://senses.dhurta.org/sight/${media.type}` },
           { "@type": "ListItem", "position": 4, "name": media.title },
         ],
@@ -236,10 +276,59 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
         <span class="text-senses-text truncate max-w-[200px]">{media.title}</span>
       </nav>
 
-      <!-- Hero -->
-      <div class="mb-6 rounded-xl overflow-hidden" style="touch-action: pinch-zoom;">
-        <MediaHero client:load media={media} />
-      </div>
+      <!-- ── VIDEO PLAYER ──────────────────────────────────────────────────── -->
+      {mediaKind === 'video' && videoData && (
+        <div class="mb-6 rounded-xl overflow-hidden bg-black aspect-video shadow-xl shadow-black/50">
+          <video
+            controls
+            preload="metadata"
+            poster={videoData.thumbnail ?? media.thumbnail}
+            class="w-full h-full object-contain"
+            aria-label={media.title}
+          >
+            {videoData.streamUrl && <source src={videoData.streamUrl} type="video/mp4" />}
+            {videoData.fullUrl && videoData.fullUrl !== videoData.streamUrl && <source src={videoData.fullUrl} type="video/mp4" />}
+            Your browser does not support HTML5 video.
+          </video>
+        </div>
+      )}
+
+      <!-- ── 3D MODEL VIEWER ────────────────────────────────────────────────── -->
+      {mediaKind === 'model' && modelData && (
+        <div class="mb-6 rounded-xl overflow-hidden bg-senses-surface border border-senses-border shadow-xl shadow-black/30">
+          <div class="relative" style="height: min(75vh, 600px);">
+            <model-viewer
+              src={modelData.modelUrl}
+              poster={modelData.previewUrl ?? media.thumbnail}
+              alt={media.title}
+              ar
+              auto-rotate
+              camera-controls
+              shadow-intensity="1"
+              exposure="1"
+              environment-image="neutral"
+              style="width:100%;height:100%;background:transparent;"
+            ></model-viewer>
+            <!-- Controls hint overlay -->
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none">
+              <div class="flex items-center gap-3 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 text-white/60 text-[10px]">
+                <span>Drag to orbit</span>
+                <span class="w-px h-3 bg-white/20"></span>
+                <span>Pinch/scroll to zoom</span>
+                <span class="w-px h-3 bg-white/20"></span>
+                <span>Two-finger drag to pan</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <!-- ── IMAGE HERO ─────────────────────────────────────────────────────── -->
+      {mediaKind === 'image' && (
+        <div class="mb-6 rounded-xl overflow-hidden" style="touch-action: pinch-zoom;">
+          <MediaHero client:load media={media} />
+        </div>
+      )}
 
       <!-- Title + Actions -->
       <div class="flex flex-col gap-4 mb-10 sm:flex-row sm:items-start sm:justify-between">
@@ -252,11 +341,21 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
                 Editor's Pick
               </span>
             )}
+            {mediaKind === 'video' && videoData?.videoType && (
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-senses-surface border border-senses-border text-senses-text-3 capitalize">
+                {videoData.videoType}
+              </span>
+            )}
+            {mediaKind === 'model' && (
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-senses-surface border border-senses-border text-senses-text-3">
+                GLB / 3D
+              </span>
+            )}
           </div>
           <h1 class="text-display-lg text-senses-text leading-tight mb-1">{media.title}</h1>
           {isPb ? (
             <p class="text-senses-text-3 text-sm">
-              by <span class="text-senses-text-2">{(media as any).creatorName || 'Unknown'}</span>
+              by <span class="text-senses-text-2">{media.creatorName || 'Unknown'}</span>
             </p>
           ) : creator && (
             <p class="text-senses-text-3 text-sm">
@@ -286,13 +385,10 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
             <section>
               <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Tags</h2>
               <div class="flex flex-wrap gap-1.5">
-                {media.tags.map(tag => (
-                  <a
-                    href={`/tag/${encodeURIComponent(tag)}`}
-                    class="px-2.5 py-1 rounded-lg text-xs bg-senses-surface border border-senses-border text-senses-text-3 hover:border-senses-border-2 hover:text-senses-text-2 transition-all"
-                  >
-                    {tag}
-                  </a>
+                {media.tags.slice(0, 25).map(tag => (
+                  <a href={`/tag/${encodeURIComponent(tag)}`}
+                    class="px-2.5 py-1 rounded-lg text-xs bg-senses-surface border border-senses-border text-senses-text-3 hover:border-senses-border-2 hover:text-senses-text-2 transition-all capitalize"
+                  >{tag}</a>
                 ))}
               </div>
             </section>
@@ -306,9 +402,7 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
                   <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Mood</h2>
                   <div class="flex flex-wrap gap-1.5">
                     {media.moods.map(m => (
-                      <a href={`/mood/${m}`} class="px-2.5 py-1 rounded-lg text-xs bg-senses-sight/10 border border-senses-sight/20 text-senses-sight/90 capitalize hover:border-senses-sight/50 hover:text-senses-sight transition-all">
-                        {m}
-                      </a>
+                      <a href={`/mood/${m}`} class="px-2.5 py-1 rounded-lg text-xs bg-senses-sight/10 border border-senses-sight/20 text-senses-sight/90 capitalize hover:border-senses-sight/50 hover:text-senses-sight transition-all">{m}</a>
                     ))}
                   </div>
                 </div>
@@ -318,9 +412,7 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
                   <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Style</h2>
                   <div class="flex flex-wrap gap-1.5">
                     {media.styles.map(s => (
-                      <a href={`/style/${s}`} class="px-2.5 py-1 rounded-lg text-xs bg-senses-surface-2 border border-senses-border text-senses-text-3 capitalize hover:border-senses-border-2 hover:text-senses-text-2 transition-all">
-                        {s.replace(/-/g, ' ')}
-                      </a>
+                      <a href={`/style/${s}`} class="px-2.5 py-1 rounded-lg text-xs bg-senses-surface-2 border border-senses-border text-senses-text-3 capitalize hover:border-senses-border-2 hover:text-senses-text-2 transition-all">{s.replace(/-/g,' ')}</a>
                     ))}
                   </div>
                 </div>
@@ -329,35 +421,51 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
           )}
 
           <!-- Technical info -->
-          {media.type !== 'video' && imgData.width && (
-            <section>
-              <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Technical</h2>
-              <dl class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
-                {[
-                  ['Dimensions',    `${imgData.width} × ${imgData.height}`],
-                  ['Aspect Ratio',  String(imgData.aspectRatio ?? (imgData.width && imgData.height ? (imgData.width / imgData.height).toFixed(2) : '—'))],
-                  ['Format',        imgData.format ?? 'jpg'],
-                  ['Orientation',   media.orientation ?? '—'],
-                ].map(([label, value]) => (
-                  <div>
-                    <dt class="text-senses-text-3 text-[10px] uppercase tracking-wider mb-0.5">{label}</dt>
-                    <dd class="text-senses-text-2 text-sm font-mono">{value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          )}
+          <section>
+            <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Technical</h2>
+            <dl class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
+              {mediaKind === 'image' && imgData && [
+                ['Dimensions',   `${imgData.width} × ${imgData.height}`],
+                ['Aspect Ratio', String(imgData.aspectRatio ?? (imgData.width && imgData.height ? (imgData.width / imgData.height).toFixed(2) : '—'))],
+                ['Format',       imgData.format ?? 'jpg'],
+                ['Orientation',  media.orientation ?? '—'],
+              ].map(([label, value]) => (
+                <div>
+                  <dt class="text-senses-text-3 text-[10px] uppercase tracking-wider mb-0.5">{label}</dt>
+                  <dd class="text-senses-text-2 text-sm font-mono capitalize">{value}</dd>
+                </div>
+              ))}
+              {mediaKind === 'video' && videoData && [
+                ['Duration',   videoData.durationFmt ?? (videoData.duration ? formatDuration(videoData.duration) : '—')],
+                ['Resolution', videoData.width && videoData.height ? `${videoData.width} × ${videoData.height}` : '—'],
+                ['Format',     videoData.format ?? 'mp4'],
+                ['Type',       (videoData.videoType ?? pbItem?.videoType ?? '—')],
+              ].map(([label, value]) => (
+                <div>
+                  <dt class="text-senses-text-3 text-[10px] uppercase tracking-wider mb-0.5">{label}</dt>
+                  <dd class="text-senses-text-2 text-sm font-mono capitalize">{value}</dd>
+                </div>
+              ))}
+              {mediaKind === 'model' && modelData && [
+                ['Format',    'GLB'],
+                ['Category',  media.category],
+                ['Published', pbItem?.datePublished ? new Date(pbItem.datePublished).getFullYear().toString() : '—'],
+              ].map(([label, value]) => (
+                <div>
+                  <dt class="text-senses-text-3 text-[10px] uppercase tracking-wider mb-0.5">{label}</dt>
+                  <dd class="text-senses-text-2 text-sm font-mono capitalize">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
 
           <!-- Category link -->
           {media.category && (
             <section>
               <h2 class="text-senses-text-3 text-xs tracking-widest uppercase mb-3 font-medium">Category</h2>
-              <a
-                href={`/category/${media.category}`}
+              <a href={`/category/${media.category}`}
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm bg-senses-surface border border-senses-border text-senses-text-2 hover:border-senses-sight/40 hover:text-senses-sight capitalize transition-all"
-              >
-                {media.category}
-              </a>
+              >{media.category}</a>
             </section>
           )}
         </div>
@@ -365,15 +473,11 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
         <!-- Right sidebar -->
         <div class="space-y-4">
 
-          <!-- Creator card (curated) -->
+          <!-- Curated creator card -->
           {!isPb && creator && (
             <div class="rounded-xl bg-senses-surface border border-senses-border p-4">
               <div class="flex items-center gap-3 mb-3">
-                <img
-                  src={creator.avatar}
-                  alt={creator.displayName}
-                  class="w-10 h-10 rounded-full object-cover bg-senses-surface-2"
-                />
+                <img src={creator.avatar} alt={creator.displayName} class="w-10 h-10 rounded-full object-cover bg-senses-surface-2" />
                 <div class="min-w-0">
                   <div class="flex items-center gap-1.5">
                     <span class="text-senses-text text-sm font-medium truncate">{creator.displayName}</span>
@@ -388,44 +492,35 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
               </div>
               <p class="text-senses-text-3 text-xs leading-relaxed mb-3 line-clamp-2">{creator.bio}</p>
               <div class="grid grid-cols-3 gap-2 text-center mb-3">
-                {[
-                  [formatCount(creator.stats.mediaCount), 'Works'],
-                  [formatCount(creator.stats.followers), 'Followers'],
-                  [formatCount(creator.stats.totalViews), 'Views'],
-                ].map(([val, lbl]) => (
+                {[[formatCount(creator.stats.mediaCount), 'Works'], [formatCount(creator.stats.followers), 'Followers'], [formatCount(creator.stats.totalViews), 'Views']].map(([val, lbl]) => (
                   <div>
                     <p class="text-senses-text text-sm font-medium">{val}</p>
                     <p class="text-senses-text-3 text-[10px]">{lbl}</p>
                   </div>
                 ))}
               </div>
-              <a
-                href={`/creator/${creator.id}`}
-                class="block text-center text-xs py-2 rounded-lg bg-senses-surface-2 border border-senses-border text-senses-text-2 hover:border-senses-border-2 hover:text-senses-text transition-all"
-              >
+              <a href={`/creator/${creator.id}`} class="block text-center text-xs py-2 rounded-lg bg-senses-surface-2 border border-senses-border text-senses-text-2 hover:border-senses-border-2 hover:text-senses-text transition-all">
                 View Profile
               </a>
             </div>
           )}
 
-          <!-- Pixabay creator card -->
-          {isPb && (media as any).creatorName && (
+          <!-- Pixabay creator chip -->
+          {isPb && media.creatorName && (
             <div class="rounded-xl bg-senses-surface border border-senses-border p-4">
-              <div class="flex items-center gap-3 mb-2">
-                {(media as any).creatorAvatar ? (
-                  <img
-                    src={(media as any).creatorAvatar}
-                    alt={(media as any).creatorName}
-                    class="w-10 h-10 rounded-full object-cover bg-senses-surface-2"
-                  />
+              <div class="flex items-center gap-3">
+                {media.creatorAvatar ? (
+                  <img src={media.creatorAvatar} alt={media.creatorName} class="w-10 h-10 rounded-full object-cover bg-senses-surface-2" />
                 ) : (
                   <div class="w-10 h-10 rounded-full bg-senses-surface-2 flex items-center justify-center text-senses-text-3 text-sm font-medium">
-                    {((media as any).creatorName as string)[0].toUpperCase()}
+                    {(media.creatorName as string)[0].toUpperCase()}
                   </div>
                 )}
                 <div>
-                  <p class="text-senses-text text-sm font-medium">{(media as any).creatorName}</p>
-                  <p class="text-senses-text-3 text-xs">Contributor</p>
+                  <p class="text-senses-text text-sm font-medium">{media.creatorName}</p>
+                  <p class="text-senses-text-3 text-xs capitalize">
+                    {mediaKind === 'video' ? 'Video Creator' : mediaKind === 'model' ? '3D Artist' : 'Photographer'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -436,7 +531,7 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
             <h3 class="text-senses-text-3 text-[10px] uppercase tracking-widest mb-3">Stats</h3>
             <div class="space-y-2">
               {[
-                ['Views',     formatCount(media.stats.views)],
+                [mediaKind === 'video' ? 'Plays' : 'Views',  formatCount(media.stats.views)],
                 ['Likes',     formatCount(media.stats.likes)],
                 ['Downloads', formatCount(media.stats.downloads)],
               ].map(([lbl, val]) => (
@@ -451,21 +546,15 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
           <!-- License -->
           <div class="rounded-xl bg-senses-surface border border-senses-border p-4">
             <h3 class="text-senses-text-3 text-[10px] uppercase tracking-widest mb-2">License</h3>
-            <p class="text-senses-text-2 text-sm font-medium mb-1">
-              {licenseLabels[media.license] ?? media.license}
-            </p>
+            <p class="text-senses-text-2 text-sm font-medium mb-1">{licenseLabels[media.license] ?? media.license}</p>
             <p class="text-senses-text-3 text-xs leading-relaxed">
-              {media.license === 'pixabay'
-                ? 'Free for personal and commercial use. No attribution required.'
-                : media.license === 'cc0'
-                  ? 'Free for any use, no attribution required.'
-                  : media.license === 'senses-original'
-                    ? 'Available under Senses platform terms.'
-                    : 'Check license details before use.'}
+              {media.license === 'pixabay' ? 'Free for personal and commercial use. No attribution required.'
+               : media.license === 'cc0'   ? 'Free for any use, no attribution required.'
+               : 'Check license details before use.'}
             </p>
           </div>
 
-          <!-- Source indicator (Pixabay icon only, no direct link per design constraints) -->
+          <!-- Pixabay source icon (no link, per design constraints) -->
           {isPb && (
             <div class="rounded-xl bg-senses-surface border border-senses-border p-4 flex items-center gap-3">
               <svg viewBox="0 0 48 48" class="w-7 h-7 flex-shrink-0" aria-label="Pixabay">
@@ -474,19 +563,20 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
               </svg>
               <div>
                 <p class="text-senses-text-2 text-xs font-medium">Pixabay</p>
-                <p class="text-senses-text-3 text-[10px]">Image source</p>
+                <p class="text-senses-text-3 text-[10px]">
+                  {mediaKind === 'video' ? 'Video source' : mediaKind === 'model' ? '3D model source' : 'Image source'}
+                </p>
               </div>
             </div>
           )}
 
-          <!-- Date (curated only) -->
           {!isPb && media.createdAt && (
             <p class="text-senses-text-3 text-xs px-1">Published {formatDate(media.createdAt)}</p>
           )}
         </div>
       </div>
 
-      <!-- Cross-sensory: Pair with Hearing (curated only) -->
+      <!-- Cross-sensory (curated only) -->
       {!isPb && crossSensory.hearing.length > 0 && (
         <section class="mb-14">
           <div class="flex items-center gap-3 mb-5">
@@ -505,16 +595,12 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
         </section>
       )}
 
-      <!-- More by this creator (curated only) -->
+      <!-- More by creator (curated only) -->
       {!isPb && moreByCreator.length > 0 && creator && (
         <section class="mb-14">
           <div class="flex items-center justify-between mb-5">
-            <h2 class="text-senses-text text-sm font-medium">
-              More by <span class="text-senses-sight">{creator.displayName}</span>
-            </h2>
-            <a href={`/creator/${creator.id}`} class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">
-              View all →
-            </a>
+            <h2 class="text-senses-text text-sm font-medium">More by <span class="text-senses-sight">{creator.displayName}</span></h2>
+            <a href={`/creator/${creator.id}`} class="text-senses-text-3 hover:text-senses-text text-xs transition-colors">View all →</a>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {moreByCreator.map(item => (
@@ -524,51 +610,22 @@ const primaryTag = isPb ? (media.tags[0] ?? media.category) : '';
         </section>
       )}
 
-      <!-- Related curated media -->
+      <!-- Related (curated only) -->
       {!isPb && related.length > 0 && (
         <section class="mb-14">
-          <div class="flex items-center justify-between mb-5">
-            <h2 class="text-senses-text text-sm font-medium">
-              Related <span class="text-senses-sight capitalize">{media.category}</span> media
-            </h2>
-          </div>
-          <div class="masonry-grid" id="related-grid">
+          <h2 class="text-senses-text text-sm font-medium mb-5">Related <span class="text-senses-sight capitalize">{media.category}</span> media</h2>
+          <div class="masonry-grid">
             {related.slice(0, 12).map(item => (
               <MediaCard client:visible media={item} />
             ))}
           </div>
-          {related.length > 12 && (
-            <>
-              <div id="related-more" class="masonry-grid hidden">
-                {related.slice(12).map(item => (
-                  <MediaCard client:visible media={item} />
-                ))}
-              </div>
-              <div class="text-center mt-6" id="related-more-btn-wrap">
-                <button
-                  id="related-more-btn"
-                  class="px-6 py-2.5 rounded-xl bg-senses-surface border border-senses-border text-senses-text-2 hover:border-senses-border-2 hover:text-senses-text text-sm transition-all"
-                >
-                  Show more · {related.length - 12} remaining
-                </button>
-              </div>
-              <script is:inline>
-                document.getElementById('related-more-btn').addEventListener('click', function() {
-                  document.getElementById('related-more').classList.remove('hidden');
-                  document.getElementById('related-more-btn-wrap').remove();
-                });
-              </script>
-            </>
-          )}
         </section>
       )}
 
-      <!-- More from same tag (Pixabay items) -->
-      {isPb && primaryTag && (
+      <!-- More from same tag (Pixabay images only) -->
+      {isPb && mediaKind === 'image' && primaryTag && (
         <section class="mb-14">
-          <h2 class="text-senses-text text-sm font-medium mb-5">
-            More free <span class="text-senses-sight capitalize">{primaryTag}</span> images
-          </h2>
+          <h2 class="text-senses-text text-sm font-medium mb-5">More free <span class="text-senses-sight capitalize">{primaryTag}</span> images</h2>
           <PixabayTagSection tagSlug={primaryTag} tagLabel={primaryTag} client:visible />
         </section>
       )}

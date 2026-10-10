@@ -22,7 +22,7 @@ import { dirname, join }    from 'path';
 
 const __dir     = dirname(fileURLToPath(import.meta.url));
 const ROOT      = join(__dir, '..');
-const INPUT     = join(ROOT, 'general.jsonl');
+const INPUT     = 'C:\\Users\\prash\\OneDrive\\Projects\\scaps\\pixabay_dataset_master\\general.jsonl';
 const CHUNK_DIR = join(ROOT, 'public', 'data', 'pb', 'chunks');
 const TAGS_DIR  = join(ROOT, 'public', 'data', 'pb', 'tags');
 const META_DIR  = join(ROOT, 'public', 'data', 'pb');

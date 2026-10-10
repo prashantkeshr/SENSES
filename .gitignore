@@ -7,5 +7,8 @@ node_modules/
 *.log
 .astro/
 
-# Source data for Pixabay transform — too large for git (94MB)
+# Source datasets — too large for git (kept locally in scaps/)
 general.jsonl
+videos.jsonl
+extracted_music.jsonl
+pixabay_3d_dataset.jsonl

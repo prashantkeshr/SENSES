@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Media, Creator } from '@/types/index';
+import type { Media } from '@/types/index';
 import { MediaCard }   from '@/components/media/MediaCard';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 
 interface Props {
-  media:    Media[];
-  creators: Creator[];
+  initialItems:     Media[];
+  photoChunkPath?:  string;
+  videoChunkPath?:  string;
+  musicChunkPath?:  string;
+  startChunk?:      number;
 }
 
 function mulberry32(seed: number) {
@@ -15,11 +18,6 @@ function mulberry32(seed: number) {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-}
-
-function dailySeed(): number {
-  const d = new Date();
-  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
 }
 
 function interleavedShuffle<T extends { category?: string }>(arr: T[], seed: number): T[] {
@@ -72,28 +70,47 @@ function ShuffleIcon() {
   );
 }
 
-export function GalleryWall({ media, creators }: Props) {
-  const [items,   setItems]   = useState<Media[]>([]);
-  const [mounted, setMounted] = useState(false);
-  const [isShuffling, setIsShuffling] = useState(false);
-  const wallRef = useRef<HTMLDivElement>(null);
+async function fetchChunk(path: string, index: number): Promise<Media[]> {
+  try {
+    const res = await fetch(`${path}${index}.json`);
+    if (!res.ok) return [];
+    return res.json();
+  } catch { return []; }
+}
 
-  const creatorMap = Object.fromEntries(creators.map(c => [c.id, c]));
+export function GalleryWall({
+  initialItems,
+  photoChunkPath,
+  videoChunkPath,
+  musicChunkPath,
+  startChunk = 1,
+}: Props) {
+  const [items,       setItems]       = useState<Media[]>([]);
+  const [mounted,     setMounted]     = useState(false);
+  const [isShuffling, setIsShuffling] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [exhausted,   setExhausted]   = useState(false);
+  const photoIdx = useRef(startChunk);
+  const videoIdx = useRef(startChunk);
+  const musicIdx = useRef(startChunk);
+  const seenIds  = useRef(new Set<string>());
+  const wallRef  = useRef<HTMLDivElement>(null);
 
   const reshuffle = useCallback(() => {
     setIsShuffling(true);
     setTimeout(() => {
-      setItems(randomShuffle(media));
+      setItems(prev => randomShuffle(prev));
       setIsShuffling(false);
     }, 180);
-  }, [media]);
+  }, []);
 
   useEffect(() => {
-    // Random shuffle on every open (like Reels/Shorts), interleaved by category
     const seed = Date.now() ^ (Math.random() * 0xffffffff);
-    setItems(interleavedShuffle(media, seed));
+    const init = interleavedShuffle(initialItems, seed);
+    init.forEach(m => seenIds.current.add(m.id));
+    setItems(init);
     setMounted(true);
-  }, [media]);
+  }, [initialItems]);
 
   // Section reveal with IntersectionObserver
   useEffect(() => {
@@ -104,7 +121,40 @@ export function GalleryWall({ media, creators }: Props) {
     );
     wallRef.current.querySelectorAll('.section-reveal').forEach(el => obs.observe(el));
     return () => obs.disconnect();
-  }, [mounted]);
+  }, [mounted, items.length]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || exhausted) return;
+    setLoadingMore(true);
+
+    const [photos, videos, music] = await Promise.all([
+      photoChunkPath ? fetchChunk(photoChunkPath, photoIdx.current) : Promise.resolve([]),
+      videoChunkPath ? fetchChunk(videoChunkPath, videoIdx.current) : Promise.resolve([]),
+      musicChunkPath ? fetchChunk(musicChunkPath, musicIdx.current) : Promise.resolve([]),
+    ]);
+
+    // Interleave new items, deduplicating against seenIds
+    const newItems: Media[] = [];
+    const maxLen = Math.max(photos.length, videos.length, music.length);
+    for (let i = 0; i < maxLen; i++) {
+      for (const item of [photos[i], videos[i], music[i]]) {
+        if (item && !seenIds.current.has(item.id)) {
+          newItems.push(item as Media);
+          seenIds.current.add(item.id);
+        }
+      }
+    }
+
+    if (newItems.length === 0) {
+      setExhausted(true);
+    } else {
+      setItems(prev => [...prev, ...newItems]);
+      if (photos.length > 0) photoIdx.current += 1;
+      if (videos.length > 0) videoIdx.current += 1;
+      if (music.length  > 0) musicIdx.current += 1;
+    }
+    setLoadingMore(false);
+  }, [loadingMore, exhausted, photoChunkPath, videoChunkPath, musicChunkPath]);
 
   if (!mounted) {
     return (
@@ -120,14 +170,17 @@ export function GalleryWall({ media, creators }: Props) {
     );
   }
 
+  const hasLoadMore = !exhausted && (photoChunkPath || videoChunkPath || musicChunkPath);
+
   return (
     <div ref={wallRef}>
       {/* Controls bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-senses-border sticky top-[var(--nav-height)] bg-senses-bg/95 backdrop-blur-md z-20">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <span className="text-senses-text-3 text-xs">
-            8.8 million+ high quality photos, videos &amp; music
+            {items.length.toLocaleString()} items shown
           </span>
+          <span className="text-senses-text-3/40 text-[10px] hidden sm:inline">photos · videos · music · 3D</span>
         </div>
         <button
           onClick={reshuffle}
@@ -149,13 +202,9 @@ export function GalleryWall({ media, creators }: Props) {
           <div
             key={`${item.id}-${idx}`}
             className="section-reveal"
-            style={{ transitionDelay: `${Math.min(idx * 20, 300)}ms` }}
+            style={{ transitionDelay: `${Math.min(idx * 15, 250)}ms` }}
           >
-            <MediaCard
-              media={item}
-              creator={creatorMap[item.creator]}
-              layout="masonry"
-            />
+            <MediaCard media={item} layout="masonry" />
           </div>
         ))}
       </div>
@@ -163,6 +212,32 @@ export function GalleryWall({ media, creators }: Props) {
       {items.length === 0 && (
         <div className="flex items-center justify-center h-60 text-senses-text-3">
           No media found
+        </div>
+      )}
+
+      {/* Load More */}
+      {hasLoadMore && (
+        <div className="flex justify-center py-12">
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="flex items-center gap-2.5 px-8 py-3 rounded-full bg-senses-surface border border-senses-border
+                       text-senses-text-2 hover:text-senses-text hover:border-senses-accent/40
+                       text-sm transition-all duration-200 disabled:opacity-50"
+          >
+            {loadingMore ? (
+              <>
+                <span className="w-4 h-4 rounded-full border-2 border-senses-text-3/30 border-t-senses-text-3 animate-spin" />
+                Loading…
+              </>
+            ) : 'Load more'}
+          </button>
+        </div>
+      )}
+
+      {exhausted && items.length > 0 && (
+        <div className="flex justify-center py-10">
+          <span className="text-senses-text-3 text-xs uppercase tracking-widest">All caught up</span>
         </div>
       )}
     </div>

@@ -60,6 +60,7 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
   const [imgError, setImgError] = useState(false);
   const [videoActive, setVideoActive] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const cardRef  = useRef<HTMLAnchorElement>(null);
 
   const handleLike = useCallback((e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
@@ -70,6 +71,17 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
     e.preventDefault(); e.stopPropagation();
     setSaved(toggleSave(media.id));
   }, [media.id]);
+
+  const isModel = media.type === 'model';
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!isModel || !cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width  - 0.5;
+    const y = (e.clientY - rect.top)  / rect.height - 0.5;
+    cardRef.current.style.transform = `perspective(700px) rotateX(${-y * 14}deg) rotateY(${x * 14}deg) scale(1.03)`;
+    cardRef.current.style.transition = 'transform 0.08s ease';
+  }, [isModel]);
 
   const handleMouseEnter = useCallback(() => {
     if (isVideo && videoRef.current) {
@@ -83,6 +95,10 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
       setVideoActive(false);
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
+    }
+    if (isModel && cardRef.current) {
+      cardRef.current.style.transform = '';
+      cardRef.current.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease';
     }
   }, []);
 
@@ -111,9 +127,12 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
 
   return (
     <a
+      ref={cardRef}
       href={href}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onMouseMove={handleMouseMove}
+      style={isModel ? { transformStyle: 'preserve-3d', willChange: 'transform' } : undefined}
       className="group block relative rounded-xl overflow-hidden bg-senses-surface
                  hover:shadow-[0_8px_32px_rgba(0,0,0,0.55)] transition-shadow duration-[var(--duration-slow)]"
     >
@@ -122,8 +141,12 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
 
         {/* Poster / still image */}
         {imgError ? (
-          <div className="w-full aspect-video bg-senses-surface-2 flex items-center justify-center text-senses-text-3 text-sm">
-            Preview unavailable
+          <div className={`w-full bg-senses-surface-2 flex flex-col items-center justify-center gap-2 ${isAudio ? 'aspect-square' : 'aspect-video'}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1} className="w-8 h-8 text-senses-text-3 opacity-25">
+              <rect x="3" y="3" width="18" height="18" rx="3"/>
+              <path strokeLinecap="round" d="m9 9 6 6M15 9l-6 6"/>
+            </svg>
+            <span className="text-senses-text-3 text-[10px] opacity-35 uppercase tracking-wider">Unavailable</span>
           </div>
         ) : thumbSrc ? (
           <img
@@ -157,8 +180,13 @@ export function MediaCard({ media, creator, layout = 'masonry' }: MediaCardProps
         )}
 
         {/* Type badge */}
-        <div className="absolute top-2 left-2 z-10">
+        <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
           <TypeBadge type={media.type} division={media.division} />
+          {isModel && (
+            <span className="px-1.5 py-0.5 rounded text-[9px] bg-black/50 backdrop-blur-sm border border-white/10 text-white/60 font-mono tracking-wider">
+              3D
+            </span>
+          )}
         </div>
 
         {/* Duration badge */}

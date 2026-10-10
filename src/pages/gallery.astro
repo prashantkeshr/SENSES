@@ -1,17 +1,42 @@
 ---
 import BaseLayout    from '@/layouts/BaseLayout.astro';
 import { GalleryWall } from '@/components/gallery/GalleryWall';
-import { provider }  from '@/lib/providers';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import type { Media } from '@/types/index';
+import pbStats     from '@data/pb/stats.json';
+import videoStats  from '@data/pb/video-stats.json';
+import musicStats  from '@data/pb/music-stats.json';
 
-const [allMedia, allCreators] = await Promise.all([
-  provider.getMedia({}),
-  provider.getCreators(500),
-]);
+const root = process.cwd();
+
+function readChunk(relPath: string): any[] {
+  try { return JSON.parse(readFileSync(join(root, 'public', relPath), 'utf-8')); }
+  catch { return []; }
+}
+
+const photoChunk0 = readChunk('data/pb/chunks/0.json');
+const videoChunk0 = readChunk('data/pb/videos/chunks/0.json');
+const musicChunk0 = readChunk('data/pb/music/chunks/0.json');
+
+// Interleave all three types into one mixed initial array
+const initialItems: Media[] = [];
+const maxLen = Math.max(photoChunk0.length, videoChunk0.length, musicChunk0.length);
+for (let i = 0; i < maxLen; i++) {
+  if (i < photoChunk0.length) initialItems.push(photoChunk0[i] as Media);
+  if (i < videoChunk0.length) initialItems.push(videoChunk0[i] as Media);
+  if (i < musicChunk0.length) initialItems.push(musicChunk0[i] as Media);
+}
+
+const s = pbStats as { total: number };
+const v = videoStats as { total: number };
+const m = musicStats as { total: number };
+const grandTotal = (s.total ?? 0) + (v.total ?? 0) + (m.total ?? 0);
 ---
 
 <BaseLayout
   title="Gallery Wall — Senses"
-  description="A full-bleed random wall of every sight and hearing piece in the Senses catalog. Reshuffled on every visit."
+  description="A full-bleed random wall of every sight and hearing piece in the Senses catalog — photos, videos, and music. Reshuffled on every visit."
 >
   <div class="pt-[var(--nav-height)] min-h-screen bg-senses-bg">
 
@@ -24,18 +49,28 @@ const [allMedia, allCreators] = await Promise.all([
             Gallery Wall
           </h1>
           <p class="text-senses-text-3 text-sm mt-2 max-w-lg">
-            Every piece in the catalog, shuffled fresh. Click any item to dive deeper, or hit Shuffle for a new arrangement.
+            Photos, videos, and music — all mixed and shuffled fresh. Discover something unexpected.
           </p>
         </div>
         <div class="hidden sm:flex flex-col items-end gap-1 flex-shrink-0 pb-1">
-          <span class="text-senses-text-3 text-xs">{allMedia.length} total pieces</span>
-          <span class="text-[11px] text-senses-text-3/60 italic">reshuffled every visit</span>
+          {grandTotal > 0 && (
+            <span class="text-senses-text text-2xl font-light tabular-nums">{grandTotal.toLocaleString()}+</span>
+          )}
+          <span class="text-senses-text-3 text-xs uppercase tracking-widest">pieces</span>
+          <span class="text-[11px] text-senses-text-3/50 italic mt-0.5">photos · videos · music</span>
         </div>
       </div>
     </div>
 
     <!-- Full-bleed gallery island -->
-    <GalleryWall client:load media={allMedia} creators={allCreators} />
+    <GalleryWall
+      client:load
+      initialItems={initialItems}
+      photoChunkPath="/data/pb/chunks/"
+      videoChunkPath="/data/pb/videos/chunks/"
+      musicChunkPath="/data/pb/music/chunks/"
+      startChunk={1}
+    />
 
   </div>
 </BaseLayout>

@@ -4,7 +4,9 @@ import { MediaCard } from '@/components/media/MediaCard';
 import { provider }  from '@/lib/providers';
 import pbStats     from '@data/pb/stats.json';
 import videoStats  from '@data/pb/video-stats.json';
-import type { MediaType, MediaFilters } from '@/types/index';
+import type { MediaType, MediaFilters, Media } from '@/types/index';
+import { readFileSync, readdirSync } from 'fs';
+import { join } from 'path';
 
 type SectionDef = {
   title:       string;
@@ -16,11 +18,21 @@ type SectionDef = {
 
 export async function getStaticPaths() {
   const s = pbStats as { byType: Record<string,number>; total: number };
+  // Count 3D models from the all.json file
+  let modelsCount = 0;
+  try {
+    const { readFileSync: rfs } = await import('fs');
+    const { join: pjoin } = await import('path');
+    const raw = rfs(pjoin(process.cwd(), 'public', 'data', 'pb', '3d', 'all.json'), 'utf-8');
+    modelsCount = (JSON.parse(raw) as unknown[]).length;
+  } catch { /* file missing */ }
+
   const defs: Record<string, SectionDef> = {
     photos:        { title: 'Photos',        description: 'High-resolution photography across landscapes, urban scenes, minimal compositions, and more.',           types: ['photo'],                         pbCount: s.byType.photo },
     videos:        { title: 'Videos',        description: 'Cinematic video content — slow motion, time-lapse, and atmospheric visual storytelling.',                types: ['video'],                          pbCount: (videoStats as any).total },
     illustrations: { title: 'Illustrations', description: 'Digital art, hand-drawn styles, and creative visual interpretations.',                                  types: ['illustration', 'vector'],        pbCount: s.byType.illustration + s.byType.vector },
     wallpapers:    { title: 'Wallpapers',    description: 'Landscape-oriented photos perfect for desktop wallpapers and wide-format displays.',                    types: ['photo'], filters: { orientation: 'landscape' }, pbCount: s.byType.photo },
+    '3d-models':   { title: '3D Models',     description: 'Interactive 3D objects — explore, orbit, zoom. Free GLB models for personal and commercial projects.', types: ['3d' as MediaType],               pbCount: modelsCount || undefined },
   };
   return Object.entries(defs).map(([section, def]) => ({
     params: { section },
@@ -36,13 +48,35 @@ if (!def) return Astro.redirect('/sight');
 const allCreators = await provider.getCreators(30);
 const creatorMap  = Object.fromEntries(allCreators.map(c => [c.id, c]));
 
-// Fetch for each type in this section
-const byType = await Promise.all(
-  def.types.map(type =>
-    provider.getMedia({ division: 'sight', type, ...def.filters })
-  )
-);
-const items = byType.flat();
+// For videos/3d-models, read JSON at build time (providers are client-side only)
+let items: Media[] = [];
+if (section === 'videos') {
+  try {
+    const root = process.cwd();
+    const chunksDir = join(root, 'public', 'data', 'pb', 'videos', 'chunks');
+    const all: any[] = [];
+    for (const file of readdirSync(chunksDir)) {
+      if (!file.endsWith('.json')) continue;
+      all.push(...JSON.parse(readFileSync(join(chunksDir, file), 'utf-8')));
+    }
+    all.sort((a: any, b: any) => (b.stats?.views ?? 0) - (a.stats?.views ?? 0));
+    items = all.slice(0, 48) as Media[];
+  } catch { /* chunks absent */ }
+} else if (section === '3d-models') {
+  try {
+    const root = process.cwd();
+    const allRaw: any[] = JSON.parse(readFileSync(join(root, 'public', 'data', 'pb', '3d', 'all.json'), 'utf-8'));
+    allRaw.sort((a: any, b: any) => (b.stats?.likes ?? 0) - (a.stats?.likes ?? 0));
+    items = allRaw.slice(0, 48) as Media[];
+  } catch { /* file absent */ }
+} else {
+  const byType = await Promise.all(
+    def.types.map(type =>
+      provider.getMedia({ division: 'sight', type, ...def.filters })
+    )
+  );
+  items = byType.flat();
+}
 ---
 
 <BaseLayout
@@ -96,9 +130,9 @@ const items = byType.flat();
           <p class="text-senses-text-3 text-sm">Check back soon — more media is on the way.</p>
         </div>
       ) : (
-        <div class="masonry-grid">
+        <div class={(section === 'videos' || section === '3d-models') ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4' : 'masonry-grid'}>
           {items.map(item => (
-            <MediaCard client:visible media={item} creator={creatorMap[item.creator]} />
+            <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout={(section === 'videos' || section === '3d-models') ? 'grid' : undefined} />
           ))}
         </div>
       )}

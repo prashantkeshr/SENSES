@@ -1,45 +1,71 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import { MediaCard } from '@/components/media/MediaCard';
-import { provider }  from '@/lib/providers';
-import type { MediaType } from '@/types/index';
+import BaseLayout      from '@/layouts/BaseLayout.astro';
+import { MediaCard }   from '@/components/media/MediaCard';
+import { formatCount } from '@/lib/utils/formatters';
+import musicStats from '@data/pb/music-stats.json';
+import type { Media } from '@/types/index';
+import { readFileSync, readdirSync } from 'fs';
+import { join } from 'path';
 
-type SectionDef = {
-  title:       string;
-  description: string;
-  types:       MediaType[];
+const SECTION_GENRES: Record<string, string[]> = {
+  music:   ['rock','electronic','jazz','classical','pop','cinematic','folk','hip-hop','world','ambient','other'],
+  ambient: ['ambient'],
+  sounds:  ['world','folk','other'],
+  'lo-fi': ['hip-hop','electronic','pop'],
+};
+
+const SECTION_META: Record<string, { title: string; description: string }> = {
+  music:   { title: 'Music',   description: 'Royalty-free music across every genre — cinematic scores, orchestral compositions, electronic beats and more.' },
+  sounds:  { title: 'Sounds',  description: 'World, folk and organic soundscapes — nature-inspired music free for any use, no attribution required.' },
+  ambient: { title: 'Ambient', description: 'Atmospheric ambient tracks for focus, sleep, relaxation and deep work environments.' },
+  'lo-fi': { title: 'Lo-Fi',   description: 'Mellow hip-hop, chill electronic and laid-back beats for studying, creating, and slow afternoons.' },
 };
 
 export async function getStaticPaths() {
-  const defs: Record<string, SectionDef> = {
-    music:   { title: 'Music',   description: 'Cinematic scores, orchestral compositions, solo piano, and emotionally charged music for any moment.',         types: ['music'] },
-    sounds:  { title: 'Sounds',  description: 'Natural soundscapes and field recordings — forests, rain, thunder, water, and the textures of the world.',     types: ['sound'] },
-    ambient: { title: 'Ambient', description: 'Atmospheric long-form audio for focus, relaxation, deep work, and immersive environments.',                    types: ['ambient', 'loop'] },
-    'lo-fi': { title: 'Lo-Fi',   description: 'Mellow, nostalgic beats for studying, creating, and slow afternoons.',                                         types: ['loop'] },
-  };
-  return Object.entries(defs).map(([section, def]) => ({
+  const sections = ['music', 'sounds', 'ambient', 'lo-fi'];
+  return sections.map(section => ({
     params: { section },
-    props:  { section, def },
+    props:  { section },
   }));
 }
 
-interface Props { section: string; def: SectionDef }
-const { section, def } = Astro.props;
+interface Props { section: string }
+const { section } = Astro.props;
 
-if (!def) return Astro.redirect('/hearing');
+const meta = SECTION_META[section];
+if (!meta) return Astro.redirect('/hearing');
 
-const allCreators = await provider.getCreators(30);
-const creatorMap  = Object.fromEntries(allCreators.map(c => [c.id, c]));
+const genres = SECTION_GENRES[section] ?? [];
 
-const byType = await Promise.all(
-  def.types.map(type => provider.getMedia({ division: 'hearing', type }))
-);
-const items = byType.flat();
+// Read music chunks at build time, filter by genre
+const root = process.cwd();
+let items: Media[] = [];
+try {
+  const chunksDir = join(root, 'public', 'data', 'pb', 'music', 'chunks');
+  const allItems: any[] = [];
+  for (const file of readdirSync(chunksDir)) {
+    if (!file.endsWith('.json')) continue;
+    const chunk: any[] = JSON.parse(readFileSync(join(chunksDir, file), 'utf-8'));
+    allItems.push(...chunk);
+  }
+  // For 'music' section show everything; for others filter by genre
+  const filtered = section === 'music'
+    ? allItems
+    : allItems.filter((m: any) => genres.includes(m.category));
+  // Sort by likes desc, take top 48
+  filtered.sort((a: any, b: any) => (b.stats?.likes ?? 0) - (a.stats?.likes ?? 0));
+  items = filtered.slice(0, 48) as Media[];
+} catch { /* chunks not yet generated */ }
+
+// Section count label
+const sectionCount = section === 'music'
+  ? musicStats.total
+  : genres.reduce((t, g) => t + ((musicStats.byGenre as any)[g] ?? 0), 0);
 ---
 
 <BaseLayout
-  title={`${def.title} — HEARING · Senses`}
-  description={def.description}
+  title={`${meta.title} — HEARING · Senses`}
+  description={meta.description}
 >
   <div class="pt-[var(--nav-height)] pb-20">
 
@@ -50,7 +76,7 @@ const items = byType.flat();
         <span>/</span>
         <a href="/hearing" class="text-senses-hearing hover:text-senses-text transition-colors">HEARING</a>
         <span>/</span>
-        <span class="text-senses-text">{def.title}</span>
+        <span class="text-senses-text">{meta.title}</span>
       </nav>
     </div>
 
@@ -58,11 +84,14 @@ const items = byType.flat();
     <div class="max-w-[1440px] mx-auto px-4 md:px-8 pb-8 border-b border-senses-border mb-8">
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <p class="text-senses-hearing text-xs tracking-widest uppercase mb-2 font-medium">HEARING · {def.title}</p>
-          <h1 class="text-display-lg text-senses-text">{def.title}</h1>
-          <p class="text-senses-text-3 text-sm mt-2 max-w-lg">{def.description}</p>
+          <p class="text-senses-hearing text-xs tracking-widest uppercase mb-2 font-medium">HEARING · {meta.title}</p>
+          <h1 class="text-display-lg text-senses-text">{meta.title}</h1>
+          <p class="text-senses-text-3 text-sm mt-2 max-w-lg">{meta.description}</p>
         </div>
-        <p class="text-senses-text-3 text-sm flex-shrink-0">{items.length} items</p>
+        <div class="text-right flex-shrink-0">
+          <p class="text-senses-hearing text-3xl font-light tabular-nums">{sectionCount.toLocaleString()}</p>
+          <p class="text-senses-text-3 text-xs uppercase tracking-widest">tracks</p>
+        </div>
       </div>
     </div>
 
@@ -70,15 +99,23 @@ const items = byType.flat();
     <div class="max-w-[1440px] mx-auto px-4 md:px-8">
       {items.length === 0 ? (
         <div class="py-24 text-center">
-          <p class="text-senses-text-3 text-lg mb-1">No {def.title.toLowerCase()} yet</p>
-          <p class="text-senses-text-3 text-sm">Check back soon — more audio is being curated.</p>
+          <p class="text-senses-text-3 text-lg mb-2">Loading tracks…</p>
+          <p class="text-senses-text-3 text-sm">Run <code class="bg-senses-surface px-1.5 py-0.5 rounded text-xs">npm run transform:music</code> to generate music data.</p>
         </div>
       ) : (
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {items.map(item => (
-            <MediaCard client:visible media={item} creator={creatorMap[item.creator]} layout="grid" />
-          ))}
-        </div>
+        <>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8">
+            {items.map((item: Media) => (
+              <MediaCard client:visible media={item} layout="grid" />
+            ))}
+          </div>
+          {sectionCount > items.length && (
+            <p class="text-center text-senses-text-3 text-sm py-6">
+              Showing top {items.length.toLocaleString()} of {sectionCount.toLocaleString()} {meta.title.toLowerCase()} tracks.
+              Use <a href={`/search?q=${section}&division=hearing`} class="text-senses-hearing hover:underline">Search</a> to find more.
+            </p>
+          )}
+        </>
       )}
     </div>
 
